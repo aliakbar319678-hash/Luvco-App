@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,15 +7,36 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:luvco_logo/core/theme/app_colors.dart';
 import 'package:luvco_logo/providers/new_password_provider.dart';
 import 'package:luvco_logo/widgets/luvco_button.dart';
-import 'package:luvco_logo/widgets/lucu_logo.dart';
+import 'package:luvco_logo/widgets/auth_header.dart';
 
-class NewPasswordScreen extends ConsumerWidget {
+// Providers for typing detection
+final newPasswordTypingProvider = StateProvider<bool>((ref) => false);
+final newPasswordTypingTimerProvider = StateProvider<Timer?>((ref) => null);
+
+final confirmPasswordTypingProvider = StateProvider<bool>((ref) => false);
+final confirmPasswordTypingTimerProvider = StateProvider<Timer?>((ref) => null);
+
+class NewPasswordScreen extends ConsumerStatefulWidget {
   const NewPasswordScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NewPasswordScreen> createState() => _NewPasswordScreenState();
+}
+
+class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(newPasswordStateProvider.notifier).reset();
+      ref.read(newPasswordProvider.notifier).state = '';
+      ref.read(confirmPasswordProvider.notifier).state = '';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final padding = MediaQuery.paddingOf(context);
     final state = ref.watch(newPasswordStateProvider);
 
     // ── Navigate to confirmation when success ──────────────────
@@ -33,7 +55,7 @@ class NewPasswordScreen extends ConsumerWidget {
         body: Column(
           children: [
             // ── Header: white card + logo ──
-            _NewPasswordHeader(size: size, padding: padding),
+            const AuthHeader(showLogo: true),
 
             // ── Scrollable content ──
             Expanded(
@@ -75,6 +97,8 @@ class NewPasswordScreen extends ConsumerWidget {
                       label: 'New Password',
                       hint: 'Enter your new password',
                       visibilityProvider: newPasswordVisibleProvider,
+                      typingProvider: newPasswordTypingProvider,
+                      typingTimerProvider: newPasswordTypingTimerProvider,
                       onChanged: (v) =>
                           ref.read(newPasswordProvider.notifier).state = v,
                       hasError: state.hasError,
@@ -115,6 +139,8 @@ class NewPasswordScreen extends ConsumerWidget {
                       label: 'Confirm Password',
                       hint: 'Enter your new password',
                       visibilityProvider: confirmPasswordVisibleProvider,
+                      typingProvider: confirmPasswordTypingProvider,
+                      typingTimerProvider: confirmPasswordTypingTimerProvider,
                       onChanged: (v) =>
                           ref.read(confirmPasswordProvider.notifier).state = v,
                       hasError: state.hasError,
@@ -151,52 +177,14 @@ class NewPasswordScreen extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Header: white card with rounded bottom corners + logo
-// ─────────────────────────────────────────────────────────────────
-class _NewPasswordHeader extends StatelessWidget {
-  final Size size;
-  final EdgeInsets padding;
-
-  const _NewPasswordHeader({required this.size, required this.padding});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(height: padding.top + 12),
-          LuvcoLogo(width: size.width * 0.32, color: LuvcoLogoColor.pink),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
 // Reusable password field with show/hide toggle
-// Uses a Riverpod provider to manage visibility state
 // ─────────────────────────────────────────────────────────────────
 class _PasswordField extends ConsumerWidget {
   final String label;
   final String hint;
   final StateProvider<bool> visibilityProvider;
+  final StateProvider<bool> typingProvider;
+  final StateProvider<Timer?> typingTimerProvider;
   final ValueChanged<String> onChanged;
   final bool hasError;
 
@@ -204,6 +192,8 @@ class _PasswordField extends ConsumerWidget {
     required this.label,
     required this.hint,
     required this.visibilityProvider,
+    required this.typingProvider,
+    required this.typingTimerProvider,
     required this.onChanged,
     this.hasError = false,
   });
@@ -217,7 +207,6 @@ class _PasswordField extends ConsumerWidget {
 
     final isVisible = ref.watch(visibilityProvider);
 
-    // ── Border colours ───────────────────────────────────────
     final borderColor = hasError ? AppColors.errorRed : AppColors.inputBorder;
     final focusColor = hasError ? AppColors.errorRed : AppColors.royalPurple;
 
@@ -233,7 +222,6 @@ class _PasswordField extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Label ──
         Text(
           label,
           style: GoogleFonts.inter(
@@ -243,12 +231,17 @@ class _PasswordField extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 8),
-
-        // ── Input ──
         SizedBox(
           height: fieldHeight,
           child: TextField(
-            onChanged: onChanged,
+            onChanged: (v) {
+              onChanged(v);
+              ref.read(typingProvider.notifier).state = true;
+              ref.read(typingTimerProvider.notifier).state?.cancel();
+              ref.read(typingTimerProvider.notifier).state = Timer(const Duration(milliseconds: 800), () {
+                ref.read(typingProvider.notifier).state = false;
+              });
+            },
             obscureText: !isVisible,
             keyboardType: TextInputType.visiblePassword,
             style: GoogleFonts.inter(
@@ -272,7 +265,6 @@ class _PasswordField extends ConsumerWidget {
               border: defaultBorder,
               enabledBorder: defaultBorder,
               focusedBorder: focusedBorder,
-              // ── Eye icon toggle ──
               suffixIcon: GestureDetector(
                 onTap: () =>
                     ref.read(visibilityProvider.notifier).state = !isVisible,
@@ -280,7 +272,9 @@ class _PasswordField extends ConsumerWidget {
                   isVisible
                       ? Icons.visibility_outlined
                       : Icons.visibility_off_outlined,
-                  color: AppColors.neutralGrey,
+                  color: hasError
+                      ? AppColors.errorRed
+                      : (ref.watch(typingProvider) ? Colors.black : AppColors.neutralGrey),
                   size: 20,
                 ),
               ),

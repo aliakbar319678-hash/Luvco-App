@@ -5,11 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:luvco_logo/core/theme/app_colors.dart';
 import 'package:luvco_logo/providers/otp_provider.dart';
-import 'package:luvco_logo/widgets/luvco_button.dart';
-import 'package:luvco_logo/widgets/lucu_logo.dart';
+import 'package:luvco_logo/widgets/auth_header.dart';
+import 'package:luvco_logo/widgets/auth_error_row.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
-  /// Email shown in the subtitle, e.g. "test@email.com"
   final String email;
 
   const OtpVerificationScreen({super.key, required this.email});
@@ -20,12 +19,19 @@ class OtpVerificationScreen extends ConsumerStatefulWidget {
 }
 
 class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
-  // One controller + focus node per OTP digit
   final List<TextEditingController> _controllers = List.generate(
     6,
     (_) => TextEditingController(),
   );
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(otpProvider.notifier).reset();
+    });
+  }
 
   @override
   void dispose() {
@@ -38,12 +44,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     super.dispose();
   }
 
-  // ── Collect all digits into a single string ──────────────────
   String get _fullCode => _controllers.map((c) => c.text).join();
-
   bool get _isComplete => _fullCode.length == 6;
 
-  // ── Wipe all cells and reset provider ────────────────────────
   void _clearAll() {
     for (final c in _controllers) {
       c.clear();
@@ -60,8 +63,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final padding = MediaQuery.paddingOf(context);
     final state = ref.watch(otpProvider);
+
     ref.listen<OtpState>(otpProvider, (_, next) {
       if (next.isSuccess && context.mounted) {
         context.push('/new-password');
@@ -77,7 +80,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
         body: Column(
           children: [
             // ── Top white card with logo ──
-            _OtpHeader(size: size, padding: padding),
+            const AuthHeader(showLogo: true),
 
             // ── Content ──
             Expanded(
@@ -101,22 +104,12 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                     const SizedBox(height: 8),
 
                     // ── Subtitle ──
-                    RichText(
-                      text: TextSpan(
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.darkGrey,
-                        ),
-                        children: [
-                          const TextSpan(
-                            text: "Enter the code we've sent  to ",
-                          ),
-                          TextSpan(
-                            text: widget.email,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ],
+                    Text(
+                      "Enter the code we've sent to ${widget.email}",
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.darkGrey,
                       ),
                     ),
 
@@ -131,39 +124,22 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                     ),
 
                     // ── Error message ──
-                    if (state.hasError) ...[
-                      const SizedBox(height: 8),
-                      Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.error_outline,
-                              color: AppColors.errorRed,
-                              size: 15,
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              state.errorMessage ?? 'Wrong code, try again',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                color: AppColors.errorRed,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
+                    if (state.hasError)
+                      AuthErrorRow(
+                        message: state.errorMessage ?? 'Wrong code, try again',
+                        centered: true,
                       ),
-                    ],
 
                     // ── "Email should arrive" hint ──
                     if (!state.hasError) ...[
                       const SizedBox(height: 8),
-                      Text(
-                        'The email should arrive within 20s',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: AppColors.neutralGrey,
+                      Center(
+                        child: Text(
+                          'The email should arrive within 20s',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: AppColors.neutralGrey,
+                          ),
                         ),
                       ),
                     ],
@@ -172,6 +148,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
 
                     // ── Resend link ──
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           "Didn't receive code? ",
@@ -187,7 +164,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                             style: GoogleFonts.inter(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.vibrantPink,
+                              color: AppColors.black,
+                              decoration: TextDecoration.underline,
                             ),
                           ),
                         ),
@@ -197,10 +175,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                     SizedBox(height: size.height * 0.034),
 
                     // ── Continue button ──
-                    LuvcoButton(
-                      label: 'Continue',
+                    _ContinueButton(
+                      isComplete: _isComplete,
                       isLoading: state.isLoading,
-                      isDisabled: !_isComplete,
                       onTap: _onSubmit,
                     ),
 
@@ -216,48 +193,6 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Header: white card with rounded bottom + Luvco logo
-// ─────────────────────────────────────────────────────────────────
-class _OtpHeader extends StatelessWidget {
-  final Size size;
-  final EdgeInsets padding;
-
-  const _OtpHeader({required this.size, required this.padding});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(height: padding.top + 12),
-          LuvcoLogo(width: size.width * 0.32, color: LuvcoLogoColor.pink),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Row of 6 OTP input boxes
-// ─────────────────────────────────────────────────────────────────
 class _OtpBoxRow extends StatelessWidget {
   final List<TextEditingController> controllers;
   final List<FocusNode> focusNodes;
@@ -295,9 +230,6 @@ class _OtpBoxRow extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Single OTP box
-// ─────────────────────────────────────────────────────────────────
 class _OtpSingleBox extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
@@ -341,6 +273,11 @@ class _OtpSingleBox extends StatelessWidget {
         ),
         decoration: InputDecoration(
           counterText: '',
+          hintText: controller.text.isEmpty ? '-' : '',
+          hintStyle: GoogleFonts.inter(
+            fontSize: 18,
+            color: AppColors.clearGrey,
+          ),
           filled: true,
           fillColor: AppColors.pureWhite,
           contentPadding: EdgeInsets.zero,
@@ -355,19 +292,109 @@ class _OtpSingleBox extends StatelessWidget {
         ),
         onChanged: (value) {
           if (value.isNotEmpty) {
-            // Move to next box
             if (nextFocus != null) {
               nextFocus!.requestFocus();
             } else {
-              // Last box → trigger submit
               focusNode.unfocus();
               onCompleted();
             }
           } else {
-            // Digit deleted → move back
             prevFocus?.requestFocus();
           }
         },
+      ),
+    );
+  }
+}
+
+class _ContinueButton extends StatelessWidget {
+  final bool isComplete;
+  final bool isLoading;
+  final VoidCallback onTap;
+
+  const _ContinueButton({
+    required this.isComplete,
+    required this.isLoading,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (isComplete) {
+      return SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: ElevatedButton(
+          onPressed: isLoading ? null : onTap,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.royalPurple,
+            disabledBackgroundColor: AppColors.royalPurple.withValues(
+              alpha: 0.5,
+            ),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(50),
+            ),
+          ),
+          child: isLoading
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2.5,
+                  ),
+                )
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Continue',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.pureWhite,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.pureWhite,
+                      size: 22,
+                    ),
+                  ],
+                ),
+        ),
+      );
+    }
+
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFFCF3F8),
+          borderRadius: BorderRadius.circular(50),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Continue',
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: AppColors.neutralGrey,
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.neutralGrey,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }

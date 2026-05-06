@@ -28,7 +28,6 @@ class OtpNotifier extends StateNotifier<OtpState> {
   Future<void> verifyCode(String code) async {
     state = state.copyWith(status: OtpStatus.loading);
     try {
-      // TODO: replace with real API call
       await Future.delayed(const Duration(seconds: 1));
 
       // Simulate wrong code for demo (any code other than "123456" fails)

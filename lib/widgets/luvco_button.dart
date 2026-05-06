@@ -10,6 +10,8 @@ class LuvcoButton extends StatelessWidget {
   final LuvcoButtonStyle style;
   final bool isLoading;
   final bool isDisabled;
+  final Color? disabledBackgroundColor;
+  final Color? disabledTextColor;
 
   const LuvcoButton({
     super.key,
@@ -18,6 +20,8 @@ class LuvcoButton extends StatelessWidget {
     this.style = LuvcoButtonStyle.filled,
     this.isLoading = false,
     this.isDisabled = false,
+    this.disabledBackgroundColor,
+    this.disabledTextColor,
   });
 
   @override
@@ -34,7 +38,7 @@ class LuvcoButton extends StatelessWidget {
           onPressed: (isLoading || isDisabled) ? null : onTap,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.royalPurple,
-            disabledBackgroundColor: AppColors.royalPurple.withValues(
+            disabledBackgroundColor: disabledBackgroundColor ?? AppColors.royalPurple.withValues(
               alpha: 0.40,
             ),
             elevation: 0,
@@ -56,7 +60,9 @@ class LuvcoButton extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 16 * scale.clamp(0.85, 1.3),
                     fontWeight: FontWeight.w600,
-                    color: AppColors.pureWhite,
+                    color: isDisabled 
+                        ? (disabledTextColor ?? AppColors.pureWhite)
+                        : AppColors.pureWhite,
                   ),
                 ),
         ),

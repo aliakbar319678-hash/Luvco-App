@@ -92,7 +92,6 @@ class SignupNotifier extends StateNotifier<SignupState> {
     try {
       await Future.delayed(const Duration(seconds: 1));
 
-      // TODO: replace with real API — demo: flag duplicate email
       if (model.email == 'test@luvco.com') {
         state = const SignupState(
           status: SignupStatus.error,

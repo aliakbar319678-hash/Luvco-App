@@ -59,7 +59,6 @@ class NewPasswordNotifier extends StateNotifier<NewPasswordState> {
 
     state = state.copyWith(status: NewPasswordStatus.loading);
     try {
-      // TODO: replace with real API call
       await Future.delayed(const Duration(seconds: 1));
       state = state.copyWith(status: NewPasswordStatus.success);
     } catch (e) {

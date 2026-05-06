@@ -64,16 +64,17 @@ class LuvcoTextField extends StatelessWidget {
             onChanged: onChanged,
             obscureText: obscureText,
             keyboardType: keyboardType,
+            cursorColor: hasError ? AppColors.errorRed : AppColors.royalPurple,
             style: GoogleFonts.inter(
               fontSize: fontSize,
-              color: AppColors.black,
+              color: hasError ? AppColors.errorRed : AppColors.black,
               fontWeight: FontWeight.w400,
             ),
             decoration: InputDecoration(
               hintText: hintText,
               hintStyle: GoogleFonts.inter(
                 fontSize: fontSize,
-                color: AppColors.neutralGrey,
+                color: hasError ? AppColors.errorRed.withValues(alpha: 0.6) : AppColors.neutralGrey,
                 fontWeight: FontWeight.w400,
               ),
               filled: true,

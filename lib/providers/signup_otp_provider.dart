@@ -34,7 +34,6 @@ class SignupOtpNotifier extends StateNotifier<SignupOtpState> {
   Future<void> verifyCode(String code) async {
     state = state.copyWith(status: SignupOtpStatus.loading);
     try {
-      // TODO: replace with real API call
       await Future.delayed(const Duration(seconds: 1));
 
       // Demo: only "123456" is accepted as correct

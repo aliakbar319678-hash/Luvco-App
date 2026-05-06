@@ -28,12 +28,11 @@ class LoginNotifier extends StateNotifier<LoginState> {
   Future<void> login(AuthModel model) async {
     state = state.copyWith(status: LoginStatus.loading);
     try {
-      // TODO: replace with real auth call
       await Future.delayed(const Duration(seconds: 1));
 
       // Demo: treat empty fields as wrong credentials
       if (model.email.isEmpty || model.password.isEmpty) {
-        state = LoginState(
+        state = const LoginState(
           status: LoginStatus.error,
           errorMessage: "We don't recognize the email or password",
         );
@@ -41,7 +40,7 @@ class LoginNotifier extends StateNotifier<LoginState> {
       }
       state = state.copyWith(status: LoginStatus.success);
     } catch (_) {
-      state = LoginState(
+      state = const LoginState(
         status: LoginStatus.error,
         errorMessage: "We don't recognize the email or password",
       );

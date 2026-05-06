@@ -33,7 +33,6 @@ class ForgotPasswordNotifier extends StateNotifier<ForgotPasswordState> {
   Future<void> resetPassword(String email) async {
     state = state.copyWith(status: ForgotPasswordStatus.loading);
     try {
-      // TODO: replace with real reset call
       await Future.delayed(const Duration(seconds: 1));
       state = state.copyWith(status: ForgotPasswordStatus.success);
     } catch (e) {

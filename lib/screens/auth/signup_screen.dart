@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +10,13 @@ import 'package:luvco_logo/models/signup_model.dart';
 import 'package:luvco_logo/providers/signup_provider.dart';
 import 'package:luvco_logo/widgets/luvco_button.dart';
 import 'package:luvco_logo/widgets/luvco_text_field.dart';
+import 'package:luvco_logo/widgets/auth_header.dart';
+import 'package:luvco_logo/widgets/auth_error_row.dart';
+
+// Provider to track if the password field is being typed
+final signupPasswordTypingProvider = StateProvider<bool>((ref) => false);
+// Provider to hold a debouncing timer for typing detection
+final signupPasswordTypingTimerProvider = StateProvider<Timer?>((ref) => null);
 
 class SignupScreen extends ConsumerWidget {
   const SignupScreen({super.key});
@@ -16,7 +24,6 @@ class SignupScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.sizeOf(context);
-    final padding = MediaQuery.paddingOf(context);
 
     final signupState = ref.watch(signupProvider);
     final obscure = ref.watch(signupObscurePasswordProvider);
@@ -50,7 +57,10 @@ class SignupScreen extends ConsumerWidget {
         body: Column(
           children: [
             // ── Top nav bar ──
-            _SignupNavBar(size: size, padding: padding),
+            const AuthHeader(
+              title: 'Register Account',
+              titleColor: AppColors.vibrantPink,
+            ),
 
             // ── Scrollable form ──
             Expanded(
@@ -98,7 +108,7 @@ class SignupScreen extends ConsumerWidget {
                       },
                     ),
                     if (fieldError(SignupErrorField.firstName))
-                      _FieldErrorRow(message: signupState.errorMessage),
+                      AuthErrorRow(message: signupState.errorMessage),
 
                     SizedBox(height: size.height * 0.020),
 
@@ -113,7 +123,7 @@ class SignupScreen extends ConsumerWidget {
                       },
                     ),
                     if (fieldError(SignupErrorField.lastName))
-                      _FieldErrorRow(message: signupState.errorMessage),
+                      AuthErrorRow(message: signupState.errorMessage),
 
                     SizedBox(height: size.height * 0.020),
 
@@ -129,7 +139,7 @@ class SignupScreen extends ConsumerWidget {
                       },
                     ),
                     if (fieldError(SignupErrorField.email))
-                      _FieldErrorRow(message: signupState.errorMessage),
+                      AuthErrorRow(message: signupState.errorMessage),
 
                     SizedBox(height: size.height * 0.020),
 
@@ -143,6 +153,14 @@ class SignupScreen extends ConsumerWidget {
                       onChanged: (v) {
                         ref.read(signupPasswordProvider.notifier).state = v;
                         clearIfError();
+                        // Start typing detection
+                        ref.read(signupPasswordTypingProvider.notifier).state = true;
+                        // Cancel previous timer if any
+                        ref.read(signupPasswordTypingTimerProvider.notifier).state?.cancel();
+                        // Start new debounce timer (800ms)
+                        ref.read(signupPasswordTypingTimerProvider.notifier).state = Timer(const Duration(milliseconds: 800), () {
+                          ref.read(signupPasswordTypingProvider.notifier).state = false;
+                        });
                       },
                       suffixIcon: GestureDetector(
                         onTap: () =>
@@ -158,7 +176,7 @@ class SignupScreen extends ConsumerWidget {
                               : Icons.visibility_outlined,
                           color: passwordHasError
                               ? AppColors.errorRed
-                              : AppColors.neutralGrey,
+                              : (ref.watch(signupPasswordTypingProvider) ? Colors.black : AppColors.neutralGrey),
                           size: 20,
                         ),
                       ),
@@ -170,7 +188,7 @@ class SignupScreen extends ConsumerWidget {
 
                     // ── Password error message (below hint, replaces hint on error) ──
                     if (passwordHasError)
-                      _FieldErrorRow(message: signupState.errorMessage),
+                      AuthErrorRow(message: signupState.errorMessage),
 
                     SizedBox(height: size.height * 0.026),
 
@@ -244,69 +262,6 @@ class SignupScreen extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Top navigation bar — back arrow + centered title
-// ─────────────────────────────────────────────────────────────────
-class _SignupNavBar extends StatelessWidget {
-  final Size size;
-  final EdgeInsets padding;
-
-  const _SignupNavBar({required this.size, required this.padding});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.only(
-          top: padding.top + 8,
-          bottom: 16,
-          left: 8,
-          right: 8,
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                onPressed: () => context.pop(),
-                icon: const Icon(
-                  Icons.chevron_left_rounded,
-                  color: AppColors.vibrantPink,
-                  size: 28,
-                ),
-              ),
-            ),
-            Text(
-              'Register Account',
-              style: GoogleFonts.inter(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.vibrantPink,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
 // Password hint row — grey normally, red when password has error
 // Matches Figma 0.3.3: red info icon + red text
 // ─────────────────────────────────────────────────────────────────
@@ -323,10 +278,7 @@ class _PasswordHintRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(
-          isError
-              ? Icons
-                    .info_outline_rounded // same icon, just red
-              : Icons.info_outline_rounded,
+          Icons.info_outline_rounded,
           size: 14,
           color: color,
         ),
@@ -343,43 +295,6 @@ class _PasswordHintRow extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Inline field error row — icon + message
-// ─────────────────────────────────────────────────────────────────
-class _FieldErrorRow extends StatelessWidget {
-  final String? message;
-
-  const _FieldErrorRow({this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.error_outline_rounded,
-            color: AppColors.errorRed,
-            size: 14,
-          ),
-          const SizedBox(width: 5),
-          Expanded(
-            child: Text(
-              message ?? 'Please fill out this field',
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: AppColors.errorRed,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -447,31 +362,31 @@ class _AccountConfirmationDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 32),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 52),
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.pureWhite,
           borderRadius: BorderRadius.circular(20),
         ),
-        padding: const EdgeInsets.fromLTRB(24, 32, 24, 28),
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // ── Green checkmark circle ──
             Container(
-              width: 72,
-              height: 72,
+              width: 68,
+              height: 68,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: const Color(0xFF4CAF50), // success green
-                  width: 2.5,
+                  width: 3.5,
                 ),
               ),
               child: const Icon(
                 Icons.check_rounded,
                 color: Color(0xFF4CAF50),
-                size: 38,
+                size: 42,
               ),
             ),
 
@@ -482,28 +397,28 @@ class _AccountConfirmationDialog extends StatelessWidget {
               'Your account has been\ncreated successfully!',
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: AppColors.black,
                 height: 1.35,
               ),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
 
             // ── Subtitle ──
             Text(
               'We have send you a confirmation\ncode to your email',
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.w400,
                 color: AppColors.darkGrey,
                 height: 1.4,
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
             // ── Verify My Account button ──
             SizedBox(
@@ -513,7 +428,7 @@ class _AccountConfirmationDialog extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.royalPurple,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(50),
                   ),
@@ -521,7 +436,7 @@ class _AccountConfirmationDialog extends StatelessWidget {
                 child: Text(
                   'Verify My Account',
                   style: GoogleFonts.inter(
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: AppColors.pureWhite,
                   ),

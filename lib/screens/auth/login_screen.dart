@@ -1,15 +1,21 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:luvco_logo/core/theme/app_colors.dart';
 import 'package:luvco_logo/core/theme/app_text_styles.dart';
 import 'package:luvco_logo/models/auth_model.dart';
 import 'package:luvco_logo/providers/auth_provider.dart';
-import 'package:luvco_logo/widgets/lucu_logo.dart';
 import 'package:luvco_logo/widgets/luvco_button.dart';
 import 'package:luvco_logo/widgets/luvco_text_field.dart';
+import 'package:luvco_logo/widgets/auth_header.dart';
+import 'package:luvco_logo/widgets/auth_error_row.dart';
+
+// Provider to track if the password field is being typed
+final passwordTypingProvider = StateProvider<bool>((ref) => false);
+// Provider to hold a debouncing timer for typing detection
+final passwordTypingTimerProvider = StateProvider<Timer?>((ref) => null);
 
 class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
@@ -17,7 +23,6 @@ class LoginScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.sizeOf(context);
-    final padding = MediaQuery.paddingOf(context);
     final loginState = ref.watch(loginProvider);
     final isLoading = loginState.status == LoginStatus.loading;
     final hasError = loginState.hasError;
@@ -32,7 +37,10 @@ class LoginScreen extends ConsumerWidget {
         body: Column(
           children: [
             // ── White header card with logo ──
-            _LoginHeader(size: size, padding: padding),
+            const AuthHeader(
+              showLogo: true,
+              showBackButton: false,
+            ),
 
             // ── Scrollable form content ──
             Expanded(
@@ -80,6 +88,14 @@ class LoginScreen extends ConsumerWidget {
                       hasError: hasError,
                       onChanged: (v) {
                         ref.read(passwordProvider.notifier).state = v;
+                        // start typing detection
+                        ref.read(passwordTypingProvider.notifier).state = true;
+                        // cancel previous timer
+                        ref.read(passwordTypingTimerProvider.notifier).state?.cancel();
+                        // debounce - after 800ms set typing false
+                        ref.read(passwordTypingTimerProvider.notifier).state = Timer(const Duration(milliseconds: 800), () {
+                          ref.read(passwordTypingProvider.notifier).state = false;
+                        });
                         if (hasError) ref.read(loginProvider.notifier).reset();
                       },
                       suffixIcon: GestureDetector(
@@ -88,11 +104,13 @@ class LoginScreen extends ConsumerWidget {
                                 !obscure,
                         child: Icon(
                           obscure
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
+                               ? Icons.visibility_off_outlined
+                               : Icons.visibility_outlined,
                           color: hasError
-                              ? AppColors.errorRed
-                              : AppColors.neutralGrey,
+                               ? AppColors.errorRed
+                               : ref.watch(passwordTypingProvider)
+                                   ? Colors.black
+                                   : AppColors.neutralGrey,
                           size: 20,
                         ),
                       ),
@@ -102,24 +120,9 @@ class LoginScreen extends ConsumerWidget {
 
                     // ── Error message row (visible only on error) ──
                     if (hasError) ...[
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.error_outline_rounded,
-                            color: AppColors.errorRed,
-                            size: 15,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            loginState.errorMessage ??
-                                "We don't recognize the email or password",
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: AppColors.errorRed,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
+                      AuthErrorRow(
+                        message: loginState.errorMessage ??
+                            "We don't recognize the email or password",
                       ),
                       const SizedBox(height: 4),
                     ],
@@ -168,55 +171,6 @@ class LoginScreen extends ConsumerWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// White header card — logo centered, rounded bottom corners
-// ─────────────────────────────────────────────────────────────────
-class _LoginHeader extends StatelessWidget {
-  final Size size;
-  final EdgeInsets padding;
-
-  const _LoginHeader({required this.size, required this.padding});
-
-  @override
-  Widget build(BuildContext context) {
-    final headerHeight = size.height * 0.148;
-
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(height: padding.top),
-          SizedBox(
-            height: headerHeight,
-            child: Center(
-              child: LuvcoLogo(
-                width: size.width * 0.38,
-                color: LuvcoLogoColor.pink,
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-        ],
       ),
     );
   }
