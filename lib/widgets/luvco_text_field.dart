@@ -9,6 +9,7 @@ class LuvcoTextField extends StatelessWidget {
   final TextInputType keyboardType;
   final ValueChanged<String> onChanged;
   final Widget? suffixIcon;
+  final bool hasError;
 
   const LuvcoTextField({
     super.key,
@@ -18,6 +19,7 @@ class LuvcoTextField extends StatelessWidget {
     this.keyboardType = TextInputType.text,
     this.obscureText = false,
     this.suffixIcon,
+    this.hasError = false,
   });
 
   @override
@@ -27,18 +29,35 @@ class LuvcoTextField extends StatelessWidget {
     final fontSize = 14 * scale.clamp(0.85, 1.3);
     final fieldHeight = (size.height * 0.062).clamp(48.0, 60.0);
 
+    // ── Border colors depend on error state ──
+    final borderColor = hasError ? AppColors.errorRed : AppColors.inputBorder;
+    final focusColor = hasError ? AppColors.errorRed : AppColors.royalPurple;
+    final labelColor = hasError ? AppColors.errorRed : AppColors.black;
+
+    final defaultBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: borderColor, width: 1.0),
+    );
+    final focusedBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: focusColor, width: 1.5),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ── Label ──
         Text(
           label,
           style: GoogleFonts.inter(
             fontSize: fontSize,
             fontWeight: FontWeight.w500,
-            color: AppColors.black,
+            color: labelColor,
           ),
         ),
         const SizedBox(height: 8),
+
+        // ── Input field ──
         SizedBox(
           height: fieldHeight,
           child: TextField(
@@ -63,27 +82,9 @@ class LuvcoTextField extends StatelessWidget {
                 horizontal: 16,
                 vertical: 14,
               ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: AppColors.inputBorder,
-                  width: 1.0,
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: AppColors.inputBorder,
-                  width: 1.0,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: AppColors.royalPurple,
-                  width: 1.5,
-                ),
-              ),
+              border: defaultBorder,
+              enabledBorder: defaultBorder,
+              focusedBorder: focusedBorder,
               suffixIcon: suffixIcon,
             ),
           ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:luvco_logo/core/theme/app_colors.dart';
 import 'package:luvco_logo/core/theme/app_text_styles.dart';
 import 'package:luvco_logo/models/auth_model.dart';
@@ -18,6 +20,7 @@ class LoginScreen extends ConsumerWidget {
     final padding = MediaQuery.paddingOf(context);
     final loginState = ref.watch(loginProvider);
     final isLoading = loginState.status == LoginStatus.loading;
+    final hasError = loginState.hasError;
     final obscure = ref.watch(obscurePasswordProvider);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -25,13 +28,13 @@ class LoginScreen extends ConsumerWidget {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: const Color(0xFFF2F2F7), // light grey page bg
+        backgroundColor: AppColors.pageBackground,
         body: Column(
           children: [
-            // ── Top header card ──
+            // ── White header card with logo ──
             _LoginHeader(size: size, padding: padding),
 
-            // ── Scrollable content ──
+            // ── Scrollable form content ──
             Expanded(
               child: SingleChildScrollView(
                 physics: const ClampingScrollPhysics(),
@@ -43,7 +46,6 @@ class LoginScreen extends ConsumerWidget {
 
                     // ── Heading ──
                     Text('Log in', style: AppTextStyles.heading1(context)),
-
                     const SizedBox(height: 6),
 
                     // ── Subtitle ──
@@ -54,25 +56,32 @@ class LoginScreen extends ConsumerWidget {
 
                     SizedBox(height: size.height * 0.034),
 
-                    // ── Email Field ──
+                    // ── Email field ──
                     LuvcoTextField(
                       label: 'Email',
                       hintText: 'Enter your email',
                       keyboardType: TextInputType.emailAddress,
-                      onChanged: (v) =>
-                          ref.read(emailProvider.notifier).state = v,
+                      hasError: hasError,
+                      onChanged: (v) {
+                        ref.read(emailProvider.notifier).state = v;
+                        // Clear error as user starts retyping
+                        if (hasError) ref.read(loginProvider.notifier).reset();
+                      },
                     ),
 
                     SizedBox(height: size.height * 0.022),
 
-                    // ── Password Field ──
+                    // ── Password field ──
                     LuvcoTextField(
                       label: 'Password',
                       hintText: 'Password',
                       obscureText: obscure,
                       keyboardType: TextInputType.visiblePassword,
-                      onChanged: (v) =>
-                          ref.read(passwordProvider.notifier).state = v,
+                      hasError: hasError,
+                      onChanged: (v) {
+                        ref.read(passwordProvider.notifier).state = v;
+                        if (hasError) ref.read(loginProvider.notifier).reset();
+                      },
                       suffixIcon: GestureDetector(
                         onTap: () =>
                             ref.read(obscurePasswordProvider.notifier).state =
@@ -81,19 +90,45 @@ class LoginScreen extends ConsumerWidget {
                           obscure
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
-                          color: AppColors.neutralGrey,
+                          color: hasError
+                              ? AppColors.errorRed
+                              : AppColors.neutralGrey,
                           size: 20,
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
 
-                    // ── Forgot Password ──
+                    // ── Error message row (visible only on error) ──
+                    if (hasError) ...[
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.error_outline_rounded,
+                            color: AppColors.errorRed,
+                            size: 15,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            loginState.errorMessage ??
+                                "We don't recognize the email or password",
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: AppColors.errorRed,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                    ],
+
+                    // ── Forgot Password link ──
                     Align(
                       alignment: Alignment.centerRight,
                       child: GestureDetector(
-                        onTap: () {},
+                        onTap: () => context.push('/forgot-password'),
                         child: Text(
                           'Forgot Password?',
                           style: AppTextStyles.link(context),
@@ -103,10 +138,11 @@ class LoginScreen extends ConsumerWidget {
 
                     SizedBox(height: size.height * 0.036),
 
-                    // ── Log In Button ──
+                    // ── Log In button (disabled on error state) ──
                     LuvcoButton(
                       label: 'Log In',
                       isLoading: isLoading,
+                      isDisabled: hasError,
                       onTap: () {
                         final email = ref.read(emailProvider);
                         final password = ref.read(passwordProvider);
@@ -118,11 +154,11 @@ class LoginScreen extends ConsumerWidget {
 
                     SizedBox(height: size.height * 0.018),
 
-                    // ── Sign Up Button ──
+                    // ── Sign Up button ──
                     LuvcoButton(
                       label: 'Sign Up',
                       style: LuvcoButtonStyle.outlined,
-                      onTap: () {},
+                      onTap: () => context.push('/signup'),
                     ),
 
                     SizedBox(height: size.height * 0.04),
@@ -138,8 +174,7 @@ class LoginScreen extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Login Header — white card, rounded bottom BOTH sides, soft shadow
-// Matches Figma exactly: logo centered, curved bottom edge
+// White header card — logo centered, rounded bottom corners
 // ─────────────────────────────────────────────────────────────────
 class _LoginHeader extends StatelessWidget {
   final Size size;
@@ -149,25 +184,20 @@ class _LoginHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Header height: status bar + logo area
-    // Figma shows roughly 121px total at 375px width
     final headerHeight = size.height * 0.148;
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.pureWhite,
-        // ── Rounded on BOTH bottom corners (matches screenshot) ──
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(28),
           bottomRight: Radius.circular(28),
         ),
-        // ── Soft shadow at bottom of card ──
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.07),
             blurRadius: 12,
-            spreadRadius: 0,
             offset: const Offset(0, 4),
           ),
         ],
@@ -175,10 +205,7 @@ class _LoginHeader extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Status bar safe area
           SizedBox(height: padding.top),
-
-          // Logo area
           SizedBox(
             height: headerHeight,
             child: Center(
@@ -188,8 +215,6 @@ class _LoginHeader extends StatelessWidget {
               ),
             ),
           ),
-
-          // Extra bottom breathing room before the curve
           const SizedBox(height: 10),
         ],
       ),

@@ -9,6 +9,7 @@ class LuvcoButton extends StatelessWidget {
   final VoidCallback? onTap;
   final LuvcoButtonStyle style;
   final bool isLoading;
+  final bool isDisabled;
 
   const LuvcoButton({
     super.key,
@@ -16,6 +17,7 @@ class LuvcoButton extends StatelessWidget {
     this.onTap,
     this.style = LuvcoButtonStyle.filled,
     this.isLoading = false,
+    this.isDisabled = false,
   });
 
   @override
@@ -29,10 +31,12 @@ class LuvcoButton extends StatelessWidget {
         width: double.infinity,
         height: height,
         child: ElevatedButton(
-          onPressed: isLoading ? null : onTap,
+          onPressed: (isLoading || isDisabled) ? null : onTap,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.royalPurple,
-            disabledBackgroundColor: AppColors.royalPurple.withOpacity(0.55),
+            disabledBackgroundColor: AppColors.royalPurple.withValues(
+              alpha: 0.40,
+            ),
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(50),
@@ -59,15 +63,20 @@ class LuvcoButton extends StatelessWidget {
       );
     }
 
-    // outlined
+    // ── Outlined ──
     return SizedBox(
       width: double.infinity,
       height: height,
       child: OutlinedButton(
-        onPressed: onTap,
+        onPressed: isDisabled ? null : onTap,
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.royalPurple,
-          side: const BorderSide(color: AppColors.royalPurple, width: 1.5),
+          side: BorderSide(
+            color: isDisabled
+                ? AppColors.royalPurple.withValues(alpha: 0.40)
+                : AppColors.royalPurple,
+            width: 1.5,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(50),
           ),
@@ -77,7 +86,9 @@ class LuvcoButton extends StatelessWidget {
           style: GoogleFonts.inter(
             fontSize: 16 * scale.clamp(0.85, 1.3),
             fontWeight: FontWeight.w600,
-            color: AppColors.royalPurple,
+            color: isDisabled
+                ? AppColors.royalPurple.withValues(alpha: 0.40)
+                : AppColors.royalPurple,
           ),
         ),
       ),

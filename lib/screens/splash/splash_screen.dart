@@ -36,23 +36,6 @@ class SplashScreen extends ConsumerWidget {
                 color: LuvcoLogoColor.white,
               ),
             ),
-
-            // ── Home indicator bar ──
-            Positioned(
-              bottom: MediaQuery.paddingOf(context).bottom + 8,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                  width: 134,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.55),
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),
