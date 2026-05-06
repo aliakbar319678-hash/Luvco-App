@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:luvco_logo/screens/splash/auth/login_screen.dart';
-import 'package:luvco_logo/screens/splash/auth/splash_screen.dart';
+import 'package:luvco_logo/screens/auth/login_screen.dart';
+
+import 'package:luvco_logo/screens/splash/splash_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
