@@ -41,7 +41,7 @@ class DietPreferenceScreen extends ConsumerWidget {
 
                 // ── Heading ──
                 Text(
-                  'Select your\ndiet preference...',
+                  'Choose your diet\n preference...',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 24 * scale.clamp(0.85, 1.3),
@@ -101,7 +101,7 @@ class DietPreferenceScreen extends ConsumerWidget {
 
                 // ── Set Preferences Later ──
                 GestureDetector(
-                  onTap: () => context.go('/home'),
+                  onTap: () => context.go('/profile'),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Text(
@@ -109,9 +109,9 @@ class DietPreferenceScreen extends ConsumerWidget {
                       style: GoogleFonts.inter(
                         fontSize: 14 * scale.clamp(0.85, 1.3),
                         fontWeight: FontWeight.w500,
-                        color: AppColors.darkGrey,
+                        color: AppColors.royalPurple,
                         decoration: TextDecoration.underline,
-                        decorationColor: AppColors.darkGrey,
+                        decorationColor: AppColors.royalPurple,
                       ),
                     ),
                   ),

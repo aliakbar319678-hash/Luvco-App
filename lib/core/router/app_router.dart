@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:luvco_logo/screens/auth/forgot_password_screen.dart';
@@ -12,6 +11,7 @@ import 'package:luvco_logo/screens/splash/splash_screen.dart';
 import 'package:luvco_logo/screens/onboarding/onboarding_screen.dart';
 import 'package:luvco_logo/screens/onboarding/diet_preference_screen.dart';
 import 'package:luvco_logo/screens/onboarding/food_allergy_screen.dart';
+import 'package:luvco_logo/screens/profile/user_profile_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -65,8 +65,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(
-        path: '/home',
-        builder: (context, state) => const Scaffold(body: Center(child: Text('Home Screen'))),
+        path: '/profile',
+        builder: (context, state) => const UserProfileScreen(),
       ),
     ],
   );

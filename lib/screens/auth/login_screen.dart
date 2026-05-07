@@ -28,6 +28,13 @@ class LoginScreen extends ConsumerWidget {
     final hasError = loginState.hasError;
     final obscure = ref.watch(obscurePasswordProvider);
 
+    // Navigate to onboarding on success
+    ref.listen<LoginState>(loginProvider, (previous, next) {
+      if (next.status == LoginStatus.success) {
+        context.go('/onboarding');
+      }
+    });
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
         statusBarColor: Colors.transparent,

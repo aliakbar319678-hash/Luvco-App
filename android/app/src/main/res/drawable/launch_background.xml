@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
+<!-- Native Android launch background — shown before Flutter engine starts.
+     Keep this as a solid brand-color only. The Luvco logo animation
+     is handled entirely by SplashScreen (Flutter widget).              -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@android:color/white" />
-
-    <!-- You can insert your own image assets here -->
-   <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@android:color/white"/>
-
+    <item android:drawable="@color/splash_color" />
 </layer-list>

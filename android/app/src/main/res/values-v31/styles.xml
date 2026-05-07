@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ (API 31) Splash Screen API
+  ───────────────────────────────────────
+  Goal: show ONLY a solid pink screen — no app icon, no Flutter logo.
+
+  How it works:
+    • windowSplashScreenBackground   → solid pink background
+    • windowSplashScreenAnimatedIcon → 288dp transparent vector (no paths)
+                                       Android accepts it so it WON'T fall
+                                       back to ic_launcher.
+    • windowSplashScreenIconBackgroundColor → same pink as background
+                                       hides the icon circle even if Android
+                                       still draws it.
+
+  Result: the user sees solid pink → seamlessly transitions into the
+  Flutter SplashScreen (which animates the Luvco logo on the same pink).
+-->
+<resources>
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@color/splash_color</item>
+        <item name="android:windowSplashScreenBackground">@color/splash_color</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_transparent</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/splash_color</item>
+    </style>
+</resources>

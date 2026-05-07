@@ -38,9 +38,7 @@ class LuvcoButton extends StatelessWidget {
           onPressed: (isLoading || isDisabled) ? null : onTap,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.royalPurple,
-            disabledBackgroundColor: disabledBackgroundColor ?? AppColors.royalPurple.withValues(
-              alpha: 0.40,
-            ),
+            disabledBackgroundColor: disabledBackgroundColor ?? AppColors.faintPink,
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(50),
@@ -61,7 +59,7 @@ class LuvcoButton extends StatelessWidget {
                     fontSize: 16 * scale.clamp(0.85, 1.3),
                     fontWeight: FontWeight.w600,
                     color: isDisabled 
-                        ? (disabledTextColor ?? AppColors.pureWhite)
+                        ? (disabledTextColor ?? AppColors.lightRoyalPurple)
                         : AppColors.pureWhite,
                   ),
                 ),

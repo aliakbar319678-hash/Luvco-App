@@ -87,88 +87,20 @@ class FoodAllergyScreen extends ConsumerWidget {
 
                         SizedBox(height: size.height * 0.020),
 
-                        // ── "Add More Manually" trigger ──
-                        GestureDetector(
-                          onTap: () =>
-                              ref.read(showManualInputProvider.notifier).state =
-                                  true,
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 22,
-                                height: 22,
-                                decoration: BoxDecoration(
-                                  color: AppColors.royalPurple,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.add,
-                                  color: Colors.white,
-                                  size: 14,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Add More Manually',
-                                style: GoogleFonts.inter(
-                                  fontSize: 14 * scale.clamp(0.85, 1.3),
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.darkGrey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // ── Manual input section (shown after tap) ──
-                        if (showManualInput) ...[
-                          SizedBox(height: size.height * 0.016),
-
-                          Text(
-                            'Other',
-                            style: GoogleFonts.inter(
-                              fontSize: 13 * scale.clamp(0.85, 1.3),
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.black,
-                            ),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          // ── Manual entry field ──
-                          _ManualAllergyField(scale: scale),
-
-                          // ── Already added manual allergies ──
-                          ...manualAllergies.map(
-                            (item) => _ManualAllergyTag(
-                              label: item,
-                              onRemove: () => ref
-                                  .read(onboardingProvider.notifier)
-                                  .removeManualAllergy(item),
-                            ),
-                          ),
-
-                          SizedBox(height: size.height * 0.012),
-
-                          // ── Add More Manually (again, after input) ──
+                        // ── "Add More Manually" trigger (only shown if input is hidden) ──
+                        if (!showManualInput)
                           GestureDetector(
-                            onTap: () {
-                              final val = ref.read(manualAllergyInputProvider);
-                              ref
-                                  .read(onboardingProvider.notifier)
-                                  .addManualAllergy(val);
-                              ref
-                                      .read(manualAllergyInputProvider.notifier)
-                                      .state =
-                                  '';
-                            },
+                            onTap: () =>
+                                ref.read(showManualInputProvider.notifier).state =
+                                    true,
                             child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Container(
                                   width: 22,
                                   height: 22,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.royalPurple,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.black,
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(
@@ -184,11 +116,53 @@ class FoodAllergyScreen extends ConsumerWidget {
                                     fontSize: 14 * scale.clamp(0.85, 1.3),
                                     fontWeight: FontWeight.w500,
                                     color: AppColors.darkGrey,
+                                    decoration: TextDecoration.underline,
                                   ),
                                 ),
                               ],
                             ),
                           ),
+
+                        // ── Manual input section (shown after tap) ──
+                        if (showManualInput) ...[
+                          SizedBox(height: size.height * 0.016),
+
+                          Row(
+                            children: [
+                              Text(
+                                'Other',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13 * scale.clamp(0.85, 1.3),
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          // ── Manual entry field ──
+                          _ManualAllergyField(
+                            scale: scale,
+                            onAdd: (val) {
+                              ref
+                                  .read(onboardingProvider.notifier)
+                                  .addManualAllergy(val);
+                            },
+                          ),
+
+                          // ── Already added manual allergies ──
+                          ...manualAllergies.map(
+                            (item) => _ManualAllergyTag(
+                              label: item,
+                              onRemove: () => ref
+                                  .read(onboardingProvider.notifier)
+                                  .removeManualAllergy(item),
+                            ),
+                          ),
+
+                          SizedBox(height: size.height * 0.020),
                         ],
 
                         SizedBox(height: size.height * 0.020),
@@ -203,14 +177,14 @@ class FoodAllergyScreen extends ConsumerWidget {
                 LuvcoButton(
                   label: 'Get Started!',
                   isDisabled: !hasSelection,
-                  onTap: () => context.go('/home'),
+                  onTap: () => context.go('/profile'),
                 ),
 
                 SizedBox(height: size.height * 0.016),
 
                 // ── Set Preferences Later ──
                 GestureDetector(
-                  onTap: () => context.go('/home'),
+                  onTap: () => context.go('/profile'),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Text(
@@ -218,9 +192,9 @@ class FoodAllergyScreen extends ConsumerWidget {
                       style: GoogleFonts.inter(
                         fontSize: 14 * scale.clamp(0.85, 1.3),
                         fontWeight: FontWeight.w500,
-                        color: AppColors.darkGrey,
+                        color: AppColors.royalPurple,
                         decoration: TextDecoration.underline,
-                        decorationColor: AppColors.darkGrey,
+                        decorationColor: AppColors.royalPurple,
                       ),
                     ),
                   ),
@@ -237,53 +211,118 @@ class FoodAllergyScreen extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Manual allergy text input field
+// Manual allergy text input field with Add button logic
 // ─────────────────────────────────────────────────────────────────
-class _ManualAllergyField extends ConsumerWidget {
+class _ManualAllergyField extends StatefulWidget {
   final double scale;
-  const _ManualAllergyField({required this.scale});
+  final Function(String) onAdd;
+
+  const _ManualAllergyField({required this.scale, required this.onAdd});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      height: 48,
-      decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.inputBorder),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              onChanged: (v) =>
-                  ref.read(manualAllergyInputProvider.notifier).state = v,
-              style: GoogleFonts.inter(
-                fontSize: 14 * scale.clamp(0.85, 1.3),
-                color: AppColors.black,
-              ),
-              decoration: InputDecoration(
-                hintText: 'Food Allergy 01',
-                hintStyle: GoogleFonts.inter(
-                  fontSize: 14 * scale.clamp(0.85, 1.3),
-                  color: AppColors.neutralGrey,
+  State<_ManualAllergyField> createState() => _ManualAllergyFieldState();
+}
+
+class _ManualAllergyFieldState extends State<_ManualAllergyField> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleSubmit() {
+    if (_controller.text.trim().isNotEmpty) {
+      widget.onAdd(_controller.text.trim());
+      _controller.clear();
+      FocusScope.of(context).unfocus();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          height: 48,
+          decoration: BoxDecoration(
+            color: AppColors.pureWhite,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.inputBorder),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  onSubmitted: (_) => _handleSubmit(),
+                  style: GoogleFonts.inter(
+                    fontSize: 14 * widget.scale.clamp(0.85, 1.3),
+                    color: AppColors.black,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Food Allergy 01',
+                    hintStyle: GoogleFonts.inter(
+                      fontSize: 14 * widget.scale.clamp(0.85, 1.3),
+                      color: AppColors.neutralGrey,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
                 ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               ),
-            ),
+              // ── Clear / X button ──
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _controller,
+                builder: (context, value, child) {
+                  if (value.text.isEmpty) return const SizedBox.shrink();
+                  return GestureDetector(
+                    onTap: () => _controller.clear(),
+                    child: const Padding(
+                      padding: EdgeInsets.only(right: 12),
+                      child: Icon(Icons.close, size: 18, color: AppColors.neutralGrey),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
-          // ── Clear / X button ──
-          GestureDetector(
-            onTap: () =>
-                ref.read(manualAllergyInputProvider.notifier).state = '',
-            child: Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Icon(Icons.close, size: 18, color: AppColors.neutralGrey),
-            ),
+        ),
+        const SizedBox(height: 16),
+        // ── The "Add More Manually" button below the field ──
+        GestureDetector(
+          onTap: _handleSubmit,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 22,
+                height: 22,
+                decoration: const BoxDecoration(
+                  color: AppColors.black,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.add,
+                  color: Colors.white,
+                  size: 14,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Add More Manually',
+                style: GoogleFonts.inter(
+                  fontSize: 14 * widget.scale.clamp(0.85, 1.3),
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.darkGrey,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

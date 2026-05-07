@@ -43,7 +43,7 @@ class PreferenceChipWrap extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 13 * scale.clamp(0.85, 1.3),
                 fontWeight: FontWeight.w500,
-                color: isSelected ? AppColors.pureWhite : AppColors.black,
+                color: isSelected ? AppColors.pureWhite : AppColors.neutralGrey,
               ),
             ),
           ),

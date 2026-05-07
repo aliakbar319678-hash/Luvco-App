@@ -16,4 +16,6 @@ class AppColors {
   static const Color inputBorder = Color(0xFFD9D9D9);
   static const Color errorRed = Color(0xFFE53935); // ← for error states
   static const Color pageBackground = Color(0xFFF2F2F7); // ← light grey bg
+  static const Color faintPink = Color(0xFFFCF3F8); // ← light pink for disabled buttons
+  static const Color lightRoyalPurple = Color(0xFFA58FD1); // ← light purple for disabled text
 }

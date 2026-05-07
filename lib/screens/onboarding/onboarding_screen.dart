@@ -13,7 +13,6 @@ class OnboardingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.sizeOf(context);
-    final padding = MediaQuery.paddingOf(context);
     final scale = size.width / 390;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -82,7 +81,7 @@ class OnboardingScreen extends ConsumerWidget {
                 LuvcoButton(
                   label: 'Skip',
                   style: LuvcoButtonStyle.outlined,
-                  onTap: () => context.go('/home'),
+                  onTap: () => context.go('/profile'),
                 ),
 
                 SizedBox(height: size.height * 0.04),
@@ -105,32 +104,18 @@ class _OnboardingIllustration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: Replace with actual illustration asset:
-    // SvgPicture.asset('assets/images/onboarding_welcome.svg')
-    return Container(
-      width: size.width * 0.72,
-      height: size.width * 0.72,
-      decoration: BoxDecoration(
-        color: AppColors.softGrey,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.lightbulb_outline_rounded,
-            size: size.width * 0.18,
-            color: AppColors.vibrantPink,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Welcome Illustration',
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              color: AppColors.neutralGrey,
-            ),
-          ),
-        ],
+    return Image.asset(
+      'assets/images/onboard_image.png',
+      width: size.width * 0.8,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) => Container(
+        width: size.width * 0.72,
+        height: size.width * 0.72,
+        decoration: BoxDecoration(
+          color: AppColors.softGrey,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Icon(Icons.image_not_supported_outlined),
       ),
     );
   }
