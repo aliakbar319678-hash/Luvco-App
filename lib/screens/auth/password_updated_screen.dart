@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:luvco_logo/core/theme/app_colors.dart';
 import 'package:luvco_logo/widgets/luvco_button.dart';
-import 'package:luvco_logo/widgets/lucu_logo.dart';
+import 'package:luvco_logo/widgets/luvco_logo.dart';
 
 class PasswordUpdatedScreen extends ConsumerWidget {
   const PasswordUpdatedScreen({super.key});

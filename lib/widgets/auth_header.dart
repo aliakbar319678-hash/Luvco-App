@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/app_colors.dart';
-import 'lucu_logo.dart';
+import 'luvco_logo.dart';
 
 class AuthHeader extends StatelessWidget {
   final String? title;

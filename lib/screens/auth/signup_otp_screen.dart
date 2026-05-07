@@ -85,7 +85,7 @@ class _SignupOtpScreenState extends ConsumerState<SignupOtpScreen> {
 
     ref.listen<SignupOtpState>(signupOtpProvider, (_, next) {
       if (next.isSuccess && context.mounted) {
-        context.go('/login');
+        context.go('/onboarding');
       }
     });
 

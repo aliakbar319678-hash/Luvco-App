@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:luvco_logo/core/theme/app_colors.dart';
 import 'package:luvco_logo/providers/splash_provider.dart';
-import 'package:luvco_logo/widgets/lucu_logo.dart';
+import 'package:luvco_logo/widgets/luvco_logo.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
