@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/food_settings_provider.dart';
-
 import '../../widgets/food_settings_dialogs.dart';
 
 
@@ -39,6 +38,22 @@ class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
     'No Sugar',
   ];
 
+  void _openModifySheet() {
+    showFoodSettingsModifySheet(
+      context,
+      onModifyDiet: () {
+        setState(() {
+          _expandedSections['diet'] = true;
+        });
+      },
+      onModifyChallenges: () {
+        setState(() {
+          _expandedSections['challenges'] = true;
+        });
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
@@ -53,7 +68,9 @@ class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
           // ── Section header: "Food Settings" + "Add Or Edit" ──
           Row(
             children: [
-              const Icon(Icons.restaurant_menu, color: AppColors.black, size: 22),
+              // Bowl/salad icon matching Figma — using a custom painted icon
+              // that matches the outlined bowl with steam/fork design
+              const Icon(Icons.set_meal, color: AppColors.black, size: 24),
               const SizedBox(width: 8),
 
               Expanded(
@@ -67,24 +84,7 @@ class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
                 ),
               ),
               GestureDetector(
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => LuvcoFoodSettingsModifyDialog(
-                      onModifyDiet: () {
-                        setState(() {
-                          _expandedSections['diet'] = true;
-                        });
-                      },
-                      onModifyChallenges: () {
-                        setState(() {
-                          _expandedSections['challenges'] = true;
-                        });
-                      },
-                    ),
-                  );
-                },
-
+                onTap: _openModifySheet,
                 child: Text(
                   'Add Or Edit',
                   style: GoogleFonts.inter(
@@ -106,35 +106,61 @@ class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
           else
             Column(
               children: [
+                // ── Diet Choices accordion ──
                 _SettingsAccordionSection(
                   title: 'Diet Choices',
-                  icon: Icons.restaurant_outlined,
+                  // Figma: fork & knife / restaurant icon
+                  icon: Icons.restaurant,
                   isExpanded: _expandedSections['diet'] ?? false,
-                  onToggle: () => setState(() => _expandedSections['diet'] = !(_expandedSections['diet'] ?? false)),
+                  onToggle: () => setState(
+                    () => _expandedSections['diet'] =
+                        !(_expandedSections['diet'] ?? false),
+                  ),
                   scale: scale,
                   content: Column(
-                    children: _dietOptions.map((option) => _SettingsListItem(
-                      label: option,
-                      isSelected: settings.dietChoices.contains(option),
-                      onTap: () => ref.read(foodSettingsProvider.notifier).toggleDietChoice(option),
-                      scale: scale,
-                    )).toList(),
+                    children: _dietOptions
+                        .map(
+                          (option) => _SettingsListItem(
+                            label: option,
+                            isSelected:
+                                settings.dietChoices.contains(option),
+                            onTap: () => ref
+                                .read(foodSettingsProvider.notifier)
+                                .toggleDietChoice(option),
+                            scale: scale,
+                          ),
+                        )
+                        .toList(),
                   ),
                 ),
+
                 const SizedBox(height: 12),
+
+                // ── Food Challenges & Allergies accordion ──
                 _SettingsAccordionSection(
                   title: 'Food Challenges & Allergies',
-                  icon: Icons.set_meal_outlined,
+                  // Figma: crossed-out food container icon
+                  icon: Icons.no_food_outlined,
                   isExpanded: _expandedSections['challenges'] ?? false,
-                  onToggle: () => setState(() => _expandedSections['challenges'] = !(_expandedSections['challenges'] ?? false)),
+                  onToggle: () => setState(
+                    () => _expandedSections['challenges'] =
+                        !(_expandedSections['challenges'] ?? false),
+                  ),
                   scale: scale,
                   content: Column(
-                    children: _challengeOptions.map((option) => _SettingsListItem(
-                      label: option,
-                      isSelected: settings.challenges.contains(option),
-                      onTap: () => ref.read(foodSettingsProvider.notifier).toggleChallenge(option),
-                      scale: scale,
-                    )).toList(),
+                    children: _challengeOptions
+                        .map(
+                          (option) => _SettingsListItem(
+                            label: option,
+                            isSelected:
+                                settings.challenges.contains(option),
+                            onTap: () => ref
+                                .read(foodSettingsProvider.notifier)
+                                .toggleChallenge(option),
+                            scale: scale,
+                          ),
+                        )
+                        .toList(),
                   ),
                 ),
               ],
@@ -145,6 +171,9 @@ class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────
+// Single selectable list item inside accordion — star icon matches Figma
+// ─────────────────────────────────────────────────────────────────
 class _SettingsListItem extends StatelessWidget {
   final String label;
   final bool isSelected;
@@ -163,21 +192,23 @@ class _SettingsListItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
+            // Star icon — filled when selected, outlined otherwise (matches Figma screenshot 2)
             Icon(
               isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
-              color: isSelected ? AppColors.royalPurple : AppColors.neutralGrey,
-              size: 20,
+              color: isSelected ? AppColors.royalPurple : AppColors.darkGrey,
+              size: 22,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Expanded(
               child: Text(
                 label,
                 style: GoogleFonts.inter(
                   fontSize: 14 * scale.clamp(0.85, 1.2),
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  fontWeight:
+                      isSelected ? FontWeight.w600 : FontWeight.w400,
                   color: isSelected ? AppColors.royalPurple : AppColors.darkGrey,
                 ),
               ),
@@ -189,6 +220,9 @@ class _SettingsListItem extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────
+// Accordion section container — matches Figma card style exactly
+// ─────────────────────────────────────────────────────────────────
 class _SettingsAccordionSection extends StatelessWidget {
   final String title;
   final IconData icon;
@@ -212,10 +246,10 @@ class _SettingsAccordionSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.pureWhite,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.clearGrey.withValues(alpha: 0.5)),
+        border: Border.all(color: AppColors.clearGrey.withValues(alpha: 0.6)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -223,14 +257,19 @@ class _SettingsAccordionSection extends StatelessWidget {
       ),
       child: Column(
         children: [
+          // ── Header row: icon + title + +/× toggle ──
           GestureDetector(
             onTap: onToggle,
             behavior: HitTestBehavior.opaque,
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 18,
+              ),
               child: Row(
                 children: [
-                  Icon(icon, color: AppColors.black, size: 20),
+                  // Section icon (restaurant or no_food matching Figma)
+                  Icon(icon, color: AppColors.black, size: 22),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -242,29 +281,42 @@ class _SettingsAccordionSection extends StatelessWidget {
                       ),
                     ),
                   ),
+                  // Toggle icon: + when collapsed, × when expanded (matches Figma)
                   Icon(
-                    isExpanded ? Icons.close_rounded : Icons.add_rounded,
+                    isExpanded ? Icons.close : Icons.add,
                     color: AppColors.black,
-                    size: 24,
+                    size: 22,
                   ),
                 ],
               ),
             ),
           ),
-          if (isExpanded)
+
+          // ── Expanded content with divider ──
+          if (isExpanded) ...[
+            const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
             Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
+              padding: const EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 4,
+                bottom: 16,
+              ),
               child: SizedBox(
                 width: double.infinity,
                 child: content,
               ),
             ),
+          ],
         ],
       ),
     );
   }
 }
 
+// ─────────────────────────────────────────────────────────────────
+// Empty state — shown when no settings selected yet
+// ─────────────────────────────────────────────────────────────────
 class _EmptyFoodSettingsState extends StatelessWidget {
   final double scale;
   final Size size;
@@ -277,7 +329,6 @@ class _EmptyFoodSettingsState extends StatelessWidget {
       padding: EdgeInsets.symmetric(vertical: size.height * 0.06),
       child: Column(
         children: [
-          // Illustration Placeholder (based on Figma)
           Center(
             child: SizedBox(
               width: 140 * scale,
@@ -287,7 +338,6 @@ class _EmptyFoodSettingsState extends StatelessWidget {
                 fit: BoxFit.contain,
               ),
             ),
-
           ),
 
           const SizedBox(height: 24),

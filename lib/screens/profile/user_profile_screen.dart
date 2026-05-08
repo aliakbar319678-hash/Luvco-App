@@ -105,24 +105,22 @@ class UserProfileScreen extends ConsumerWidget {
               right: size.width * 0.058,
               child: _FabButton(
                 onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => LuvcoFabActionMenu(
-                      onCreateList: () => _showCreateListDialog(context, ref),
-                      onSearchProducts: () {
-                        // Navigate to search or show snackbar
-                      },
-                      onCreateRecipe: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const EditRecipeScreen(),
-                          ),
-                        );
-                      },
-                      onSearchRecipe: () {
-                        // Navigate to search recipes
-                      },
-                    ),
+                  showLuvcoFabActionMenu(
+                    context,
+                    onCreateList: () => _showCreateListDialog(context, ref),
+                    onSearchProducts: () {
+                      // Navigate to search or show snackbar
+                    },
+                    onCreateRecipe: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const EditRecipeScreen(),
+                        ),
+                      );
+                    },
+                    onSearchRecipe: () {
+                      // Navigate to search recipes
+                    },
                   );
                 },
               ),
