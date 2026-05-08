@@ -1,17 +1,31 @@
+import 'package:custom_pop_up_menu/custom_pop_up_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/app_colors.dart';
 import '../models/shopping_list_model.dart';
 
-class ShoppingListGridCard extends StatelessWidget {
+class ShoppingListGridCard extends StatefulWidget {
   final ShoppingListModel list;
-  final VoidCallback onMoreTap;
+  final void Function(String action) onAction;
 
   const ShoppingListGridCard({
     super.key,
     required this.list,
-    required this.onMoreTap,
+    required this.onAction,
   });
+
+  @override
+  State<ShoppingListGridCard> createState() => _ShoppingListGridCardState();
+}
+
+class _ShoppingListGridCardState extends State<ShoppingListGridCard> {
+  final CustomPopupMenuController _menuController = CustomPopupMenuController();
+
+  @override
+  void dispose() {
+    _menuController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,55 +35,67 @@ class ShoppingListGridCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.pureWhite,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Image + "..." menu row ──
+          // ── Image area with "..." overlay ──
           Stack(
             children: [
-              // Image placeholder
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(14),
-                ),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                 child: Container(
                   width: double.infinity,
-                  height: size.width * 0.22,
+                  height: size.width * 0.27,
                   color: AppColors.softGrey,
-                  child: list.imageUrl != null
-                      ? (list.imageUrl!.startsWith('http')
-                          ? Image.network(list.imageUrl!, fit: BoxFit.cover)
-                          : Image.asset(list.imageUrl!, fit: BoxFit.cover))
-                      : Center(
+                  child: widget.list.imageUrl != null
+                      ? (widget.list.imageUrl!.startsWith('http')
+                          ? Image.network(widget.list.imageUrl!, fit: BoxFit.cover)
+                          : Image.asset(widget.list.imageUrl!, fit: BoxFit.cover))
+                      : const Center(
                           child: Icon(
                             Icons.image_outlined,
                             color: AppColors.neutralGrey,
-                            size: 32 * scale,
+                            size: 36,
                           ),
                         ),
                 ),
               ),
-              // "..." more button
+              // ── "..." CustomPopupMenu overlaid top-right ──
               Positioned(
-                top: 6,
-                right: 6,
-                child: GestureDetector(
-                  onTap: onMoreTap,
+                top: 4,
+                right: 4,
+                child: CustomPopupMenu(
+                  controller: _menuController,
+                  pressType: PressType.singleClick,
+                  barrierColor: Colors.transparent,
+                  showArrow: false,
+                  verticalMargin: 2,
+                  horizontalMargin: 8,
+                  menuBuilder: () => _LuvcoContextMenu(
+                    onSelected: (action) {
+                      _menuController.hideMenu();
+                      widget.onAction(action);
+                    },
+                  ),
                   child: Container(
-                    padding: const EdgeInsets.all(4),
-                    child: Icon(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
                       Icons.more_horiz,
                       color: AppColors.darkGrey,
-                      size: 20,
+                      size: 18,
                     ),
                   ),
                 ),
@@ -77,44 +103,40 @@ class ShoppingListGridCard extends StatelessWidget {
             ],
           ),
 
+          // ── Info section ──
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Item count badge ──
                 Align(
                   alignment: Alignment.centerRight,
                   child: Text(
-                    '${list.itemCount} Items',
+                    '${widget.list.itemCount} items',
                     style: GoogleFonts.inter(
                       fontSize: 10 * scale.clamp(0.85, 1.2),
-                      color: AppColors.neutralGrey,
-                      fontWeight: FontWeight.w400,
+                      color: AppColors.royalPurple,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
                 const SizedBox(height: 2),
-
-                // ── Title ──
                 Text(
-                  list.title,
+                  widget.list.title,
                   style: GoogleFonts.inter(
                     fontSize: 13 * scale.clamp(0.85, 1.2),
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.vibrantPink,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 3),
-
-                // ── Description ──
                 Text(
-                  list.description,
+                  widget.list.description,
                   style: GoogleFonts.inter(
                     fontSize: 11 * scale.clamp(0.85, 1.2),
-                    color: AppColors.darkGrey,
+                    color: AppColors.darkGrey.withValues(alpha: 0.75),
                     fontWeight: FontWeight.w400,
                     height: 1.4,
                   ),
@@ -125,6 +147,107 @@ class ShoppingListGridCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Shared Luvco Context Menu — Figma-exact
+// ─────────────────────────────────────────────────────────────────
+class _LuvcoContextMenu extends StatelessWidget {
+  final void Function(String action) onSelected;
+
+  const _LuvcoContextMenu({required this.onSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 200,
+        decoration: BoxDecoration(
+          color: AppColors.pureWhite,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _MenuRow(
+              label: 'Edit Lists Title',
+              icon: Icons.edit_outlined,
+              iconColor: AppColors.black,
+              labelColor: AppColors.black,
+              onTap: () => onSelected('edit'),
+            ),
+            const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
+            _MenuRow(
+              label: 'Duplicate List',
+              icon: Icons.content_copy_outlined,
+              iconColor: AppColors.black,
+              labelColor: AppColors.black,
+              onTap: () => onSelected('duplicate'),
+            ),
+            const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
+            _MenuRow(
+              label: 'Delete List',
+              icon: Icons.delete_outline_rounded,
+              iconColor: AppColors.errorRed,
+              labelColor: AppColors.errorRed,
+              onTap: () => onSelected('delete'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuRow extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color iconColor;
+  final Color labelColor;
+  final VoidCallback onTap;
+
+  const _MenuRow({
+    required this.label,
+    required this.icon,
+    required this.iconColor,
+    required this.labelColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: labelColor,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Icon(icon, size: 18, color: iconColor),
+          ],
+        ),
       ),
     );
   }

@@ -91,7 +91,9 @@ class FoodAllergyScreen extends ConsumerWidget {
                         if (!showManualInput)
                           GestureDetector(
                             onTap: () =>
-                                ref.read(showManualInputProvider.notifier).state =
+                                ref
+                                        .read(showManualInputProvider.notifier)
+                                        .state =
                                     true,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -281,7 +283,11 @@ class _ManualAllergyFieldState extends State<_ManualAllergyField> {
                     onTap: () => _controller.clear(),
                     child: const Padding(
                       padding: EdgeInsets.only(right: 12),
-                      child: Icon(Icons.close, size: 18, color: AppColors.neutralGrey),
+                      child: Icon(
+                        Icons.close,
+                        size: 18,
+                        color: AppColors.neutralGrey,
+                      ),
                     ),
                   );
                 },
@@ -303,11 +309,7 @@ class _ManualAllergyFieldState extends State<_ManualAllergyField> {
                   color: AppColors.black,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.add,
-                  color: Colors.white,
-                  size: 14,
-                ),
+                child: const Icon(Icons.add, color: Colors.white, size: 14),
               ),
               const SizedBox(width: 8),
               Text(
@@ -362,8 +364,8 @@ class _ManualAllergyTag extends StatelessWidget {
             ),
             GestureDetector(
               onTap: onRemove,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 12),
+              child: const Padding(
+                padding: EdgeInsets.only(right: 12),
                 child: Icon(
                   Icons.close,
                   size: 18,

@@ -16,24 +16,36 @@ class LuvcoBottomNavBar extends ConsumerWidget {
     final scale = size.width / 390;
 
     return Container(
+      height: 106 * scale,
       decoration: BoxDecoration(
         color: AppColors.pureWhite,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(32),
+          topRight: Radius.circular(32),
+        ),
+        border: Border(
+          top: BorderSide(
+            color: AppColors.clearGrey.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, -2),
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
           ),
         ],
       ),
       child: SafeArea(
         top: false,
-        child: SizedBox(
-          height: 60,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: size.width * 0.08),
           child: Row(
             children: [
               _NavItem(
-                icon: Icons.home_rounded,
+                icon: Icons.home_outlined,
+                activeIcon: Icons.home_rounded,
                 label: 'Home',
                 isActive: currentIndex == 0,
                 scale: scale,
@@ -42,6 +54,7 @@ class LuvcoBottomNavBar extends ConsumerWidget {
               ),
               _NavItem(
                 icon: Icons.search_rounded,
+                activeIcon: Icons.search_rounded,
                 label: 'Search',
                 isActive: currentIndex == 1,
                 scale: scale,
@@ -58,6 +71,7 @@ class LuvcoBottomNavBar extends ConsumerWidget {
 
 class _NavItem extends StatelessWidget {
   final IconData icon;
+  final IconData activeIcon;
   final String label;
   final bool isActive;
   final double scale;
@@ -65,6 +79,7 @@ class _NavItem extends StatelessWidget {
 
   const _NavItem({
     required this.icon,
+    required this.activeIcon,
     required this.label,
     required this.isActive,
     required this.scale,
@@ -73,26 +88,40 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? AppColors.vibrantPink : AppColors.neutralGrey;
-
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 24 * scale.clamp(0.85, 1.2)),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 11 * scale.clamp(0.85, 1.2),
-                fontWeight: FontWeight.w500,
-                color: color,
-              ),
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            decoration: BoxDecoration(
+              color: isActive
+                  ? AppColors.vibrantPink.withValues(alpha: 0.08)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
             ),
-          ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isActive ? activeIcon : icon,
+                  color: isActive ? AppColors.vibrantPink : AppColors.neutralGrey,
+                  size: 24 * scale.clamp(0.85, 1.2),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: 10 * scale.clamp(0.85, 1.2),
+                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                    color: isActive ? AppColors.vibrantPink : AppColors.neutralGrey,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

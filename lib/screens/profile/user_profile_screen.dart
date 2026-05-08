@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/shopping_list_model.dart';
@@ -9,6 +10,13 @@ import '../../widgets/bottom_nav_bar.dart';
 import '../../widgets/luvco_dialog.dart';
 import '../../widgets/shopping_list_grid_card.dart';
 import '../../widgets/shopping_list_list_card.dart';
+import '../recipe/my_recipes_tab.dart';
+import '../recipe/edit_recipe_screen.dart';
+import 'food_settings_tab.dart';
+import '../../widgets/fab_menu_dialog.dart';
+
+
+
 
 class UserProfileScreen extends ConsumerWidget {
   const UserProfileScreen({super.key});
@@ -38,15 +46,15 @@ class UserProfileScreen extends ConsumerWidget {
                 // ── Scrollable body ──
                 Expanded(
                   child: SingleChildScrollView(
-                    physics: const ClampingScrollPhysics(),
+                    physics: const BouncingScrollPhysics(),
                     child: Column(
                       children: [
-                        SizedBox(height: size.height * 0.022),
+                        const SizedBox(height: 16),
 
                         // ── Profile avatar + name ──
                         _ProfileInfo(size: size, scale: scale),
 
-                        SizedBox(height: size.height * 0.022),
+                        const SizedBox(height: 10),
 
                         // ── Tab bar ──
                         _ProfileTabBar(
@@ -57,7 +65,7 @@ class UserProfileScreen extends ConsumerWidget {
                               ref.read(profileTabProvider.notifier).state = tab,
                         ),
 
-                        SizedBox(height: size.height * 0.022),
+                        const SizedBox(height: 20),
 
                         // ── Tab content ──
                         if (activeTab == ProfileTab.shoppingLists)
@@ -68,16 +76,19 @@ class UserProfileScreen extends ConsumerWidget {
                             scale: scale,
                             ref: ref,
                           )
+                        else if (activeTab == ProfileTab.myRecipes)
+                          const MyRecipesTab()
+                        else if (activeTab == ProfileTab.foodSettings)
+                          const FoodSettingsTab()
                         else
                           _PlaceholderTab(
-                            label: activeTab == ProfileTab.myRecipes
-                                ? 'My Recipes'
-                                : 'Food Settings',
+                            label: 'Coming Soon',
                             scale: scale,
                           ),
 
+
                         // Bottom padding for FAB + nav
-                        SizedBox(height: size.height * 0.14),
+                        const SizedBox(height: 120),
                       ],
                     ),
                   ),
@@ -90,11 +101,32 @@ class UserProfileScreen extends ConsumerWidget {
 
             // ── Floating Action Button ──
             Positioned(
-              bottom: 72 + padding.bottom,
+              bottom: 126 + padding.bottom,
               right: size.width * 0.058,
               child: _FabButton(
-                onTap: () => _showCreateListDialog(context, ref),
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => LuvcoFabActionMenu(
+                      onCreateList: () => _showCreateListDialog(context, ref),
+                      onSearchProducts: () {
+                        // Navigate to search or show snackbar
+                      },
+                      onCreateRecipe: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const EditRecipeScreen(),
+                          ),
+                        );
+                      },
+                      onSearchRecipe: () {
+                        // Navigate to search recipes
+                      },
+                    ),
+                  );
+                },
               ),
+
             ),
           ],
         ),
@@ -144,46 +176,69 @@ class _ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: AppColors.pureWhite,
+      height: 145 * scale,
+      decoration: BoxDecoration(
+        color: AppColors.pureWhite,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       padding: EdgeInsets.only(
-        top: padding.top + 12,
-        bottom: 12,
+        top: padding.top,
         left: size.width * 0.058,
         right: size.width * 0.058,
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // ── "My Profile" title ──
           Expanded(
-            child: Text(
-              'My Profile',
-              style: GoogleFonts.inter(
-                fontSize: 20 * scale.clamp(0.85, 1.2),
-                fontWeight: FontWeight.w700,
-                color: AppColors.vibrantPink,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                'My Profile',
+                style: GoogleFonts.inter(
+                  fontSize: 22 * scale.clamp(0.85, 1.2),
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.vibrantPink,
+                ),
               ),
             ),
           ),
 
           // ── Heart icon ──
-          GestureDetector(
-            onTap: () {},
-            child: Icon(
-              Icons.favorite_border_rounded,
-              color: AppColors.vibrantPink,
-              size: 24,
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: GestureDetector(
+              onTap: () {},
+              child: Icon(
+                Icons.favorite_border_rounded,
+                color: AppColors.vibrantPink,
+                size: 26 * scale.clamp(0.85, 1.2),
+              ),
             ),
           ),
 
           const SizedBox(width: 16),
 
           // ── Settings icon ──
-          GestureDetector(
-            onTap: () {},
-            child: Icon(
-              Icons.settings_outlined,
-              color: AppColors.vibrantPink,
-              size: 24,
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: GestureDetector(
+              onTap: () {},
+              child: Icon(
+                Icons.settings_outlined,
+                color: AppColors.vibrantPink,
+                size: 26 * scale.clamp(0.85, 1.2),
+              ),
             ),
           ),
         ],
@@ -207,16 +262,17 @@ class _ProfileInfo extends StatelessWidget {
       children: [
         // Avatar circle
         Container(
-          width: 80,
-          height: 80,
+          width: 90 * scale,
+          height: 90 * scale,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: AppColors.clearGrey,
-            border: Border.all(color: AppColors.pureWhite, width: 3),
+            border: Border.all(color: AppColors.pureWhite, width: 4),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.10),
-                blurRadius: 8,
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -228,13 +284,13 @@ class _ProfileInfo extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
 
         Text(
           'User Name',
           style: GoogleFonts.inter(
-            fontSize: 17 * scale.clamp(0.85, 1.2),
-            fontWeight: FontWeight.w700,
+            fontSize: 18 * scale.clamp(0.85, 1.2),
+            fontWeight: FontWeight.w800,
             color: AppColors.black,
           ),
         ),
@@ -264,16 +320,10 @@ class _ProfileTabBar extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: size.width * 0.058),
       child: Container(
+        height: 48,
         decoration: BoxDecoration(
-          color: AppColors.pureWhite,
-          borderRadius: BorderRadius.circular(50),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: const Color(0xFFF1EEF9), // Light lilac background
+          borderRadius: BorderRadius.circular(24),
         ),
         child: Row(
           children: [
@@ -332,17 +382,17 @@ class _TabItem extends StatelessWidget {
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          height: double.infinity,
           decoration: BoxDecoration(
             color: isActive ? AppColors.royalPurple : Colors.transparent,
-            borderRadius: BorderRadius.circular(50),
+            borderRadius: BorderRadius.circular(24),
           ),
           child: Center(
             child: Text(
               label,
               style: GoogleFonts.inter(
                 fontSize: 11 * scale.clamp(0.85, 1.1),
-                fontWeight: FontWeight.w600,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                 color: isActive ? AppColors.pureWhite : AppColors.darkGrey,
               ),
               textAlign: TextAlign.center,
@@ -395,17 +445,18 @@ class _ShoppingListsTab extends StatelessWidget {
           // ── Section header: "My Shopping Lists" + view toggles ──
           Row(
             children: [
-              Icon(
-                Icons.shopping_basket_outlined,
-                color: AppColors.black,
-                size: 20,
+              SvgPicture.asset(
+                'assets/icons/shopping-bag.svg',
+                colorFilter: const ColorFilter.mode(AppColors.black, BlendMode.srcIn),
+                width: 22,
+                height: 22,
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'My Shopping Lists',
                   style: GoogleFonts.inter(
-                    fontSize: 15 * scale.clamp(0.85, 1.2),
+                    fontSize: 17 * scale.clamp(0.85, 1.2),
                     fontWeight: FontWeight.w700,
                     color: AppColors.black,
                   ),
@@ -415,31 +466,41 @@ class _ShoppingListsTab extends StatelessWidget {
               GestureDetector(
                 onTap: () => ref.read(viewModeProvider.notifier).state =
                     ShoppingListViewMode.grid,
-                child: Icon(
-                  Icons.grid_view_rounded,
-                  color: viewMode == ShoppingListViewMode.grid
-                      ? AppColors.royalPurple
-                      : AppColors.neutralGrey,
-                  size: 22,
+                child: SvgPicture.asset(
+                  'assets/icons/layout-grid.svg',
+                  colorFilter: ColorFilter.mode(
+                    viewMode == ShoppingListViewMode.grid
+                        ? AppColors.royalPurple
+                        : AppColors.neutralGrey.withValues(alpha: 0.5),
+                    BlendMode.srcIn,
+                  ),
+                  width: 22,
+                  height: 22,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 6),
+              Container(width: 1, height: 14, color: AppColors.clearGrey),
+              const SizedBox(width: 6),
               // List view icon
               GestureDetector(
                 onTap: () => ref.read(viewModeProvider.notifier).state =
                     ShoppingListViewMode.list,
-                child: Icon(
-                  Icons.view_list_rounded,
-                  color: viewMode == ShoppingListViewMode.list
-                      ? AppColors.royalPurple
-                      : AppColors.neutralGrey,
-                  size: 22,
+                child: SvgPicture.asset(
+                  'assets/icons/list-details.svg',
+                  colorFilter: ColorFilter.mode(
+                    viewMode == ShoppingListViewMode.list
+                        ? AppColors.royalPurple
+                        : AppColors.neutralGrey.withValues(alpha: 0.5),
+                    BlendMode.srcIn,
+                  ),
+                  width: 22,
+                  height: 22,
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
           // ── Empty state ──
           if (lists.isEmpty)
@@ -485,25 +546,25 @@ class _EmptyState extends StatelessWidget {
             'No shopping list has been\ncreated yet',
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
-              fontSize: 14 * scale.clamp(0.85, 1.2),
-              fontWeight: FontWeight.w600,
+              fontSize: 16 * scale.clamp(0.85, 1.2),
+              fontWeight: FontWeight.w700,
               color: AppColors.black,
-              height: 1.4,
+              height: 1.3,
             ),
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
 
           GestureDetector(
             onTap: () {},
             child: Text(
               'Create New Shopping List',
               style: GoogleFonts.inter(
-                fontSize: 13 * scale.clamp(0.85, 1.2),
+                fontSize: 14 * scale.clamp(0.85, 1.2),
                 fontWeight: FontWeight.w500,
-                color: AppColors.royalPurple,
+                color: AppColors.neutralGrey,
                 decoration: TextDecoration.underline,
-                decorationColor: AppColors.royalPurple,
+                decorationColor: AppColors.neutralGrey,
               ),
             ),
           ),
@@ -528,33 +589,31 @@ class _GridView extends StatelessWidget {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.82,
+        mainAxisSpacing: 14,
+        childAspectRatio: 0.70,
       ),
       itemCount: lists.length,
       itemBuilder: (context, index) {
         final list = lists[index];
         return ShoppingListGridCard(
           list: list,
-          onMoreTap: () => _showMoreActions(context, list),
+          onAction: (action) => _handleAction(context, action, list),
         );
       },
     );
   }
 
-  void _showMoreActions(BuildContext context, ShoppingListModel list) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => LuvcoMoreActionsSheet(
-        onEdit: () => _showEditDialog(context, list),
-        onDuplicate: () => _showDuplicateSuccess(context, list.id),
-        onDelete: () => _showDeleteDialog(context, list),
-      ),
-    );
+  void _handleAction(BuildContext context, String action, ShoppingListModel list) {
+    if (action == 'edit') {
+      _showEditDialog(context, list);
+    } else if (action == 'duplicate') {
+      _showDuplicateSuccess(context, list.id);
+    } else if (action == 'delete') {
+      _showDeleteDialog(context, list);
+    }
   }
 
   void _showEditDialog(BuildContext context, ShoppingListModel list) {
@@ -610,49 +669,45 @@ class _ListView extends StatelessWidget {
           .map(
             (list) => ShoppingListListCard(
               list: list,
-              onMoreTap: () => _showMoreActions(context, list),
+              onAction: (action) => _handleAction(context, action, list),
             ),
           )
           .toList(),
     );
   }
 
-  void _showMoreActions(BuildContext context, ShoppingListModel list) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => LuvcoMoreActionsSheet(
-        onEdit: () => showDialog(
-          context: context,
-          builder: (_) => LuvcoEditListDialog(
-            initialTitle: list.title,
-            initialDescription: list.description,
-            onSave: (title, desc) => ref
-                .read(shoppingListProvider.notifier)
-                .editList(list.id, title, desc),
-          ),
+  void _handleAction(BuildContext context, String action, ShoppingListModel list) {
+    if (action == 'edit') {
+      showDialog(
+        context: context,
+        builder: (_) => LuvcoEditListDialog(
+          initialTitle: list.title,
+          initialDescription: list.description,
+          onSave: (title, desc) => ref
+              .read(shoppingListProvider.notifier)
+              .editList(list.id, title, desc),
         ),
-        onDuplicate: () {
-          ref.read(shoppingListProvider.notifier).duplicateList(list.id);
-          showDialog(
-            context: context,
-            builder: (_) => const LuvcoDuplicateSuccessOverlay(),
-          );
-          Future.delayed(
-            const Duration(seconds: 2),
-            () => Navigator.of(context, rootNavigator: true).pop(),
-          );
-        },
-        onDelete: () => showDialog(
-          context: context,
-          builder: (_) => LuvcoDeleteConfirmDialog(
-            listName: list.title,
-            onDelete: () =>
-                ref.read(shoppingListProvider.notifier).deleteList(list.id),
-          ),
+      );
+    } else if (action == 'duplicate') {
+      ref.read(shoppingListProvider.notifier).duplicateList(list.id);
+      showDialog(
+        context: context,
+        builder: (_) => const LuvcoDuplicateSuccessOverlay(),
+      );
+      Future.delayed(
+        const Duration(seconds: 2),
+        () => Navigator.of(context, rootNavigator: true).pop(),
+      );
+    } else if (action == 'delete') {
+      showDialog(
+        context: context,
+        builder: (_) => LuvcoDeleteConfirmDialog(
+          listName: list.title,
+          onDelete: () =>
+              ref.read(shoppingListProvider.notifier).deleteList(list.id),
         ),
-      ),
-    );
+      );
+    }
   }
 }
 
@@ -694,8 +749,9 @@ class _FabButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 52,
-        height: 52,
+        width: 54,
+        height: 54,
+        padding: const EdgeInsets.all(12), // Resulting in a clean look
         decoration: BoxDecoration(
           color: AppColors.royalPurple,
           shape: BoxShape.circle,
@@ -707,7 +763,7 @@ class _FabButton extends StatelessWidget {
             ),
           ],
         ),
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
       ),
     );
   }

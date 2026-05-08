@@ -3,132 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/app_colors.dart';
 
 // ─────────────────────────────────────────────────────────────────
-// Reusable Luvco bottom sheet for "More Actions"
-// ─────────────────────────────────────────────────────────────────
-class LuvcoMoreActionsSheet extends StatelessWidget {
-  final VoidCallback onEdit;
-  final VoidCallback onDuplicate;
-  final VoidCallback onDelete;
-
-  const LuvcoMoreActionsSheet({
-    super.key,
-    required this.onEdit,
-    required this.onDuplicate,
-    required this.onDelete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = MediaQuery.sizeOf(context).width / 390;
-
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Drag handle
-          Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-              color: AppColors.clearGrey,
-              borderRadius: BorderRadius.circular(100),
-            ),
-          ),
-
-          _SheetAction(
-            label: 'Edit Lists Title',
-            icon: Icons.edit_outlined,
-            iconColor: AppColors.darkGrey,
-            labelColor: AppColors.black,
-            scale: scale,
-            onTap: () {
-              Navigator.of(context).pop();
-              onEdit();
-            },
-          ),
-
-          _SheetAction(
-            label: 'Duplicate List',
-            icon: Icons.copy_outlined,
-            iconColor: AppColors.darkGrey,
-            labelColor: AppColors.black,
-            scale: scale,
-            onTap: () {
-              Navigator.of(context).pop();
-              onDuplicate();
-            },
-          ),
-
-          _SheetAction(
-            label: 'Delete List',
-            icon: Icons.delete_outline_rounded,
-            iconColor: AppColors.errorRed,
-            labelColor: AppColors.errorRed,
-            scale: scale,
-            onTap: () {
-              Navigator.of(context).pop();
-              onDelete();
-            },
-          ),
-
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-}
-
-class _SheetAction extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color iconColor;
-  final Color labelColor;
-  final double scale;
-  final VoidCallback onTap;
-
-  const _SheetAction({
-    required this.label,
-    required this.icon,
-    required this.iconColor,
-    required this.labelColor,
-    required this.scale,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 15 * scale.clamp(0.85, 1.2),
-                  fontWeight: FontWeight.w500,
-                  color: labelColor,
-                ),
-              ),
-            ),
-            Icon(icon, color: iconColor, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Edit List Dialog
+// Edit List Dialog — matches Figma 1.4 & 1.5
 // ─────────────────────────────────────────────────────────────────
 class LuvcoEditListDialog extends StatefulWidget {
   final String initialTitle;
@@ -147,18 +22,29 @@ class LuvcoEditListDialog extends StatefulWidget {
 }
 
 class _LuvcoEditListDialogState extends State<LuvcoEditListDialog> {
-  late TextEditingController _titleController;
-  late TextEditingController _descController;
+  late final TextEditingController _titleController;
+  late final TextEditingController _descController;
+  bool _hasTitle = false;
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.initialTitle);
     _descController = TextEditingController(text: widget.initialDescription);
+    _hasTitle = widget.initialTitle.trim().isNotEmpty;
+    _titleController.addListener(_onTitleChanged);
+  }
+
+  void _onTitleChanged() {
+    final hasText = _titleController.text.trim().isNotEmpty;
+    if (hasText != _hasTitle) {
+      setState(() => _hasTitle = hasText);
+    }
   }
 
   @override
   void dispose() {
+    _titleController.removeListener(_onTitleChanged);
     _titleController.dispose();
     _descController.dispose();
     super.dispose();
@@ -181,6 +67,7 @@ class _LuvcoEditListDialogState extends State<LuvcoEditListDialog> {
           children: [
             // ── Header row ──
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: Text(
@@ -189,79 +76,88 @@ class _LuvcoEditListDialogState extends State<LuvcoEditListDialog> {
                       fontSize: 16 * scale.clamp(0.85, 1.2),
                       fontWeight: FontWeight.w700,
                       color: AppColors.black,
-                      height: 1.3,
+                      height: 1.35,
                     ),
                   ),
                 ),
                 GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
-                  child: const Icon(
-                    Icons.close,
-                    color: AppColors.darkGrey,
-                    size: 22,
-                  ),
+                  child: const Icon(Icons.close, color: AppColors.darkGrey, size: 22),
                 ),
               ],
             ),
 
             const SizedBox(height: 20),
 
-            // ── List Title ──
+            // ── List Title label + field ──
             Text(
               'List Title',
               style: GoogleFonts.inter(
                 fontSize: 13 * scale.clamp(0.85, 1.2),
                 fontWeight: FontWeight.w500,
-                color: AppColors.black,
+                color: AppColors.darkGrey,
               ),
             ),
             const SizedBox(height: 8),
-            _DialogTextField(controller: _titleController, hint: 'List title'),
+            _LuvcoTextField(
+              controller: _titleController,
+              hint: 'My weekend shopping list',
+            ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
-            // ── Description ──
+            // ── Description label + field ──
             Text(
               'Description',
               style: GoogleFonts.inter(
                 fontSize: 13 * scale.clamp(0.85, 1.2),
                 fontWeight: FontWeight.w500,
-                color: AppColors.black,
+                color: AppColors.darkGrey,
               ),
             ),
             const SizedBox(height: 8),
-            _DialogTextField(
+            _LuvcoTextField(
               controller: _descController,
               hint: 'Short description of the shopping list.',
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
-            // ── Save Changes button ──
-            SizedBox(
+            // ── Save Changes button — disabled when title is empty ──
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
               width: double.infinity,
               height: 50,
-              child: ElevatedButton(
-                onPressed: () {
-                  widget.onSave(
-                    _titleController.text.trim(),
-                    _descController.text.trim(),
-                  );
-                  Navigator.of(context).pop();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.royalPurple,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                ),
-                child: Text(
-                  'Save Changes',
-                  style: GoogleFonts.inter(
-                    fontSize: 15 * scale.clamp(0.85, 1.2),
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.pureWhite,
+              decoration: BoxDecoration(
+                color: _hasTitle
+                    ? AppColors.royalPurple
+                    : AppColors.royalPurple.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(50),
+                  onTap: _hasTitle
+                      ? () {
+                          widget.onSave(
+                            _titleController.text.trim(),
+                            _descController.text.trim(),
+                          );
+                          Navigator.of(context).pop();
+                        }
+                      : null,
+                  child: Center(
+                    child: Text(
+                      'Save Changes',
+                      style: GoogleFonts.inter(
+                        fontSize: 15 * scale.clamp(0.85, 1.2),
+                        fontWeight: FontWeight.w600,
+                        color: _hasTitle
+                            ? AppColors.pureWhite
+                            : AppColors.pureWhite.withValues(alpha: 0.7),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -273,51 +169,9 @@ class _LuvcoEditListDialogState extends State<LuvcoEditListDialog> {
   }
 }
 
-class _DialogTextField extends StatelessWidget {
-  final TextEditingController controller;
-  final String hint;
-
-  const _DialogTextField({required this.controller, required this.hint});
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      style: GoogleFonts.inter(fontSize: 14, color: AppColors.black),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: GoogleFonts.inter(
-          fontSize: 14,
-          color: AppColors.neutralGrey,
-        ),
-        filled: true,
-        fillColor: AppColors.pureWhite,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.inputBorder),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.inputBorder),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: AppColors.royalPurple,
-            width: 1.5,
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────
-// Delete Confirmation Dialog
+// Delete Confirmation Dialog — matches Figma 1.7
 // ─────────────────────────────────────────────────────────────────
 class LuvcoDeleteConfirmDialog extends StatelessWidget {
   final String listName;
@@ -343,7 +197,7 @@ class LuvcoDeleteConfirmDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Question ──
+            // Question
             Text(
               'Do you want to delete "$listName"?',
               textAlign: TextAlign.center,
@@ -351,30 +205,31 @@ class LuvcoDeleteConfirmDialog extends StatelessWidget {
                 fontSize: 16 * scale.clamp(0.85, 1.2),
                 fontWeight: FontWeight.w700,
                 color: AppColors.black,
-                height: 1.3,
+                height: 1.35,
               ),
             ),
 
             const SizedBox(height: 10),
 
             Text(
-              'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+              'Lorem ipsum dolor sit amet,\nconsectetur adipiscing elit.',
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 13 * scale.clamp(0.85, 1.2),
                 color: AppColors.darkGrey,
-                height: 1.4,
+                height: 1.45,
               ),
             ),
 
             const SizedBox(height: 24),
 
-            // ── Cancel / Delete row ──
+            // Cancel / Delete row
             Row(
               children: [
                 Expanded(
                   child: GestureDetector(
                     onTap: () => Navigator.of(context).pop(),
+                    behavior: HitTestBehavior.opaque,
                     child: Center(
                       child: Text(
                         'Cancel',
@@ -387,13 +242,14 @@ class LuvcoDeleteConfirmDialog extends StatelessWidget {
                     ),
                   ),
                 ),
-                Container(width: 1, height: 24, color: AppColors.clearGrey),
+                Container(width: 1, height: 22, color: AppColors.clearGrey),
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
                       Navigator.of(context).pop();
                       onDelete();
                     },
+                    behavior: HitTestBehavior.opaque,
                     child: Center(
                       child: Text(
                         'Delete',
@@ -416,7 +272,7 @@ class LuvcoDeleteConfirmDialog extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Duplicate Success Overlay (shown briefly after duplicate)
+// Duplicate Success Overlay — matches Figma 1.6
 // ─────────────────────────────────────────────────────────────────
 class LuvcoDuplicateSuccessOverlay extends StatelessWidget {
   const LuvcoDuplicateSuccessOverlay({super.key});
@@ -429,26 +285,26 @@ class LuvcoDuplicateSuccessOverlay extends StatelessWidget {
       backgroundColor: AppColors.pureWhite,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
+        padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 36),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Green checkmark icon
+            // Double-check icon — green, matches Figma
             Container(
-              width: 72,
-              height: 72,
+              width: 76,
+              height: 76,
               decoration: BoxDecoration(
                 color: const Color(0xFFE8F5E9),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Icon(
-                Icons.check_circle_outline_rounded,
+                Icons.playlist_add_check_rounded,
                 color: Color(0xFF43A047),
                 size: 44,
               ),
             ),
 
-            const SizedBox(height: 18),
+            const SizedBox(height: 20),
 
             Text(
               'This list was duplicated!',
@@ -460,6 +316,43 @@ class LuvcoDuplicateSuccessOverlay extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Shared text field for dialogs
+// ─────────────────────────────────────────────────────────────────
+class _LuvcoTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+
+  const _LuvcoTextField({required this.controller, required this.hint});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      style: GoogleFonts.inter(fontSize: 14, color: AppColors.black),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: GoogleFonts.inter(fontSize: 14, color: AppColors.neutralGrey),
+        filled: true,
+        fillColor: AppColors.pureWhite,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.inputBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.inputBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.royalPurple, width: 1.5),
         ),
       ),
     );
