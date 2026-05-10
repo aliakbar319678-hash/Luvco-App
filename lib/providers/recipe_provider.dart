@@ -54,7 +54,7 @@ final recipeFilterProvider =
 class MyRecipesNotifier extends StateNotifier<List<RecipeModel>> {
   MyRecipesNotifier() : super(_demoMyRecipes);
 
-  static final _demoMyRecipes = [
+  static const _demoMyRecipes = [
     RecipeModel(
       id: '1',
       title: 'Name of the Recipe',
@@ -99,7 +99,7 @@ final myRecipesProvider =
 class SavedRecipesNotifier extends StateNotifier<List<RecipeModel>> {
   SavedRecipesNotifier() : super(_demoSavedRecipes);
 
-  static final _demoSavedRecipes = [
+  static const _demoSavedRecipes = [
     RecipeModel(
       id: 's1',
       title: 'Name of the Recipe',

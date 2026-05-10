@@ -316,7 +316,11 @@ class _RecipeGridView extends StatelessWidget {
     );
     Future.delayed(
       const Duration(seconds: 2),
-      () => Navigator.of(context, rootNavigator: true).pop(),
+      () {
+        if (context.mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+      },
     );
   }
 
@@ -382,7 +386,11 @@ class _RecipeListViewSection extends StatelessWidget {
           );
           Future.delayed(
             const Duration(seconds: 2),
-            () => Navigator.of(context, rootNavigator: true).pop(),
+            () {
+              if (context.mounted) {
+                Navigator.of(context, rootNavigator: true).pop();
+              }
+            },
           );
         },
         onDelete: () => showDialog(

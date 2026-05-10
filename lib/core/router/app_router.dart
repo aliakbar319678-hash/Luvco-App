@@ -12,6 +12,9 @@ import 'package:luvco_logo/screens/onboarding/onboarding_screen.dart';
 import 'package:luvco_logo/screens/onboarding/diet_preference_screen.dart';
 import 'package:luvco_logo/screens/onboarding/food_allergy_screen.dart';
 import 'package:luvco_logo/screens/profile/user_profile_screen.dart';
+import 'package:luvco_logo/screens/shopping/new_shopping_list_screen.dart';
+import 'package:luvco_logo/screens/account/account_settings_screen.dart';
+
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -67,6 +70,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile',
         builder: (context, state) => const UserProfileScreen(),
+      ),
+      GoRoute(
+        path: '/new-shopping-list',
+        builder: (context, state) => const NewShoppingListScreen(),
+      ),
+      GoRoute(
+        path: '/account-settings',
+        builder: (context, state) => const AccountSettingsScreen(),
       ),
     ],
   );

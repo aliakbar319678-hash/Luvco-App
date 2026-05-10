@@ -117,8 +117,8 @@ class _ShoppingListListCardState extends State<ShoppingListListCard> {
                             widget.onAction(action);
                           },
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                           child: Icon(
                             Icons.more_horiz,
                             color: AppColors.darkGrey,

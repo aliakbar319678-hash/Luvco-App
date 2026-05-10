@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Luvco would like to access the camera</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Access to your photo library is required to attach photos to your claim.</string>
 </dict>
 </plist>

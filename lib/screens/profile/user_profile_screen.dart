@@ -13,10 +13,10 @@ import '../../widgets/shopping_list_list_card.dart';
 import '../recipe/my_recipes_tab.dart';
 import '../recipe/edit_recipe_screen.dart';
 import 'food_settings_tab.dart';
+import 'package:go_router/go_router.dart';
 import '../../widgets/fab_menu_dialog.dart';
-
-
-
+import '../../providers/account_settings_provider.dart';
+import '../../providers/modify_name_provider.dart';
 
 class UserProfileScreen extends ConsumerWidget {
   const UserProfileScreen({super.key});
@@ -41,7 +41,12 @@ class UserProfileScreen extends ConsumerWidget {
             Column(
               children: [
                 // ── Top Header ──
-                _ProfileHeader(size: size, padding: padding, scale: scale),
+                _ProfileHeader(
+                  size: size,
+                  padding: padding,
+                  scale: scale,
+                  onSettingsTap: () => context.push('/account-settings'),
+                ),
 
                 // ── Scrollable body ──
                 Expanded(
@@ -105,23 +110,17 @@ class UserProfileScreen extends ConsumerWidget {
               right: size.width * 0.058,
               child: _FabButton(
                 onTap: () {
-                  showLuvcoFabActionMenu(
-                    context,
-                    onCreateList: () => _showCreateListDialog(context, ref),
-                    onSearchProducts: () {
-                      // Navigate to search or show snackbar
-                    },
-                    onCreateRecipe: () {
-                      Navigator.of(context).push(
+                    showLuvcoFabActionMenu(
+                      context,
+                      onCreateList: () => context.push('/new-shopping-list'),
+                      onSearchProducts: () => context.push('/new-shopping-list'),
+                      onCreateRecipe: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const EditRecipeScreen(),
                         ),
-                      );
-                    },
-                    onSearchRecipe: () {
-                      // Navigate to search recipes
-                    },
-                  );
+                      ),
+                      onSearchRecipe: () {},
+                    );
                 },
               ),
 
@@ -132,28 +131,7 @@ class UserProfileScreen extends ConsumerWidget {
     );
   }
 
-  // ── Show create list dialog ──────────────────────────────────
-  void _showCreateListDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (_) => LuvcoEditListDialog(
-        initialTitle: '',
-        initialDescription: '',
-        onSave: (title, description) {
-          ref
-              .read(shoppingListProvider.notifier)
-              .addList(
-                ShoppingListModel(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  title: title.isEmpty ? 'New List' : title,
-                  description: description,
-                  itemCount: 0,
-                ),
-              );
-        },
-      ),
-    );
-  }
+
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -163,11 +141,13 @@ class _ProfileHeader extends StatelessWidget {
   final Size size;
   final EdgeInsets padding;
   final double scale;
+  final VoidCallback onSettingsTap;
 
   const _ProfileHeader({
     required this.size,
     required this.padding,
     required this.scale,
+    required this.onSettingsTap,
   });
 
   @override
@@ -231,7 +211,7 @@ class _ProfileHeader extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: GestureDetector(
-              onTap: () {},
+              onTap: onSettingsTap,
               child: Icon(
                 Icons.settings_outlined,
                 color: AppColors.vibrantPink,
@@ -248,14 +228,20 @@ class _ProfileHeader extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 // Profile avatar + name
 // ─────────────────────────────────────────────────────────────────
-class _ProfileInfo extends StatelessWidget {
+class _ProfileInfo extends ConsumerWidget {
   final Size size;
   final double scale;
 
   const _ProfileInfo({required this.size, required this.scale});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final accountState = ref.watch(accountSettingsProvider);
+    final nameState = ref.watch(modifyNameProvider);
+    final displayName = nameState.firstName.isEmpty && nameState.lastName.isEmpty
+        ? 'User Name'
+        : '${nameState.firstName} ${nameState.lastName}'.trim();
+
     return Column(
       children: [
         // Avatar circle
@@ -275,17 +261,22 @@ class _ProfileInfo extends StatelessWidget {
             ],
           ),
           child: ClipOval(
-            child: Image.asset(
-              'assets/images/profile_pic.png',
-              fit: BoxFit.cover,
-            ),
+            child: accountState.profileImage != null
+                ? Image.file(
+                    accountState.profileImage!,
+                    fit: BoxFit.cover,
+                  )
+                : Image.asset(
+                    'assets/images/profile_pic.png',
+                    fit: BoxFit.cover,
+                  ),
           ),
         ),
 
         const SizedBox(height: 12),
 
         Text(
-          'User Name',
+          displayName,
           style: GoogleFonts.inter(
             fontSize: 18 * scale.clamp(0.85, 1.2),
             fontWeight: FontWeight.w800,
@@ -635,7 +626,11 @@ class _GridView extends StatelessWidget {
     );
     Future.delayed(
       const Duration(seconds: 2),
-      () => Navigator.of(context, rootNavigator: true).pop(),
+      () {
+        if (context.mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+      },
     );
   }
 
@@ -694,7 +689,11 @@ class _ListView extends StatelessWidget {
       );
       Future.delayed(
         const Duration(seconds: 2),
-        () => Navigator.of(context, rootNavigator: true).pop(),
+        () {
+          if (context.mounted) {
+            Navigator.of(context, rootNavigator: true).pop();
+          }
+        },
       );
     } else if (action == 'delete') {
       showDialog(
