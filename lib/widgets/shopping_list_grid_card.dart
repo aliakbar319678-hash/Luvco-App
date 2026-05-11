@@ -7,11 +7,13 @@ import '../models/shopping_list_model.dart';
 class ShoppingListGridCard extends StatefulWidget {
   final ShoppingListModel list;
   final void Function(String action) onAction;
+  final VoidCallback? onTap;
 
   const ShoppingListGridCard({
     super.key,
     required this.list,
     required this.onAction,
+    this.onTap,
   });
 
   @override
@@ -32,7 +34,10 @@ class _ShoppingListGridCardState extends State<ShoppingListGridCard> {
     final size = MediaQuery.sizeOf(context);
     final scale = size.width / 390;
 
-    return Container(
+    return GestureDetector(
+      onTap: widget.onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
       decoration: BoxDecoration(
         color: AppColors.pureWhite,
         borderRadius: BorderRadius.circular(20),
@@ -148,7 +153,7 @@ class _ShoppingListGridCardState extends State<ShoppingListGridCard> {
           ),
         ],
       ),
-    );
+    ));
   }
 }
 

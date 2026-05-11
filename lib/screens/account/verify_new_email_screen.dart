@@ -37,8 +37,12 @@ class _VerifyNewEmailScreenState extends ConsumerState<VerifyNewEmailScreen> {
 
   @override
   void dispose() {
-    for (final c in _controllers) c.dispose();
-    for (final f in _focusNodes) f.dispose();
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    for (final f in _focusNodes) {
+      f.dispose();
+    }
     super.dispose();
   }
 
@@ -47,7 +51,9 @@ class _VerifyNewEmailScreenState extends ConsumerState<VerifyNewEmailScreen> {
   bool get _isComplete => _fullCode.length == 6;
 
   void _clearAll() {
-    for (final c in _controllers) c.clear();
+    for (final c in _controllers) {
+      c.clear();
+    }
     ref.read(verifyEmailProvider.notifier).reset();
     _focusNodes[0].requestFocus();
   }

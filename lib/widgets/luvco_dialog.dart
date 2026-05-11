@@ -5,12 +5,12 @@ import '../core/theme/app_colors.dart';
 // ─────────────────────────────────────────────────────────────────
 // Edit List Dialog — matches Figma 1.4 & 1.5
 // ─────────────────────────────────────────────────────────────────
-class LuvcoEditListDialog extends StatefulWidget {
+class LuvcoEditListBottomSheet extends StatefulWidget {
   final String initialTitle;
   final String initialDescription;
   final void Function(String title, String description) onSave;
 
-  const LuvcoEditListDialog({
+  const LuvcoEditListBottomSheet({
     super.key,
     required this.initialTitle,
     required this.initialDescription,
@@ -18,10 +18,10 @@ class LuvcoEditListDialog extends StatefulWidget {
   });
 
   @override
-  State<LuvcoEditListDialog> createState() => _LuvcoEditListDialogState();
+  State<LuvcoEditListBottomSheet> createState() => _LuvcoEditListBottomSheetState();
 }
 
-class _LuvcoEditListDialogState extends State<LuvcoEditListDialog> {
+class _LuvcoEditListBottomSheetState extends State<LuvcoEditListBottomSheet> {
   late final TextEditingController _titleController;
   late final TextEditingController _descController;
   bool _hasTitle = false;
@@ -54,116 +54,126 @@ class _LuvcoEditListDialogState extends State<LuvcoEditListDialog> {
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final scale = size.width / 390;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Dialog(
-      backgroundColor: AppColors.pureWhite,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      insetPadding: EdgeInsets.symmetric(horizontal: size.width * 0.06),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Header row ──
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    'Do you want to edit the list\ninformation?',
-                    style: GoogleFonts.inter(
-                      fontSize: 16 * scale.clamp(0.85, 1.2),
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.black,
-                      height: 1.35,
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: const Icon(Icons.close, color: AppColors.darkGrey, size: 22),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            // ── List Title label + field ──
-            Text(
-              'List Title',
-              style: GoogleFonts.inter(
-                fontSize: 13 * scale.clamp(0.85, 1.2),
-                fontWeight: FontWeight.w500,
-                color: AppColors.darkGrey,
-              ),
-            ),
-            const SizedBox(height: 8),
-            _LuvcoTextField(
-              controller: _titleController,
-              hint: 'My weekend shopping list',
-            ),
-
-            const SizedBox(height: 14),
-
-            // ── Description label + field ──
-            Text(
-              'Description',
-              style: GoogleFonts.inter(
-                fontSize: 13 * scale.clamp(0.85, 1.2),
-                fontWeight: FontWeight.w500,
-                color: AppColors.darkGrey,
-              ),
-            ),
-            const SizedBox(height: 8),
-            _LuvcoTextField(
-              controller: _descController,
-              hint: 'Short description of the shopping list.',
-            ),
-
-            const SizedBox(height: 20),
-
-            // ── Save Changes button — disabled when title is empty ──
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: double.infinity,
-              height: 50,
-              decoration: BoxDecoration(
-                color: _hasTitle
-                    ? AppColors.royalPurple
-                    : AppColors.royalPurple.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(50),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(50),
-                  onTap: _hasTitle
-                      ? () {
-                          widget.onSave(
-                            _titleController.text.trim(),
-                            _descController.text.trim(),
-                          );
-                          Navigator.of(context).pop();
-                        }
-                      : null,
-                  child: Center(
-                    child: Text(
-                      'Save Changes',
-                      style: GoogleFonts.inter(
-                        fontSize: 15 * scale.clamp(0.85, 1.2),
-                        fontWeight: FontWeight.w600,
-                        color: _hasTitle
-                            ? AppColors.pureWhite
-                            : AppColors.pureWhite.withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: AppColors.pureWhite,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
         ),
+      ),
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 24,
+        bottom: 20 + bottomInset,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Header row ──
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  'Do you want to edit the list\ninformation?',
+                  style: GoogleFonts.inter(
+                    fontSize: 16 * scale.clamp(0.85, 1.2),
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.black,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: const Icon(Icons.close, color: AppColors.black, size: 22),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // ── List Title label + field ──
+          Text(
+            'List Title',
+            style: GoogleFonts.inter(
+              fontSize: 13 * scale.clamp(0.85, 1.2),
+              fontWeight: FontWeight.w700, // Make it bolder
+              color: AppColors.black,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _LuvcoTextField(
+            controller: _titleController,
+            hint: 'My weekend shopping list',
+          ),
+
+          const SizedBox(height: 14),
+
+          // ── Description label + field ──
+          Text(
+            'Description',
+            style: GoogleFonts.inter(
+              fontSize: 13 * scale.clamp(0.85, 1.2),
+              fontWeight: FontWeight.w700,
+              color: AppColors.black,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _LuvcoTextField(
+            controller: _descController,
+            hint: 'Short description of the shopping list.',
+          ),
+
+          const SizedBox(height: 24),
+
+          // ── Save Changes button ──
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: double.infinity,
+            height: 50,
+            decoration: BoxDecoration(
+              color: _hasTitle
+                  ? const Color(0xFFFFF0F5) // light pink background
+                  : const Color(0xFFFFF0F5).withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(50),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(50),
+                onTap: _hasTitle
+                    ? () {
+                        widget.onSave(
+                          _titleController.text.trim(),
+                          _descController.text.trim(),
+                        );
+                        Navigator.of(context).pop();
+                      }
+                    : null,
+                child: Center(
+                  child: Text(
+                    'Save Changes',
+                    style: GoogleFonts.inter(
+                      fontSize: 15 * scale.clamp(0.85, 1.2),
+                      fontWeight: FontWeight.w600,
+                      color: _hasTitle
+                          ? const Color(0xFFA39A9A) // slightly dark grayish pink
+                          : const Color(0xFFA39A9A).withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
       ),
     );
   }

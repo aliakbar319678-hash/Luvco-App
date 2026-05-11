@@ -9,6 +9,7 @@ import '../../providers/account_settings_provider.dart';
 import '../../providers/modify_name_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import 'change_email_screen.dart';
+import 'help_support_screen.dart';
 import 'modify_name_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────
@@ -469,18 +470,17 @@ class _AccountMenuList extends StatelessWidget {
   void _handleTap(BuildContext context, String label) {
     if (label == 'Name') {
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => const ModifyNameScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const ModifyNameScreen()),
       );
     } else if (label == 'Email') {
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => const ChangeEmailScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const ChangeEmailScreen()),
+      );
+    } else if (label == 'Help & Support') {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const HelpSupportScreen()),
       );
     }
-    // Password, Help & Support, Delete Account — wire later
   }
 }
 

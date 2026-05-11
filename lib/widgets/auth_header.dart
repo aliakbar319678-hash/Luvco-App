@@ -9,6 +9,7 @@ class AuthHeader extends StatelessWidget {
   final bool showLogo;
   final bool showBackButton;
   final Color titleColor;
+  final VoidCallback? onBackTap;
 
   const AuthHeader({
     super.key,
@@ -16,6 +17,7 @@ class AuthHeader extends StatelessWidget {
     this.showLogo = false,
     this.showBackButton = true,
     this.titleColor = AppColors.royalPurple,
+    this.onBackTap,
   });
 
   @override
@@ -55,7 +57,7 @@ class AuthHeader extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: GestureDetector(
-                        onTap: () => context.pop(),
+                        onTap: onBackTap ?? () => context.pop(),
                         child: Icon(
                           Icons.chevron_left_rounded,
                           color: titleColor,

@@ -11,12 +11,12 @@ import '../../widgets/luvco_dialog.dart';
 import '../../widgets/shopping_list_grid_card.dart';
 import '../../widgets/shopping_list_list_card.dart';
 import '../recipe/my_recipes_tab.dart';
-import '../recipe/edit_recipe_screen.dart';
 import 'food_settings_tab.dart';
 import 'package:go_router/go_router.dart';
 import '../../widgets/fab_menu_dialog.dart';
 import '../../providers/account_settings_provider.dart';
 import '../../providers/modify_name_provider.dart';
+import '../../providers/new_recipe_provider.dart';
 
 class UserProfileScreen extends ConsumerWidget {
   const UserProfileScreen({super.key});
@@ -46,6 +46,7 @@ class UserProfileScreen extends ConsumerWidget {
                   padding: padding,
                   scale: scale,
                   onSettingsTap: () => context.push('/account-settings'),
+                  onFavoritesTap: () => context.push('/favorites'),
                 ),
 
                 // ── Scrollable body ──
@@ -114,11 +115,11 @@ class UserProfileScreen extends ConsumerWidget {
                       context,
                       onCreateList: () => context.push('/new-shopping-list'),
                       onSearchProducts: () => context.push('/new-shopping-list'),
-                      onCreateRecipe: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const EditRecipeScreen(),
-                        ),
-                      ),
+                      onCreateRecipe: () {
+                        ref.read(newRecipeProvider.notifier).reset();
+                        ref.read(newRecipeStepProvider.notifier).state = 1;
+                        context.push('/new-recipe');
+                      },
                       onSearchRecipe: () {},
                     );
                 },
@@ -142,12 +143,14 @@ class _ProfileHeader extends StatelessWidget {
   final EdgeInsets padding;
   final double scale;
   final VoidCallback onSettingsTap;
+  final VoidCallback onFavoritesTap;
 
   const _ProfileHeader({
     required this.size,
     required this.padding,
     required this.scale,
     required this.onSettingsTap,
+    required this.onFavoritesTap,
   });
 
   @override
@@ -196,7 +199,8 @@ class _ProfileHeader extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: GestureDetector(
-              onTap: () {},
+              onTap: onFavoritesTap,
+              behavior: HitTestBehavior.opaque,
               child: Icon(
                 Icons.favorite_border_rounded,
                 color: AppColors.vibrantPink,
@@ -590,6 +594,7 @@ class _GridView extends StatelessWidget {
         return ShoppingListGridCard(
           list: list,
           onAction: (action) => _handleAction(context, action, list),
+          onTap: () => context.push('/shopping-list/${list.id}'),
         );
       },
     );
@@ -606,9 +611,11 @@ class _GridView extends StatelessWidget {
   }
 
   void _showEditDialog(BuildContext context, ShoppingListModel list) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (_) => LuvcoEditListDialog(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => LuvcoEditListBottomSheet(
         initialTitle: list.title,
         initialDescription: list.description,
         onSave: (title, desc) => ref
@@ -663,6 +670,7 @@ class _ListView extends StatelessWidget {
             (list) => ShoppingListListCard(
               list: list,
               onAction: (action) => _handleAction(context, action, list),
+              onTap: () => context.push('/shopping-list/${list.id}'),
             ),
           )
           .toList(),
@@ -671,9 +679,11 @@ class _ListView extends StatelessWidget {
 
   void _handleAction(BuildContext context, String action, ShoppingListModel list) {
     if (action == 'edit') {
-      showDialog(
+      showModalBottomSheet(
         context: context,
-        builder: (_) => LuvcoEditListDialog(
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => LuvcoEditListBottomSheet(
           initialTitle: list.title,
           initialDescription: list.description,
           onSave: (title, desc) => ref
