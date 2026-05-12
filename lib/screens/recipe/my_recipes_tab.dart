@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/recipe_model.dart';
+import '../../models/recipe_detail_model.dart';
 import '../../providers/recipe_provider.dart';
+import '../../providers/recipe_detail_provider.dart';
 import '../../widgets/recipe_card.dart';
 import '../../widgets/recipe_dialogs.dart';
 import 'edit_recipe_screen.dart';
@@ -118,6 +121,27 @@ class MyRecipesTab extends ConsumerWidget {
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => EditRecipeScreen(recipe: recipe)));
+  }
+
+  void _navigateToDetail(BuildContext context, RecipeModel recipe) {
+    // For demo purposes, we convert RecipeModel to RecipeDetailModel
+    // or we could just use demoRecipeDetail for testing as per request
+    final detail = RecipeDetailModel(
+      id: recipe.id,
+      title: recipe.title,
+      description: recipe.description,
+      imageUrl: recipe.imageUrl,
+      servings: recipe.servings,
+      timeMinutes: recipe.timeOfPreparation,
+      dietTypes: recipe.dietTags,
+      freeOfIngredients: recipe.freeOfIngredients,
+      ingredients: demoRecipeDetail.ingredients, // placeholder
+      instructions: demoRecipeDetail.instructions, // placeholder
+      products: demoRecipeDetail.products, // placeholder
+      isOwner: true,
+    );
+
+    context.push('/recipe-detail', extra: detail);
   }
 }
 
@@ -286,6 +310,7 @@ class _RecipeGridView extends StatelessWidget {
         return RecipeGridCard(
           recipe: recipe,
           onMoreTap: () => _showMoreActions(context, recipe),
+          onTap: () => MyRecipesTab()._navigateToDetail(context, recipe),
         );
       },
     );
@@ -363,6 +388,7 @@ class _RecipeListViewSection extends StatelessWidget {
             (recipe) => RecipeListCard(
               recipe: recipe,
               onMoreTap: () => _showMoreActions(context, recipe),
+              onTap: () => MyRecipesTab()._navigateToDetail(context, recipe),
             ),
           )
           .toList(),

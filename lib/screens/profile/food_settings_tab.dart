@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/food_settings_provider.dart';
@@ -41,16 +42,8 @@ class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
   void _openModifySheet() {
     showFoodSettingsModifySheet(
       context,
-      onModifyDiet: () {
-        setState(() {
-          _expandedSections['diet'] = true;
-        });
-      },
-      onModifyChallenges: () {
-        setState(() {
-          _expandedSections['challenges'] = true;
-        });
-      },
+      onModifyDiet: () => GoRouter.of(context).push('/food-diet'),
+      onModifyChallenges: () => GoRouter.of(context).push('/food-challenges'),
     );
   }
 

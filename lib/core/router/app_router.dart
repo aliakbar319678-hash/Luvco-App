@@ -8,6 +8,10 @@ import 'package:luvco_logo/screens/auth/password_updated_screen.dart'; // ← NE
 import 'package:luvco_logo/screens/auth/signup_otp_screen.dart';
 import 'package:luvco_logo/screens/auth/signup_screen.dart';
 import 'package:luvco_logo/screens/recipe/new_recipe_screen.dart';
+import 'package:luvco_logo/screens/recipe/recipe_detail_screen.dart';
+import 'package:luvco_logo/models/recipe_detail_model.dart';
+import 'package:luvco_logo/providers/recipe_detail_provider.dart';
+import 'package:luvco_logo/screens/profile/food_preferences_screen.dart';
 import 'package:luvco_logo/screens/splash/splash_screen.dart';
 import 'package:luvco_logo/screens/onboarding/onboarding_screen.dart';
 import 'package:luvco_logo/screens/onboarding/diet_preference_screen.dart';
@@ -103,6 +107,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/new-recipe',
         builder: (context, state) => const NewRecipeScreen(),
+      ),
+      GoRoute(
+        path: '/recipe-detail',
+        builder: (context, state) {
+          final recipe = state.extra as RecipeDetailModel? ?? demoRecipeDetail;
+          return RecipeDetailScreen(recipe: recipe);
+        },
+      ),
+      GoRoute(
+        path: '/food-challenges',
+        builder: (context, state) => const FoodPreferencesScreen(isDiet: false),
+      ),
+      GoRoute(
+        path: '/food-diet',
+        builder: (context, state) => const FoodPreferencesScreen(isDiet: true),
       ),
     ],
   );

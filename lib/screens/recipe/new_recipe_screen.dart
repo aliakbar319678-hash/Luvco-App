@@ -1051,9 +1051,12 @@ class _EmptyProductState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+      child: SizedBox(
+        width: double.infinity,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
           SizedBox(
             width: 140 * scale,
             height: 140 * scale,
@@ -1095,6 +1098,7 @@ class _EmptyProductState extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 }
@@ -1114,68 +1118,35 @@ class _AddedIngredientRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Stack(
         children: [
-          // ── Unsustainable/Safe tags row ──
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFF5A5A),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(10),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.warning_amber_rounded,
-                        size: 13,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Unsustainable',
-                        style: GoogleFonts.inter(
-                          fontSize: 11 * scale.clamp(0.85, 1.2),
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+          // Background Tabs
+          SizedBox(
+            height: 44,
+            child: Stack(
+              children: [
+                // Green tab (full width, right aligned text)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.only(top: 8, right: 30),
+                  alignment: Alignment.topRight,
                   decoration: const BoxDecoration(
                     color: Color(0xFF4CAF50),
                     borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(10),
+                      topLeft: Radius.circular(14),
+                      topRight: Radius.circular(14),
                     ),
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
-                        Icons.check_circle_outline_rounded,
-                        size: 13,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 4),
+                      const Icon(Icons.flag_outlined, size: 14, color: Colors.white),
+                      const SizedBox(width: 6),
                       Text(
                         'Safe',
                         style: GoogleFonts.inter(
-                          fontSize: 11 * scale.clamp(0.85, 1.2),
+                          fontSize: 12 * scale.clamp(0.85, 1.2),
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
                         ),
@@ -1183,68 +1154,109 @@ class _AddedIngredientRow extends StatelessWidget {
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-
-          // ── Product info row ──
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Row(
-              children: [
+                // Red tab (partial width, overlapping)
                 Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.softGrey,
-                    borderRadius: BorderRadius.circular(8),
+                  width: MediaQuery.sizeOf(context).width * 0.52,
+                  padding: const EdgeInsets.only(top: 8),
+                  alignment: Alignment.topCenter,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFED3232),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(14),
+                      topRight: Radius.circular(14),
+                    ),
                   ),
-                  child: ingredient.imageUrl != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.asset(
-                            ingredient.imageUrl!,
-                            fit: BoxFit.contain,
-                          ),
-                        )
-                      : const Icon(
-                          Icons.fastfood_outlined,
-                          size: 20,
-                          color: AppColors.neutralGrey,
-                        ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      const Icon(Icons.eco_outlined, size: 14, color: Colors.white),
+                      const SizedBox(width: 6),
                       Text(
-                        ingredient.name,
+                        'Unsustainable',
                         style: GoogleFonts.inter(
-                          fontSize: 13 * scale.clamp(0.85, 1.2),
+                          fontSize: 12 * scale.clamp(0.85, 1.2),
                           fontWeight: FontWeight.w600,
-                          color: AppColors.black,
-                        ),
-                      ),
-                      Text(
-                        ingredient.otherData,
-                        style: GoogleFonts.inter(
-                          fontSize: 11 * scale.clamp(0.85, 1.2),
-                          color: AppColors.neutralGrey,
+                          color: Colors.white,
                         ),
                       ),
                     ],
                   ),
                 ),
-                GestureDetector(
-                  onTap: onDelete,
-                  child: const Icon(
-                    Icons.delete_outline_rounded,
-                    size: 20,
-                    color: AppColors.neutralGrey,
-                  ),
+              ],
+            ),
+          ),
+          // White Foreground Card
+          Container(
+            margin: const EdgeInsets.only(top: 32),
+            decoration: BoxDecoration(
+              color: AppColors.pureWhite,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
                 ),
               ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: AppColors.softGrey,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: ingredient.imageUrl != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.asset(
+                              ingredient.imageUrl!,
+                              fit: BoxFit.contain,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.fastfood_outlined,
+                            size: 20,
+                            color: AppColors.neutralGrey,
+                          ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          ingredient.name,
+                          style: GoogleFonts.inter(
+                            fontSize: 13 * scale.clamp(0.85, 1.2),
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.black,
+                          ),
+                        ),
+                        Text(
+                          ingredient.otherData,
+                          style: GoogleFonts.inter(
+                            fontSize: 11 * scale.clamp(0.85, 1.2),
+                            color: AppColors.neutralGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: onDelete,
+                    child: const Icon(
+                      Icons.delete_outline_rounded,
+                      size: 20,
+                      color: AppColors.black,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -1302,142 +1314,166 @@ class _ProductDetailOverlay extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ── Close + Title ──
-                      Row(
+                      // ── Header (Title, Subtitle, Close) ──
+                      SizedBox(
+                        width: double.infinity,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 40),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    product.name,
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 18 * scale.clamp(0.85, 1.2),
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.vibrantPink,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    product.otherData,
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13 * scale.clamp(0.85, 1.2),
+                                      color: AppColors.darkGrey,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Positioned(
+                              right: 0,
+                              top: 0,
+                              child: GestureDetector(
+                                onTap: onClose,
+                                child: const Icon(
+                                  Icons.close_rounded,
+                                  color: AppColors.black,
+                                  size: 26,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // ── Image Card with Sustainability Header ──
+                      Stack(
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  product.name,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 16 * scale.clamp(0.85, 1.2),
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.vibrantPink,
+                          // Background Tabs
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  height: 80 * scale.clamp(0.85, 1.2), // extends behind the white card
+                                  padding: EdgeInsets.only(top: 14 * scale.clamp(0.85, 1.2)),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFED3232),
+                                    borderRadius: BorderRadius.only(topLeft: Radius.circular(28)),
+                                  ),
+                                  alignment: Alignment.topCenter,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.eco_outlined, color: Colors.white, size: 20),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Unsustainable',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 14 * scale.clamp(0.85, 1.2),
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                Text(
-                                  product.otherData,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12 * scale.clamp(0.85, 1.2),
-                                    color: AppColors.neutralGrey,
+                              ),
+                              Expanded(
+                                child: Container(
+                                  height: 80 * scale.clamp(0.85, 1.2),
+                                  padding: EdgeInsets.only(top: 14 * scale.clamp(0.85, 1.2)),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF4CAF50),
+                                    borderRadius: BorderRadius.only(topRight: Radius.circular(28)),
                                   ),
+                                  alignment: Alignment.topCenter,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.flag_outlined, color: Colors.white, size: 20),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Safe',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 14 * scale.clamp(0.85, 1.2),
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          // White Foreground Card
+                          Container(
+                            margin: EdgeInsets.only(top: 48 * scale.clamp(0.85, 1.2)), // visible tab height
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: AppColors.pureWhite,
+                              borderRadius: BorderRadius.circular(28),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, -2), // subtle shadow to show it's above tabs
+                                ),
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 4),
                                 ),
                               ],
                             ),
-                          ),
-                          GestureDetector(
-                            onTap: onClose,
-                            child: const Icon(
-                              Icons.close_rounded,
-                              color: AppColors.darkGrey,
-                              size: 24,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // ── Unsustainable / Safe tags row ──
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFFF5A5A),
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(10),
-                                  bottomLeft: Radius.circular(10),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 24),
+                              child: Stack(
+                                alignment: Alignment.center,
                                 children: [
-                                  const Icon(
-                                    Icons.warning_amber_rounded,
-                                    size: 14,
-                                    color: Colors.white,
+                                  SizedBox(
+                                    height: 190 * scale.clamp(0.85, 1.2),
+                                    width: double.infinity,
+                                    child: product.imageUrl != null
+                                        ? Image.asset(
+                                            product.imageUrl!,
+                                            fit: BoxFit.contain,
+                                          )
+                                        : const Icon(
+                                            Icons.fastfood_outlined,
+                                            size: 70,
+                                            color: AppColors.clearGrey,
+                                          ),
                                   ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Unsustainable',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12 * scale.clamp(0.85, 1.2),
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
+                                  const Positioned(
+                                    top: -4,
+                                    right: 20,
+                                    child: Icon(
+                                      Icons.favorite_border_rounded,
+                                      color: AppColors.black,
+                                      size: 28,
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF4CAF50),
-                                borderRadius: BorderRadius.only(
-                                  topRight: Radius.circular(10),
-                                  bottomRight: Radius.circular(10),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.check_circle_outline_rounded,
-                                    size: 14,
-                                    color: Colors.white,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Safe',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12 * scale.clamp(0.85, 1.2),
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // ── Product Image + Favorite ──
-                      Stack(
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            height: size.height * 0.22,
-                            decoration: BoxDecoration(
-                              color: AppColors.softGrey,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: product.imageUrl != null
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image.asset(
-                                      product.imageUrl!,
-                                      fit: BoxFit.contain,
-                                    ),
-                                  )
-                                : const Icon(
-                                    Icons.fastfood_outlined,
-                                    size: 60,
-                                    color: AppColors.clearGrey,
-                                  ),
-                          ),
-                          Positioned(
-                            top: 10,
-                            right: 10,
-                            child: const Icon(
-                              Icons.favorite_border_rounded,
-                              color: AppColors.neutralGrey,
                             ),
                           ),
                         ],
@@ -1449,7 +1485,7 @@ class _ProductDetailOverlay extends StatelessWidget {
                         'Labels and Certifications',
                         style: GoogleFonts.inter(
                           fontSize: 14 * scale.clamp(0.85, 1.2),
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                           color: AppColors.black,
                         ),
                       ),
@@ -1467,7 +1503,7 @@ class _ProductDetailOverlay extends StatelessWidget {
                         'Possible allergens',
                         style: GoogleFonts.inter(
                           fontSize: 14 * scale.clamp(0.85, 1.2),
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                           color: AppColors.black,
                         ),
                       ),
@@ -1532,26 +1568,33 @@ class _LabelCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: AppColors.clearGrey, width: 1),
-            color: AppColors.softGrey,
+    return Container(
+      width: 64 * scale.clamp(0.85, 1.2),
+      height: 64 * scale.clamp(0.85, 1.2),
+      decoration: BoxDecoration(
+        color: AppColors.pureWhite,
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.clearGrey, width: 1),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.hexagon_outlined,
+            size: 20 * scale.clamp(0.85, 1.2),
+            color: AppColors.black,
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 11 * scale.clamp(0.85, 1.2),
-            color: AppColors.neutralGrey,
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 10 * scale.clamp(0.85, 1.2),
+              color: AppColors.darkGrey,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
