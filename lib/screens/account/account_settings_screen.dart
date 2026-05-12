@@ -21,8 +21,9 @@ class AccountSettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AccountSettingsState state = ref.watch(accountSettingsProvider);
-    final AccountSettingsNotifier notifier =
-        ref.read(accountSettingsProvider.notifier);
+    final AccountSettingsNotifier notifier = ref.read(
+      accountSettingsProvider.notifier,
+    );
     final nameState = ref.watch(modifyNameProvider);
     final size = MediaQuery.sizeOf(context);
     final padding = MediaQuery.paddingOf(context);
@@ -65,9 +66,11 @@ class AccountSettingsScreen extends ConsumerWidget {
 
                         // ── User Name ──
                         Text(
-                          nameState.firstName.isEmpty && nameState.lastName.isEmpty
+                          nameState.firstName.isEmpty &&
+                                  nameState.lastName.isEmpty
                               ? 'User Name'
-                              : '${nameState.firstName} ${nameState.lastName}'.trim(),
+                              : '${nameState.firstName} ${nameState.lastName}'
+                                    .trim(),
                           style: GoogleFonts.inter(
                             fontSize: 18 * scale.clamp(0.85, 1.2),
                             fontWeight: FontWeight.w800,
@@ -469,17 +472,17 @@ class _AccountMenuList extends StatelessWidget {
 
   void _handleTap(BuildContext context, String label) {
     if (label == 'Name') {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const ModifyNameScreen()),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const ModifyNameScreen()));
     } else if (label == 'Email') {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const ChangeEmailScreen()),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const ChangeEmailScreen()));
     } else if (label == 'Help & Support') {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const HelpSupportScreen()),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
     }
   }
 }

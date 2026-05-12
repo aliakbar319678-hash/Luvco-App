@@ -339,14 +339,11 @@ class _RecipeGridView extends StatelessWidget {
       context: context,
       builder: (_) => const RecipeDuplicateSuccessOverlay(),
     );
-    Future.delayed(
-      const Duration(seconds: 2),
-      () {
-        if (context.mounted) {
-          Navigator.of(context, rootNavigator: true).pop();
-        }
-      },
-    );
+    Future.delayed(const Duration(seconds: 2), () {
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    });
   }
 
   void _showDeleteDialog(BuildContext context, RecipeModel recipe) {
@@ -410,14 +407,11 @@ class _RecipeListViewSection extends StatelessWidget {
             context: context,
             builder: (_) => const RecipeDuplicateSuccessOverlay(),
           );
-          Future.delayed(
-            const Duration(seconds: 2),
-            () {
-              if (context.mounted) {
-                Navigator.of(context, rootNavigator: true).pop();
-              }
-            },
-          );
+          Future.delayed(const Duration(seconds: 2), () {
+            if (context.mounted) {
+              Navigator.of(context, rootNavigator: true).pop();
+            }
+          });
         },
         onDelete: () => showDialog(
           context: context,

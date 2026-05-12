@@ -19,7 +19,7 @@ final editRecipeTabProvider = StateProvider.autoDispose<int>((_) => 0);
 
 // ── Recipe Detail State Notifier ──────────────────────────────────
 class RecipeDetailNotifier extends StateNotifier<RecipeDetailModel> {
-  RecipeDetailNotifier(RecipeDetailModel initial) : super(initial);
+  RecipeDetailNotifier(super.initial);
 
   void updateDetails({
     String? title,
@@ -66,7 +66,7 @@ final recipeDetailProvider = StateNotifierProvider.autoDispose
     );
 
 // ── Demo recipe for testing ────────────────────────────────────────
-final demoRecipeDetail = RecipeDetailModel(
+const demoRecipeDetail = RecipeDetailModel(
   id: 'demo_1',
   title: 'Recipe Title',
   description: 'Short description of the recipe.',
@@ -100,7 +100,7 @@ Place the shaped bagels on a baking sheet.''',
       otherData: 'Other data from the product.',
       sustainabilityLevel: 'Unsustainable',
       safetyLevel: 'Avoid',
-      imageAsset: 'assets/images/product_thumb.png',
+      imageAsset: 'assets/images/product_image.png',
     ),
     RecipeProduct(
       id: 'prod_2',
@@ -108,7 +108,7 @@ Place the shaped bagels on a baking sheet.''',
       otherData: 'Other data from the product.',
       sustainabilityLevel: 'Moderate Impact',
       safetyLevel: 'Safe',
-      imageAsset: 'assets/images/product_thumb.png',
+      imageAsset: 'assets/images/product_image.png',
     ),
     RecipeProduct(
       id: 'prod_3',
@@ -116,7 +116,7 @@ Place the shaped bagels on a baking sheet.''',
       otherData: 'Other data from the product.',
       sustainabilityLevel: 'Eco-Friendly',
       safetyLevel: 'Safe',
-      imageAsset: 'assets/images/product_thumb.png',
+      imageAsset: 'assets/images/product_image.png',
     ),
   ],
   isOwner: true,

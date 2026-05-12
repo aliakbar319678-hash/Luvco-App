@@ -4,20 +4,6 @@ import '../models/food_preferences_model.dart';
 // ── Active tab: 0=Selected, 1=Custom ──────────────────────────────
 final foodPrefsTabProvider = StateProvider.autoDispose<int>((_) => 0);
 
-// ── Search modal visibility ────────────────────────────────────────
-final foodPrefsSearchModalProvider = StateProvider.autoDispose<bool>(
-  (_) => false,
-);
-
-// ── Add Manually modal visibility ─────────────────────────────────
-final foodPrefsAddManuallyModalProvider = StateProvider.autoDispose<bool>(
-  (_) => false,
-);
-
-// ── Edit custom item — holds the item being edited (null = none) ──
-final foodPrefsEditItemProvider =
-    StateProvider.autoDispose<FoodPreferenceItem?>((_) => null);
-
 // ── Delete confirm item — holds item pending deletion ─────────────
 final foodPrefsDeleteItemProvider =
     StateProvider.autoDispose<FoodPreferenceItem?>((_) => null);

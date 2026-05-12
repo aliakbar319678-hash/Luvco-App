@@ -80,6 +80,9 @@ flutter:
   - assets/images/cruesli_image.png
   - assets/images/empty_tile.png
   - assets/images/new_recipe.png
+  - assets/icons/done_icon.png
+  - assets/icons/milk_icon.png
+  - assets/icons/circle_check.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -12,14 +12,32 @@ import '../../providers/shopping_list_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import '../shopping/product_detail_sheet.dart';
 
-class FavoritesScreen extends ConsumerWidget {
+class FavoritesScreen extends ConsumerStatefulWidget {
   const FavoritesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FavoritesScreen> createState() => _FavoritesScreenState();
+}
+
+class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(favoritesProvider);
     final size = MediaQuery.sizeOf(context);
     final scale = size.width / 390;
+
+    final filteredItems = _searchQuery.isEmpty
+        ? state.items
+        : state.items.where((i) => i.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(statusBarColor: Colors.transparent),
@@ -28,10 +46,18 @@ class FavoritesScreen extends ConsumerWidget {
         body: Column(
           children: [
             _FavoritesTopBar(scale: scale),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: _FavoriteSearchBar(
+                controller: _searchController,
+                onChanged: (v) => setState(() => _searchQuery = v),
+                scale: scale,
+              ),
+            ),
             Expanded(
-              child: state.items.isEmpty
+              child: filteredItems.isEmpty
                   ? _EmptyState(scale: scale)
-                  : _ProductsList(scale: scale, items: state.items),
+                  : _ProductsList(scale: scale, items: filteredItems),
             ),
             const LuvcoBottomNavBar(),
           ],
@@ -40,6 +66,55 @@ class FavoritesScreen extends ConsumerWidget {
     );
   }
 }
+
+// ── Search Bar ─────────────────────────────────────────────────────
+class _FavoriteSearchBar extends StatelessWidget {
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final double scale;
+
+  const _FavoriteSearchBar({
+    required this.controller,
+    required this.onChanged,
+    required this.scale,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.pureWhite,
+        borderRadius: BorderRadius.circular(50),
+        border: Border.all(color: AppColors.royalPurple.withValues(alpha: 0.5), width: 1.5),
+      ),
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        style: GoogleFonts.inter(fontSize: 14 * scale, color: AppColors.black),
+        decoration: InputDecoration(
+          hintText: 'Product Name |',
+          hintStyle: GoogleFonts.inter(fontSize: 14 * scale, color: AppColors.royalPurple.withValues(alpha: 0.6)),
+          prefixIcon: Padding(
+            padding: EdgeInsets.all(12 * scale),
+            child: Image.asset('assets/icons/milk_icon.png', width: 22 * scale, height: 22 * scale),
+          ),
+          suffixIcon: controller.text.isNotEmpty
+              ? GestureDetector(
+                  onTap: () {
+                    controller.clear();
+                    onChanged('');
+                  },
+                  child: Icon(Icons.close_rounded, color: AppColors.neutralGrey, size: 20 * scale),
+                )
+              : const SizedBox.shrink(),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+        ),
+      ),
+    );
+  }
+}
+
 
 // ── Top Bar ────────────────────────────────────────────────────────
 class _FavoritesTopBar extends StatelessWidget {
