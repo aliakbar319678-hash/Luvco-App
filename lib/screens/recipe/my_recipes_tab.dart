@@ -310,7 +310,7 @@ class _RecipeGridView extends StatelessWidget {
         return RecipeGridCard(
           recipe: recipe,
           onMoreTap: () => _showMoreActions(context, recipe),
-          onTap: () => MyRecipesTab()._navigateToDetail(context, recipe),
+          onTap: () => const MyRecipesTab()._navigateToDetail(context, recipe),
         );
       },
     );
@@ -385,7 +385,7 @@ class _RecipeListViewSection extends StatelessWidget {
             (recipe) => RecipeListCard(
               recipe: recipe,
               onMoreTap: () => _showMoreActions(context, recipe),
-              onTap: () => MyRecipesTab()._navigateToDetail(context, recipe),
+              onTap: () => const MyRecipesTab()._navigateToDetail(context, recipe),
             ),
           )
           .toList(),

@@ -23,6 +23,11 @@ import 'package:luvco_logo/screens/shopping/search_product_screen.dart';
 import 'package:luvco_logo/screens/account/account_settings_screen.dart';
 import 'package:luvco_logo/screens/favorites/favorites_screen.dart';
 import 'package:luvco_logo/screens/dashboard/user_dashboard_screen.dart';
+import 'package:luvco_logo/screens/dashboard/dashboard_search_product_screen.dart';
+import 'package:luvco_logo/screens/search_recipe/search_recipe_screen.dart';
+import 'package:luvco_logo/screens/product/product_detail_screen.dart';
+import 'package:luvco_logo/screens/scanner/barcode_scanner_screen.dart';
+import 'package:luvco_logo/models/product_model.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -127,6 +132,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/home',
         builder: (context, state) => const UserDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/dashboard-search',
+        builder: (context, state) => const DashboardSearchProductScreen(),
+      ),
+      GoRoute(
+        path: '/search-recipe',
+        builder: (context, state) => const SearchRecipeScreen(),
+      ),
+      GoRoute(
+        path: '/product-detail',
+        builder: (context, state) {
+          final product = state.extra as ProductModel;
+          return ProductDetailScreen(product: product);
+        },
+      ),
+      GoRoute(
+        path: '/barcode-scanner',
+        builder: (context, state) => const BarcodeScannerScreen(),
       ),
     ],
   );

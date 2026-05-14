@@ -31,11 +31,11 @@ class DashboardState {
 }
 
 // ── Demo data ─────────────────────────────────────────────────────
-final _demoState = DashboardState(
+const _demoState = DashboardState(
   username: 'Username',
   recommendedProducts: [
     RecommendedProduct(
-      product: const ProductModel(
+      product: ProductModel(
         id: 'p1',
         name: 'Name of the Product',
         description: 'Other data from the product.',
@@ -47,7 +47,7 @@ final _demoState = DashboardState(
       isGreenBadge: true,
     ),
     RecommendedProduct(
-      product: const ProductModel(
+      product: ProductModel(
         id: 'p2',
         name: 'Name of the Product',
         description: 'Other data from the product.',
@@ -64,14 +64,14 @@ final _demoState = DashboardState(
       id: 'rv1',
       title: 'Name of the Recipe',
       description: 'Other data from the recipe.',
-      imageUrl: 'assets/images/recipe1.png',
+      imageUrl: 'assets/images/cake_image.png',
       dietTags: ['Gluten Free', 'Label 01', 'Label 02'],
     ),
     RecipeModel(
       id: 'rv2',
       title: 'Name of the Recipe',
       description: 'Other data from the recipe.',
-      imageUrl: 'assets/images/recipe2.png',
+      imageUrl: 'assets/images/cake_image2.png',
       dietTags: ['Gluten Free', 'Label 01', 'Label 02'],
     ),
   ],

@@ -700,10 +700,10 @@ class _CoverPicturePicker extends StatelessWidget {
                     ? Image.asset(imagePath!, fit: BoxFit.cover)
                     : Image.file(File(imagePath!), fit: BoxFit.cover),
               )
-            : Column(
+            : const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.image_outlined,
                     size: 40,
                     color: AppColors.clearGrey,

@@ -84,6 +84,9 @@ flutter:
   - assets/icons/milk_icon.png
   - assets/icons/circle_check.png
   - assets/icons/microscope_icon.png
+  - assets/images/cake_image.png
+  - assets/images/cake_image2.png
+  - assets/icons/search_icon.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -229,10 +229,7 @@ class RecipeDetailScreen extends ConsumerWidget {
   ) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => ProviderScope(
-          parent: ProviderScope.containerOf(context),
-          child: _EditRecipeSheet(recipe: recipe),
-        ),
+        builder: (context) => _EditRecipeSheet(recipe: recipe),
       ),
     );
   }
@@ -1152,7 +1149,7 @@ class _MoreActionsOverlay extends StatelessWidget {
                     scale: scale,
                     onTap: onEdit,
                   ),
-                  Divider(height: 1, color: AppColors.clearGrey),
+                  const Divider(height: 1, color: AppColors.clearGrey),
                   _PopupItem(
                     label: 'Duplicate Recipe',
                     icon: Icons.copy_outlined,
@@ -1160,7 +1157,7 @@ class _MoreActionsOverlay extends StatelessWidget {
                     scale: scale,
                     onTap: onDuplicate,
                   ),
-                  Divider(height: 1, color: AppColors.clearGrey),
+                  const Divider(height: 1, color: AppColors.clearGrey),
                   _PopupItem(
                     label: 'Delete Recipe',
                     icon: Icons.delete_outline_rounded,

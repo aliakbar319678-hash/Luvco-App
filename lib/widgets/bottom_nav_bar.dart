@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import '../core/theme/app_colors.dart';
 
 // ── Active bottom nav index ───────────────────────────────────────
@@ -49,8 +50,10 @@ class LuvcoBottomNavBar extends ConsumerWidget {
                 label: 'Home',
                 isActive: currentIndex == 0,
                 scale: scale,
-                onTap: () =>
-                    ref.read(bottomNavIndexProvider.notifier).state = 0,
+                onTap: () {
+                  ref.read(bottomNavIndexProvider.notifier).state = 0;
+                  context.go('/home');
+                },
               ),
               _NavItem(
                 icon: Icons.search_rounded,
@@ -58,8 +61,10 @@ class LuvcoBottomNavBar extends ConsumerWidget {
                 label: 'Search',
                 isActive: currentIndex == 1,
                 scale: scale,
-                onTap: () =>
-                    ref.read(bottomNavIndexProvider.notifier).state = 1,
+                onTap: () {
+                  ref.read(bottomNavIndexProvider.notifier).state = 1;
+                  context.go('/dashboard-search');
+                },
               ),
             ],
           ),

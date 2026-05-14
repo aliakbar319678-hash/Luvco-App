@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../providers/dashboard_provider.dart';
-import '../../models/product_model.dart';
+
 import '../../models/recipe_model.dart';
 import '../../widgets/bottom_nav_bar.dart';
 
@@ -168,7 +168,7 @@ class _GreetingHeader extends StatelessWidget {
           Text(
             'Hi, $username!',
             style: GoogleFonts.inter(
-              fontSize: 22 * scale.clamp(0.85, 1.3),
+              fontSize: 24 * scale.clamp(0.85, 1.3),
               fontWeight: FontWeight.w700,
               color: AppColors.vibrantPink,
             ),
@@ -204,16 +204,16 @@ class _SectionTitle extends StatelessWidget {
           isAssetIcon
               ? Image.asset(
                   icon,
-                  width: 20 * scale.clamp(0.85, 1.2),
-                  height: 20 * scale.clamp(0.85, 1.2),
+                  width: 26 * scale.clamp(0.85, 1.3),
+                  height: 26 * scale.clamp(0.85, 1.3),
                   color: AppColors.black,
                 )
-              : Text(icon, style: TextStyle(fontSize: 16 * scale.clamp(0.85, 1.2))),
-          SizedBox(width: 8 * scale),
+              : Text(icon, style: TextStyle(fontSize: 24 * scale.clamp(0.85, 1.3))),
+          SizedBox(width: 10 * scale),
           Text(
             title,
             style: GoogleFonts.inter(
-              fontSize: 16 * scale.clamp(0.85, 1.2),
+              fontSize: 22 * scale.clamp(0.85, 1.3),
               fontWeight: FontWeight.w700,
               color: AppColors.black,
             ),
@@ -242,14 +242,14 @@ class _ExploreActionCards extends StatelessWidget {
             title: 'Search New Products',
             subtitle: 'Search products by name or brand',
             scale: scale,
-            onTap: () {},
+            onTap: () => context.push('/dashboard-search'),
           ),
           SizedBox(height: 10 * scale),
           _PurpleActionCard(
             title: 'Find New Recipe',
             subtitle: 'Search for a recipe by ingredient or diet type',
             scale: scale,
-            onTap: () {},
+            onTap: () => context.push('/search-recipe'),
           ),
         ],
       ),
@@ -278,7 +278,7 @@ class _PurpleActionCard extends StatelessWidget {
         width: double.infinity,
         padding: EdgeInsets.symmetric(
           horizontal: 20 * scale,
-          vertical: 26 * scale,
+          vertical: 38 * scale,
         ),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
@@ -304,16 +304,16 @@ class _PurpleActionCard extends StatelessWidget {
                   Text(
                     title,
                     style: GoogleFonts.inter(
-                      fontSize: 15 * scale.clamp(0.85, 1.2),
+                      fontSize: 16 * scale.clamp(0.85, 1.2),
                       fontWeight: FontWeight.w700,
                       color: AppColors.pureWhite,
                     ),
                   ),
-                  SizedBox(height: 2 * scale),
+                  SizedBox(height: 4 * scale),
                   Text(
                     subtitle,
                     style: GoogleFonts.inter(
-                      fontSize: 11 * scale.clamp(0.85, 1.2),
+                      fontSize: 13 * scale.clamp(0.85, 1.2),
                       fontWeight: FontWeight.w400,
                       color: AppColors.pureWhite.withValues(alpha: 0.8),
                     ),
@@ -353,7 +353,7 @@ class _QuickActionCards extends StatelessWidget {
               icon: Icons.qr_code_scanner_rounded,
               title: 'Scan the Barcode of a Product',
               scale: scale,
-              onTap: () {},
+              onTap: () => context.push('/barcode-scanner'),
             ),
           ),
           SizedBox(width: 10 * scale),
@@ -389,7 +389,7 @@ class _PinkQuickCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 150 * scale,
+        height: 180 * scale,
         padding: EdgeInsets.all(16 * scale),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
@@ -421,7 +421,7 @@ class _PinkQuickCard extends StatelessWidget {
             Text(
               title,
               style: GoogleFonts.inter(
-                fontSize: 14 * scale.clamp(0.85, 1.2),
+                fontSize: 15 * scale.clamp(0.85, 1.2),
                 fontWeight: FontWeight.w700,
                 color: AppColors.pureWhite,
                 height: 1.3,
@@ -491,7 +491,7 @@ class _RecommendedProductCard extends StatelessWidget {
           // ── Safe Badge ──
           Container(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 5 * scale),
+            padding: EdgeInsets.symmetric(vertical: 8 * scale),
             decoration: BoxDecoration(
               color: const Color(0xFF2DB34B),
               borderRadius: BorderRadius.only(
@@ -511,7 +511,7 @@ class _RecommendedProductCard extends StatelessWidget {
                 Text(
                   'Safe',
                   style: GoogleFonts.inter(
-                    fontSize: 11 * scale.clamp(0.85, 1.1),
+                    fontSize: 14 * scale.clamp(0.85, 1.2),
                     fontWeight: FontWeight.w700,
                     color: AppColors.pureWhite,
                   ),
@@ -523,7 +523,7 @@ class _RecommendedProductCard extends StatelessWidget {
           // ── Sustainability Badge ──
           Container(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 5 * scale),
+            padding: EdgeInsets.symmetric(vertical: 8 * scale),
             decoration: BoxDecoration(
               color: item.isGreenBadge
                   ? const Color(0xFF1E9E38)
@@ -543,7 +543,7 @@ class _RecommendedProductCard extends StatelessWidget {
                 Text(
                   item.sustainabilityLabel,
                   style: GoogleFonts.inter(
-                    fontSize: 10 * scale.clamp(0.85, 1.1),
+                    fontSize: 13 * scale.clamp(0.85, 1.2),
                     fontWeight: FontWeight.w600,
                     color: AppColors.pureWhite,
                   ),
@@ -553,11 +553,11 @@ class _RecommendedProductCard extends StatelessWidget {
           ),
 
           // ── Product Image ──
-          Padding(
-            padding: EdgeInsets.fromLTRB(10 * scale, 10 * scale, 10 * scale, 0),
-            child: Stack(
-              children: [
-                AspectRatio(
+          Stack(
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(32 * scale, 24 * scale, 32 * scale, 16 * scale),
+                child: AspectRatio(
                   aspectRatio: 1.0,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8 * scale),
@@ -571,43 +571,29 @@ class _RecommendedProductCard extends StatelessWidget {
                         : _ProductPlaceholder(scale: scale),
                   ),
                 ),
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: GestureDetector(
-                    onTap: () {},
-                    child: Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: AppColors.pureWhite.withValues(alpha: 0.9),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 4,
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.more_horiz,
-                        size: 14,
-                        color: AppColors.darkGrey,
-                      ),
-                    ),
+              ),
+              Positioned(
+                top: 12 * scale,
+                right: 12 * scale,
+                child: GestureDetector(
+                  onTap: () {},
+                  child: Icon(
+                    Icons.more_horiz,
+                    size: 24 * scale.clamp(0.85, 1.2),
+                    color: AppColors.black,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
 
           // ── Product Info ──
           Padding(
             padding: EdgeInsets.fromLTRB(
-              10 * scale,
-              8 * scale,
-              10 * scale,
-              12 * scale,
+              16 * scale,
+              4 * scale,
+              16 * scale,
+              24 * scale,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -615,18 +601,18 @@ class _RecommendedProductCard extends StatelessWidget {
                 Text(
                   item.product.name,
                   style: GoogleFonts.inter(
-                    fontSize: 12 * scale.clamp(0.85, 1.1),
+                    fontSize: 16 * scale.clamp(0.85, 1.2),
                     fontWeight: FontWeight.w700,
                     color: AppColors.black,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(height: 2 * scale),
+                SizedBox(height: 6 * scale),
                 Text(
                   item.product.description,
                   style: GoogleFonts.inter(
-                    fontSize: 10 * scale.clamp(0.85, 1.1),
+                    fontSize: 14 * scale.clamp(0.85, 1.2),
                     color: AppColors.darkGrey,
                   ),
                   maxLines: 2,
@@ -726,7 +712,7 @@ class _RecentRecipeCard extends StatelessWidget {
                     topRight: Radius.circular(16 * scale),
                   ),
                   child: AspectRatio(
-                    aspectRatio: 0.9,
+                    aspectRatio: 1.0,
                     child: recipe.imageUrl != null
                         ? Image.asset(
                             recipe.imageUrl!,
@@ -746,28 +732,14 @@ class _RecentRecipeCard extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  top: 6,
-                  right: 6,
+                  top: 12 * scale,
+                  right: 12 * scale,
                   child: GestureDetector(
                     onTap: () {},
-                    child: Container(
-                      width: 26,
-                      height: 26,
-                      decoration: BoxDecoration(
-                        color: AppColors.pureWhite.withValues(alpha: 0.9),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 4,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.more_horiz,
-                        size: 14,
-                        color: AppColors.darkGrey,
-                      ),
+                    child: Icon(
+                      Icons.more_horiz,
+                      size: 24 * scale.clamp(0.85, 1.2),
+                      color: AppColors.pureWhite,
                     ),
                   ),
                 ),
@@ -777,10 +749,10 @@ class _RecentRecipeCard extends StatelessWidget {
             // ── Info ──
             Padding(
               padding: EdgeInsets.fromLTRB(
-                10 * scale,
-                8 * scale,
-                10 * scale,
-                10 * scale,
+                16 * scale,
+                12 * scale,
+                16 * scale,
+                16 * scale,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -788,24 +760,24 @@ class _RecentRecipeCard extends StatelessWidget {
                   Text(
                     recipe.title,
                     style: GoogleFonts.inter(
-                      fontSize: 12 * scale.clamp(0.85, 1.1),
+                      fontSize: 16 * scale.clamp(0.85, 1.2),
                       fontWeight: FontWeight.w700,
                       color: AppColors.vibrantPink,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 2 * scale),
+                  SizedBox(height: 6 * scale),
                   Text(
                     recipe.description,
                     style: GoogleFonts.inter(
-                      fontSize: 10 * scale.clamp(0.85, 1.1),
+                      fontSize: 14 * scale.clamp(0.85, 1.2),
                       color: AppColors.darkGrey,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 6 * scale),
+                  SizedBox(height: 12 * scale),
                   // ── Diet Tags ──
                   Wrap(
                     spacing: 4,
@@ -834,16 +806,16 @@ class _DietTagChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 6 * scale, vertical: 2 * scale),
+      padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 4 * scale),
       decoration: BoxDecoration(
-        color: AppColors.softGrey,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.clearGrey, width: 0.8),
+        border: Border.all(color: AppColors.darkGrey.withValues(alpha: 0.5), width: 0.8),
       ),
       child: Text(
         label,
         style: GoogleFonts.inter(
-          fontSize: 9 * scale.clamp(0.85, 1.1),
+          fontSize: 11 * scale.clamp(0.85, 1.1),
           fontWeight: FontWeight.w500,
           color: AppColors.darkGrey,
         ),
