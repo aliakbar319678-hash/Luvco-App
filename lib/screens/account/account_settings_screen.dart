@@ -11,6 +11,7 @@ import '../../widgets/bottom_nav_bar.dart';
 import 'change_email_screen.dart';
 import 'help_support_screen.dart';
 import 'modify_name_screen.dart';
+import 'modify_password_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // Account Settings Screen — frame 1.6.0 → 1.6.23
@@ -479,6 +480,10 @@ class _AccountMenuList extends StatelessWidget {
       Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const ChangeEmailScreen()));
+    } else if (label == 'Password') {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const ModifyPasswordScreen()));
     } else if (label == 'Help & Support') {
       Navigator.of(
         context,

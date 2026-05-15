@@ -140,8 +140,8 @@ class _LuvcoEditListBottomSheetState extends State<LuvcoEditListBottomSheet> {
             height: 50,
             decoration: BoxDecoration(
               color: _hasTitle
-                  ? const Color(0xFFFFF0F5) // light pink background
-                  : const Color(0xFFFFF0F5).withValues(alpha: 0.5),
+                  ? AppColors.royalPurple
+                  : AppColors.faintPink,
               borderRadius: BorderRadius.circular(50),
             ),
             child: Material(
@@ -164,8 +164,8 @@ class _LuvcoEditListBottomSheetState extends State<LuvcoEditListBottomSheet> {
                       fontSize: 15 * scale.clamp(0.85, 1.2),
                       fontWeight: FontWeight.w600,
                       color: _hasTitle
-                          ? const Color(0xFFA39A9A) // slightly dark grayish pink
-                          : const Color(0xFFA39A9A).withValues(alpha: 0.5),
+                          ? AppColors.pureWhite
+                          : AppColors.lightRoyalPurple,
                     ),
                   ),
                 ),
@@ -300,18 +300,11 @@ class LuvcoDuplicateSuccessOverlay extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             // Double-check icon — green, matches Figma
-            Container(
+            Image.asset(
+              'assets/icons/done_icon.png',
               width: 76,
               height: 76,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Icon(
-                Icons.playlist_add_check_rounded,
-                color: Color(0xFF43A047),
-                size: 44,
-              ),
+              fit: BoxFit.contain,
             ),
 
             const SizedBox(height: 20),

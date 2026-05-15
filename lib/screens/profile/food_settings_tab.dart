@@ -94,10 +94,20 @@ class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
 
           const SizedBox(height: 20),
 
-          if (settings.isEmpty && !_expandedSections.values.any((e) => e))
-            _EmptyFoodSettingsState(scale: scale, size: size)
-          else
-            Column(
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.pureWhite,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.clearGrey.withValues(alpha: 0.6)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
               children: [
                 // ── Diet Choices accordion ──
                 _SettingsAccordionSection(
@@ -127,7 +137,7 @@ class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
 
                 // ── Food Challenges & Allergies accordion ──
                 _SettingsAccordionSection(
@@ -158,6 +168,7 @@ class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
                 ),
               ],
             ),
+          ),
         ],
       ),
     );
@@ -235,21 +246,8 @@ class _SettingsAccordionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.clearGrey.withValues(alpha: 0.6)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
+    return Column(
+      children: [
           // ── Header row: icon + title + +/× toggle ──
           GestureDetector(
             onTap: onToggle,
@@ -302,62 +300,7 @@ class _SettingsAccordionSection extends StatelessWidget {
             ),
           ],
         ],
-      ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Empty state — shown when no settings selected yet
-// ─────────────────────────────────────────────────────────────────
-class _EmptyFoodSettingsState extends StatelessWidget {
-  final double scale;
-  final Size size;
-
-  const _EmptyFoodSettingsState({required this.scale, required this.size});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: size.height * 0.06),
-      child: Column(
-        children: [
-          Center(
-            child: SizedBox(
-              width: 140 * scale,
-              height: 140 * scale,
-              child: Image.asset(
-                'assets/images/cutomer_pic.png',
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          Text(
-            'No food settings have\nbeen set yet.',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 16 * scale.clamp(0.85, 1.2),
-              fontWeight: FontWeight.w700,
-              color: AppColors.black,
-              height: 1.3,
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          Text(
-            'Choose Your Food Settings',
-            style: GoogleFonts.inter(
-              fontSize: 13 * scale.clamp(0.85, 1.2),
-              fontWeight: FontWeight.w500,
-              color: AppColors.neutralGrey,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

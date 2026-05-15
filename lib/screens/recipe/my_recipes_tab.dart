@@ -23,6 +23,17 @@ class MyRecipesTab extends ConsumerWidget {
     final viewMode = ref.watch(recipeViewModeProvider);
     final filterState = ref.watch(recipeFilterProvider);
 
+    var myFiltered = myRecipes;
+    var savedFiltered = savedRecipes;
+    if (filterState.dietFilters.isNotEmpty) {
+      myFiltered = myRecipes.where((r) {
+        return filterState.dietFilters.any((f) => r.dietTags.contains(f));
+      }).toList();
+      savedFiltered = savedRecipes.where((r) {
+        return filterState.dietFilters.any((f) => r.dietTags.contains(f));
+      }).toList();
+    }
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: size.width * 0.058),
       child: Column(
@@ -39,10 +50,18 @@ class MyRecipesTab extends ConsumerWidget {
             onFilterTap: () => _showFilterSheet(context, ref, filterState),
           ),
 
+          const SizedBox(height: 12),
+          _FilterRow(
+            scale: scale,
+            filterState: filterState,
+            onFilterIconTap: () => _showFilterSheet(context, ref, filterState),
+            onTagToggle: (tag) => ref.read(recipeFilterProvider.notifier).toggleDietFilter(tag),
+          ),
           const SizedBox(height: 16),
 
-          if (myRecipes.isEmpty)
+          if (myFiltered.isEmpty)
             _EmptyRecipeState(
+              imagePath: 'assets/images/cooking_recipe.png',
               message: 'You have not yet created\na recipe.',
               actionLabel: 'Create New Recipe',
               scale: scale,
@@ -50,10 +69,10 @@ class MyRecipesTab extends ConsumerWidget {
               onAction: () => _openEditRecipe(context, null),
             )
           else if (viewMode == RecipeViewMode.grid)
-            _RecipeGridView(recipes: myRecipes, ref: ref, isMyRecipes: true)
+            _RecipeGridView(recipes: myFiltered, ref: ref, isMyRecipes: true)
           else
             _RecipeListViewSection(
-              recipes: myRecipes,
+              recipes: myFiltered,
               ref: ref,
               isMyRecipes: true,
             ),
@@ -72,10 +91,18 @@ class MyRecipesTab extends ConsumerWidget {
             onFilterTap: () => _showFilterSheet(context, ref, filterState),
           ),
 
+          const SizedBox(height: 12),
+          _FilterRow(
+            scale: scale,
+            filterState: filterState,
+            onFilterIconTap: () => _showFilterSheet(context, ref, filterState),
+            onTagToggle: (tag) => ref.read(recipeFilterProvider.notifier).toggleDietFilter(tag),
+          ),
           const SizedBox(height: 16),
 
-          if (savedRecipes.isEmpty)
+          if (savedFiltered.isEmpty)
             _EmptyRecipeState(
+              imagePath: 'assets/images/cooking_saved.png',
               message: 'A recipe has not been\nsaved yet.',
               actionLabel: 'Look For Recipes',
               scale: scale,
@@ -83,10 +110,10 @@ class MyRecipesTab extends ConsumerWidget {
               onAction: () {},
             )
           else if (viewMode == RecipeViewMode.grid)
-            _RecipeGridView(recipes: savedRecipes, ref: ref, isMyRecipes: false)
+            _RecipeGridView(recipes: savedFiltered, ref: ref, isMyRecipes: false)
           else
             _RecipeListViewSection(
-              recipes: savedRecipes,
+              recipes: savedFiltered,
               ref: ref,
               isMyRecipes: false,
             ),
@@ -102,8 +129,10 @@ class MyRecipesTab extends ConsumerWidget {
     WidgetRef ref,
     RecipeFilterState filterState,
   ) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (_) => RecipeFilterSheet(
         initialSortBy: filterState.sortBy,
         initialDietFilters: filterState.dietFilters,
@@ -215,6 +244,7 @@ class _RecipeSectionHeader extends StatelessWidget {
 // Empty state
 // ─────────────────────────────────────────────────────────────────
 class _EmptyRecipeState extends StatelessWidget {
+  final String imagePath;
   final String message;
   final String actionLabel;
   final double scale;
@@ -222,6 +252,7 @@ class _EmptyRecipeState extends StatelessWidget {
   final VoidCallback onAction;
 
   const _EmptyRecipeState({
+    required this.imagePath,
     required this.message,
     required this.actionLabel,
     required this.scale,
@@ -239,7 +270,7 @@ class _EmptyRecipeState extends StatelessWidget {
             width: 110 * scale.clamp(0.85, 1.2),
             height: 110 * scale.clamp(0.85, 1.2),
             child: Image.asset(
-              'assets/images/home_cart_pic.png',
+              imagePath,
               fit: BoxFit.contain,
               errorBuilder: (_, __, ___) => Icon(
                 Icons.restaurant_menu_outlined,
@@ -424,6 +455,99 @@ class _RecipeListViewSection extends StatelessWidget {
                 ref.read(savedRecipesProvider.notifier).deleteRecipe(recipe.id);
               }
             },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Filter Row & Chips
+// ─────────────────────────────────────────────────────────────────
+class _FilterRow extends StatelessWidget {
+  final double scale;
+  final RecipeFilterState filterState;
+  final VoidCallback onFilterIconTap;
+  final Function(String) onTagToggle;
+
+  const _FilterRow({
+    required this.scale,
+    required this.filterState,
+    required this.onFilterIconTap,
+    required this.onTagToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: onFilterIconTap,
+            child: Icon(Icons.tune_rounded, size: 22 * scale, color: AppColors.black),
+          ),
+          SizedBox(width: 14 * scale),
+          _FilterChip(
+            label: 'See All',
+            isSelected: filterState.dietFilters.isEmpty,
+            scale: scale,
+            onTap: () => onTagToggle('See All'),
+          ),
+          SizedBox(width: 8 * scale),
+          _FilterChip(
+            label: 'Gluten Free',
+            isSelected: filterState.dietFilters.contains('Gluten Free'),
+            scale: scale,
+            onTap: () => onTagToggle('Gluten Free'),
+          ),
+          SizedBox(width: 8 * scale),
+          _FilterChip(
+            label: 'Dairy-Free',
+            isSelected: filterState.dietFilters.contains('Dairy-Free'),
+            scale: scale,
+            onTap: () => onTagToggle('Dairy-Free'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final double scale;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.scale,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 8 * scale),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.royalPurple : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppColors.royalPurple : AppColors.inputBorder,
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 13 * scale.clamp(0.85, 1.2),
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            color: isSelected ? AppColors.pureWhite : AppColors.darkGrey,
           ),
         ),
       ),

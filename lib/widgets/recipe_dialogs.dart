@@ -331,12 +331,21 @@ class _RecipeFilterSheetState extends State<RecipeFilterSheet> {
   Widget build(BuildContext context) {
     final scale = MediaQuery.sizeOf(context).width / 390;
 
-    return Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      insetPadding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 80),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+      ),
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 24,
+        bottom: 24 + MediaQuery.of(context).viewInsets.bottom,
+      ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -497,7 +506,6 @@ class _RecipeFilterSheetState extends State<RecipeFilterSheet> {
             ),
           ],
         ),
-      ),
     );
   }
 }

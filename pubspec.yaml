@@ -66,6 +66,8 @@ flutter:
   - assets/images/luvco_logo_pink.svg
   - assets/images/onboard_image.png
   - assets/images/bread_pic.png
+  - assets/images/cooking_saved.png
+  - assets/images/cooking_recipe.png
   - assets/images/profile_pic.png
   - assets/images/home_cart_pic.png
   - assets/icons/layout-grid.svg
