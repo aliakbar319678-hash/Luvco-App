@@ -350,47 +350,86 @@ class _RecipeMetaSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: 20 * scale,
-        vertical: 10 * scale,
+    return Container(
+      width: 375 * scale,
+      height: 157 * scale,
+      decoration: BoxDecoration(
+        color: AppColors.pureWhite,
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(32 * scale),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
+      padding: EdgeInsets.all(24 * scale),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title
-          Text(
-            recipe.title,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 24 * scale.clamp(0.85, 1.2),
-              fontWeight: FontWeight.w700,
-              color: AppColors.vibrantPink,
-            ),
+          // ── Title + Bookmark Row ────────────────────────────────
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      recipe.title,
+                      style: GoogleFonts.inter(
+                        fontSize: 22 * scale,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.vibrantPink,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Short description of the recipe.',
+                      style: GoogleFonts.inter(
+                        fontSize: 14 * scale,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.black,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Bookmark Button
+              Container(
+                width: 44 * scale,
+                height: 44 * scale,
+                decoration: BoxDecoration(
+                  color: AppColors.royalPurple,
+                  borderRadius: BorderRadius.circular(16 * scale),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.bookmark_border_rounded,
+                    color: AppColors.pureWhite,
+                    size: 20 * scale,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          // Description
-          Text(
-            'Short description of the recipe.',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 15 * scale.clamp(0.85, 1.2),
-              fontWeight: FontWeight.w400,
-              color: AppColors.darkGrey,
-            ),
-          ),
-          SizedBox(height: 20 * scale),
-          // Servings + Time row
+
+          const Spacer(), // Gap of 24px or flexible space
+
+          // ── Servings + Time row (Centered) ───────────────────────
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _MetaItem(
                 label: 'Servings',
                 value: '${recipe.servings}',
-                icon: Icons.restaurant_rounded,
+                icon: Icons.restaurant_menu_rounded,
                 scale: scale,
               ),
-              SizedBox(width: 54 * scale),
+              SizedBox(width: 50 * scale),
               _MetaItem(
                 label: 'Time',
                 value: '${recipe.timeMinutes} min',
@@ -559,7 +598,7 @@ class _OutlineChip extends StatelessWidget {
           Icon(
             Icons.hexagon_outlined,
             size: 18 * scale.clamp(0.85, 1.2),
-            color: AppColors.black,
+            color: Colors.black, // Black icon — matches Figma
           ),
           const SizedBox(height: 4),
           Text(
@@ -568,7 +607,7 @@ class _OutlineChip extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 11 * scale.clamp(0.85, 1.2),
               fontWeight: FontWeight.w500,
-              color: AppColors.darkGrey,
+              color: Colors.black, // Black label — matches Figma
             ),
           ),
         ],
@@ -914,7 +953,7 @@ class _ProductCard extends StatelessWidget {
       case 'Moderate Impact':
         return const Color(0xFFF59E0B);
       case 'Eco-Friendly':
-        return const Color(0xFF22C55E); // Vibrant Leaf Green
+        return const Color(0xFF22C55E);
       default:
         return AppColors.neutralGrey;
     }
@@ -925,7 +964,7 @@ class _ProductCard extends StatelessWidget {
       case 'Avoid':
         return const Color(0xFFF59E0B);
       case 'Safe':
-        return const Color(0xFF22C55E); // Vibrant Leaf Green
+        return const Color(0xFF22C55E);
       default:
         return AppColors.neutralGrey;
     }
@@ -933,157 +972,160 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ── ONE unified card — matches Figma exactly ─────────────────────
+    // Structure: rounded white card → top row has [Unsustainable tab | Safe tab]
+    //            → below: product image centered with heart icon overlay
     return Container(
       margin: EdgeInsets.only(bottom: 20 * scale),
-      child: Stack(
-        children: [
-          // ── Background Tabs (Touching with Notch) ──────────────────
-          Row(
-            children: [
-              // Sustainability Tab
-              Expanded(
-                child: Container(
-                  height: 60 * scale,
-                  decoration: BoxDecoration(
-                    color: _sustainabilityColor,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
-                    ),
-                  ),
-                  alignment: Alignment.topCenter,
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.eco_outlined, size: 16, color: Colors.white),
-                      const SizedBox(width: 6),
-                      Text(
-                        product.sustainabilityLevel,
-                        style: GoogleFonts.inter(
-                          fontSize: 12 * scale.clamp(0.85, 1.2),
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Safety Tab (No gap)
-              Expanded(
-                child: Container(
-                  height: 60 * scale,
-                  decoration: BoxDecoration(
-                    color: _safetyColor,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
-                    ),
-                  ),
-                  alignment: Alignment.topCenter,
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.flag_outlined, size: 16, color: Colors.white),
-                      const SizedBox(width: 6),
-                      Text(
-                        product.safetyLevel,
-                        style: GoogleFonts.inter(
-                          fontSize: 12 * scale.clamp(0.85, 1.2),
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+      decoration: BoxDecoration(
+        color: AppColors.pureWhite,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
           ),
-
-          // ── White Content Body ────────────────────────────────────
-          Padding(
-            padding: EdgeInsets.only(top: 38 * scale),
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.pureWhite,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 15,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              padding: EdgeInsets.all(16 * scale),
-              child: Row(
-                children: [
-                  // Product Image
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: SizedBox(
-                      width: 68 * scale,
-                      height: 68 * scale,
-                      child: product.imageAsset != null
-                          ? Image.asset(
-                              product.imageAsset!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                color: AppColors.faintPink,
-                                child: const Icon(Icons.image_outlined,
-                                    color: AppColors.vibrantPink),
-                              ),
-                            )
-                          : Container(
-                              color: AppColors.faintPink,
-                              child: const Icon(Icons.image_outlined,
-                                  color: AppColors.vibrantPink),
-                            ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          // ── Top Status Bar — two coloured tabs side by side ────────
+          IntrinsicHeight(
+            child: Row(
+              children: [
+                // Sustainability tab (left)
+                Expanded(
+                  child: Container(
+                    color: _sustainabilityColor,
+                    padding: EdgeInsets.symmetric(
+                      vertical: 10 * scale,
+                      horizontal: 8 * scale,
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  // Text Content
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          product.name,
-                          style: GoogleFonts.inter(
-                            fontSize: 15 * scale.clamp(0.85, 1.2),
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.black,
-                          ),
+                        const Icon(
+                          Icons.eco_outlined,
+                          size: 16,
+                          color: Colors.white,
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(width: 6),
                         Text(
-                          product.otherData,
+                          product.sustainabilityLevel,
                           style: GoogleFonts.inter(
-                            fontSize: 12 * scale.clamp(0.85, 1.2),
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.neutralGrey,
-                            height: 1.4,
+                            fontSize: 13 * scale.clamp(0.85, 1.2),
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  // Delete Button
-                  if (isOwner && onDelete != null)
-                    IconButton(
-                      onPressed: onDelete,
-                      icon: Icon(
+                ),
+                // Safety tab (right)
+                Expanded(
+                  child: Container(
+                    color: _safetyColor,
+                    padding: EdgeInsets.symmetric(
+                      vertical: 10 * scale,
+                      horizontal: 8 * scale,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.flag_outlined,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          product.safetyLevel,
+                          style: GoogleFonts.inter(
+                            fontSize: 13 * scale.clamp(0.85, 1.2),
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Product image area with heart icon ─────────────────────
+          Stack(
+            children: [
+              // White background + centered product image
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  vertical: 20 * scale,
+                  horizontal: 16 * scale,
+                ),
+                color: AppColors.pureWhite,
+                child: Center(
+                  child: SizedBox(
+                    height: 160 * scale,
+                    child: product.imageAsset != null
+                        ? Image.asset(
+                            product.imageAsset!,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.image_outlined,
+                              size: 64 * scale,
+                              color: AppColors.clearGrey,
+                            ),
+                          )
+                        : Icon(
+                            Icons.image_outlined,
+                            size: 64 * scale,
+                            color: AppColors.clearGrey,
+                          ),
+                  ),
+                ),
+              ),
+
+              // Heart icon — top-right overlay
+              Positioned(
+                top: 12 * scale,
+                right: 14 * scale,
+                child: GestureDetector(
+                  onTap: () {},
+                  child: Icon(
+                    Icons.favorite_border_rounded,
+                    size: 24 * scale.clamp(0.85, 1.2),
+                    color: AppColors.black,
+                  ),
+                ),
+              ),
+
+              // Delete button — top-left, only for owners
+              if (isOwner && onDelete != null)
+                Positioned(
+                  top: 8 * scale,
+                  left: 8 * scale,
+                  child: GestureDetector(
+                    onTap: onDelete,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
                         Icons.delete_outline_rounded,
-                        size: 24 * scale.clamp(0.85, 1.2),
-                        color: AppColors.black.withValues(alpha: 0.6),
+                        size: 20 * scale.clamp(0.85, 1.2),
+                        color: Colors.red,
                       ),
                     ),
-                ],
-              ),
-            ),
+                  ),
+                ),
+            ],
           ),
         ],
       ),

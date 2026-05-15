@@ -186,17 +186,17 @@ class _ProductDetailSheetState extends State<_ProductDetailSheet> {
                                               width: 18 * scale.clamp(0.85, 1.2),
                                               height: 18 * scale.clamp(0.85, 1.2),
                                               color: Colors.white,
-                                              errorBuilder: (_, __, ___) => const Icon(
+                                              errorBuilder: (_, __, ___) => Icon(
                                                 Icons.recycling_outlined,
                                                 color: Colors.white,
-                                                size: 18,
+                                                size: 16 * scale.clamp(0.85, 1.2),
                                               ),
                                             ),
                                             const SizedBox(width: 8),
                                             Text(
                                               'Unsustainable',
                                               style: GoogleFonts.inter(
-                                                fontSize: 13 * scale.clamp(0.85, 1.2),
+                                                fontSize: 11 * scale.clamp(0.85, 1.2),
                                                 fontWeight: FontWeight.w600,
                                                 color: Colors.white,
                                               ),
@@ -221,13 +221,13 @@ class _ProductDetailSheetState extends State<_ProductDetailSheet> {
                                             Icon(
                                               Icons.flag_outlined,
                                               color: Colors.white,
-                                              size: 18 * scale.clamp(0.85, 1.2),
+                                              size: 16 * scale.clamp(0.85, 1.2),
                                             ),
                                             const SizedBox(width: 8),
                                             Text(
                                               'Safe',
                                               style: GoogleFonts.inter(
-                                                fontSize: 13 * scale.clamp(0.85, 1.2),
+                                                fontSize: 11 * scale.clamp(0.85, 1.2),
                                                 fontWeight: FontWeight.w600,
                                                 color: Colors.white,
                                               ),

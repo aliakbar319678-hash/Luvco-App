@@ -52,7 +52,7 @@ class LuvcoBottomNavBar extends ConsumerWidget {
                 scale: scale,
                 onTap: () {
                   ref.read(bottomNavIndexProvider.notifier).state = 0;
-                  context.go('/home');
+                  context.go('/profile');
                 },
               ),
               _NavItem(
@@ -63,7 +63,7 @@ class LuvcoBottomNavBar extends ConsumerWidget {
                 scale: scale,
                 onTap: () {
                   ref.read(bottomNavIndexProvider.notifier).state = 1;
-                  context.go('/dashboard-search');
+                  context.go('/home');
                 },
               ),
             ],

@@ -89,7 +89,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   // ── Navigation listener ───────────────────────────────────────────────────
   void _listenToSplashState(SplashStatus status) {
     if (status == SplashStatus.done && mounted) {
-      context.go('/home');
+      context.go('/login');
     }
   }
 

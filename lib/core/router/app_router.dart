@@ -144,7 +144,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/product-detail',
         builder: (context, state) {
-          final product = state.extra as ProductModel;
+          final product = state.extra is ProductModel
+              ? state.extra as ProductModel
+              : ProductModel.demo();
           return ProductDetailScreen(product: product);
         },
       ),

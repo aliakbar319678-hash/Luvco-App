@@ -23,7 +23,7 @@ class SearchRecipeScreen extends ConsumerStatefulWidget {
 class _SearchRecipeScreenState extends ConsumerState<SearchRecipeScreen> {
   final _searchController = TextEditingController();
   final _focusNode = FocusNode();
-  
+
   @override
   void initState() {
     super.initState();
@@ -84,7 +84,12 @@ class _SearchRecipeScreenState extends ConsumerState<SearchRecipeScreen> {
                           onItemTap: notifier.openQuickView,
                           onMoreTap: notifier.showMoreActionsFor,
                         )
-                      : _EmptyState(scale: scale),
+                      : SingleChildScrollView(
+                          padding: EdgeInsets.only(
+                            bottom: padding.bottom + 100,
+                          ),
+                          child: _EmptyState(scale: scale),
+                        ),
                 ),
               ],
             ),
@@ -109,28 +114,6 @@ class _SearchRecipeScreenState extends ConsumerState<SearchRecipeScreen> {
                   notifier.closeQuickView();
                   final detail = _recipeToDetail(state.selectedRecipe!);
                   context.push('/recipe-detail', extra: detail);
-                },
-              ),
-
-            // ── More Actions Popup ──
-            if (state.showMoreActions && state.moreActionsRecipeId != null)
-              _MoreActionsPopup(
-                recipeId: state.moreActionsRecipeId!,
-                scale: scale,
-                size: size,
-                onDismiss: notifier.hideMoreActions,
-                onSeeMore: () {
-                  notifier.hideMoreActions();
-                  final recipe = state.results.firstWhere(
-                    (r) => r.id == state.moreActionsRecipeId,
-                    orElse: () => state.results.first,
-                  );
-                  final detail = _recipeToDetail(recipe);
-                  context.push('/recipe-detail', extra: detail);
-                },
-                onSave: () {
-                  notifier.toggleSave(state.moreActionsRecipeId!);
-                  notifier.hideMoreActions();
                 },
               ),
           ],
@@ -216,70 +199,101 @@ class _SearchHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.pureWhite,
-      padding: EdgeInsets.only(
-        top: padding.top + 8,
-        left: 16 * scale,
-        right: 16 * scale,
-        bottom: 12 * scale,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Back + Title row
-          Row(
-            children: [
-              GestureDetector(
-                onTap: () => Navigator.of(context).maybePop(),
-                child: Icon(
-                  Icons.chevron_left,
-                  size: 28 * scale,
-                  color: AppColors.vibrantPink,
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Header Title Box (121px height) ──────────────────────
+        Container(
+          width: double.infinity,
+          height: 121 * scale + padding.top,
+          decoration: BoxDecoration(
+            color: AppColors.pureWhite,
+            borderRadius: BorderRadius.vertical(
+              bottom: Radius.circular(32 * scale),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-              Expanded(
-                child: Center(
-                  child: Text(
-                    'Search Recipe',
-                    style: GoogleFonts.inter(
-                      fontSize: 18 * scale,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.vibrantPink,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 28 * scale),
             ],
           ),
-          SizedBox(height: 12 * scale),
+          padding: EdgeInsets.only(top: padding.top),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).maybePop(),
+                      child: Icon(
+                        Icons.chevron_left,
+                        size: 28 * scale,
+                        color: AppColors.vibrantPink,
+                      ),
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          'Search Recipe',
+                          style: GoogleFonts.inter(
+                            fontSize: 18 * scale,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.vibrantPink,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 28 * scale),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
 
-          // Search bar row
-          Row(
+        // ── Search Bar Section (Figma top: 153px) ────────────────
+        // (121 + 32 = 153 gap)
+        SizedBox(height: 32 * scale),
+
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+          child: Row(
             children: [
               Expanded(
                 child: Container(
-                  height: 48 * scale,
+                  height: 50 * scale,
                   decoration: BoxDecoration(
                     color: AppColors.pureWhite,
-                    borderRadius: BorderRadius.circular(12 * scale),
+                    borderRadius: BorderRadius.circular(18 * scale),
                     border: Border.all(
                       color: query.isNotEmpty
-                          ? AppColors.vibrantPink
+                          ? AppColors.royalPurple
                           : AppColors.inputBorder,
-                      width: 1.2,
+                      width: 1.4,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
-                      SizedBox(width: 12 * scale),
+                      SizedBox(width: 14 * scale),
                       Icon(
                         Icons.search,
                         size: 20 * scale,
-                        color: AppColors.vibrantPink,
+                        color: query.isNotEmpty
+                            ? AppColors.royalPurple
+                            : AppColors.neutralGrey,
                       ),
-                      SizedBox(width: 8 * scale),
+                      SizedBox(width: 10 * scale),
                       Expanded(
                         child: TextField(
                           controller: controller,
@@ -310,16 +324,14 @@ class _SearchHeader extends StatelessWidget {
                             color: AppColors.neutralGrey,
                           ),
                         ),
-                        SizedBox(width: 10 * scale),
+                        SizedBox(width: 12 * scale),
                       ],
                     ],
                   ),
                 ),
               ),
-
-              // Filter button — only visible when searching
               if (query.isNotEmpty) ...[
-                SizedBox(width: 10 * scale),
+                SizedBox(width: 12 * scale),
                 GestureDetector(
                   onTap: onFilterTap,
                   child: Row(
@@ -344,8 +356,9 @@ class _SearchHeader extends StatelessWidget {
               ],
             ],
           ),
-        ],
-      ),
+        ),
+        SizedBox(height: 12 * scale),
+      ],
     );
   }
 }
@@ -359,37 +372,37 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Illustration
-          SizedBox(
-            width: 180 * scale,
-            height: 180 * scale,
-            child: Image.asset(
-              'assets/images/search_recipe_empty.png',
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => Icon(
-                Icons.restaurant_menu_outlined,
-                size: 100 * scale,
-                color: AppColors.clearGrey,
-              ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(height: 60 * scale),
+        // Illustration
+        SizedBox(
+          width: 200 * scale,
+          height: 200 * scale,
+          child: Image.asset(
+            'assets/images/search_image.png',
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => Icon(
+              Icons.restaurant_menu_outlined,
+              size: 100 * scale,
+              color: AppColors.clearGrey,
             ),
           ),
-          SizedBox(height: 16 * scale),
-          Text(
-            'Search for a recipe by\ningredient or diet type',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 15 * scale,
-              fontWeight: FontWeight.w500,
-              color: AppColors.darkGrey,
-              height: 1.5,
-            ),
+        ),
+        SizedBox(height: 24 * scale),
+        Text(
+          'Search for a recipe by\ningredient or diet type',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(
+            fontSize: 18 * scale,
+            fontWeight: FontWeight.w700,
+            color: AppColors.black,
+            height: 1.3,
           ),
-        ],
-      ),
+        ),
+        SizedBox(height: 60 * scale),
+      ],
     );
   }
 }
@@ -417,29 +430,31 @@ class _ResultsList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Results label
-        Padding(
-          padding: EdgeInsets.fromLTRB(
-            16 * scale,
-            16 * scale,
-            16 * scale,
-            8 * scale,
-          ),
-          child: Text(
-            'Results',
-            style: GoogleFonts.inter(
-              fontSize: 16 * scale,
-              fontWeight: FontWeight.w700,
-              color: AppColors.black,
-            ),
+        // ── "Results" label + Filter icon row ────────────────────
+        Container(
+          color: AppColors.pageBackground,
+          padding: EdgeInsets.fromLTRB(16 * scale, 0, 16 * scale, 10 * scale),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Results',
+                style: GoogleFonts.inter(
+                  fontSize: 16 * scale,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.black,
+                ),
+              ),
+            ],
           ),
         ),
 
+        // ── Scrollable cards ─────────────────────────────────────
         Expanded(
           child: ListView.separated(
             padding: EdgeInsets.fromLTRB(
               16 * scale,
-              0,
+              4 * scale,
               16 * scale,
               100 * scale,
             ),
@@ -449,7 +464,8 @@ class _ResultsList extends StatelessWidget {
               recipe: results[i],
               scale: scale,
               onTap: () => onItemTap(results[i]),
-              onMoreTap: () => onMoreTap(results[i].id),
+              onSeeMore: () => onMoreTap(results[i].id),
+              onSave: () {}, // This will be handled in screen via notifier
             ),
           ),
         ),
@@ -461,21 +477,23 @@ class _ResultsList extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════
 // Recipe Card  (reused in results list)
 // ═══════════════════════════════════════════════════════════════
-class _RecipeCard extends StatelessWidget {
+class _RecipeCard extends ConsumerWidget {
   final RecipeModel recipe;
   final double scale;
   final VoidCallback onTap;
-  final VoidCallback onMoreTap;
+  final VoidCallback onSeeMore;
+  final VoidCallback onSave;
 
   const _RecipeCard({
     required this.recipe,
     required this.scale,
     required this.onTap,
-    required this.onMoreTap,
+    required this.onSeeMore,
+    required this.onSave,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -542,16 +560,53 @@ class _RecipeCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      GestureDetector(
-                        onTap: onMoreTap,
-                        behavior: HitTestBehavior.opaque,
-                        child: Padding(
-                          padding: EdgeInsets.only(left: 8 * scale),
-                          child: Icon(
+                      Theme(
+                        data: Theme.of(context).copyWith(
+                          hoverColor: Colors.transparent,
+                          splashColor: Colors.transparent,
+                          highlightColor: Colors.transparent,
+                        ),
+                        child: PopupMenuButton<int>(
+                          icon: Icon(
                             Icons.more_horiz,
                             size: 20 * scale,
                             color: AppColors.darkGrey,
                           ),
+                          offset: const Offset(0, 30),
+                          elevation: 8,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12 * scale),
+                          ),
+                          color: AppColors.pureWhite,
+                          onSelected: (val) {
+                            if (val == 0) onSeeMore();
+                            if (val == 1) {
+                              ref
+                                  .read(searchRecipeProvider.notifier)
+                                  .toggleSave(recipe.id);
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            PopupMenuItem<int>(
+                              value: 0,
+                              height: 48 * scale,
+                              child: _PopupItemRow(
+                                label: 'See More Details',
+                                icon: Icons.remove_red_eye_outlined,
+                                scale: scale,
+                              ),
+                            ),
+                            const PopupMenuDivider(height: 1),
+                            PopupMenuItem<int>(
+                              value: 1,
+                              height: 48 * scale,
+                              child: _PopupItemRow(
+                                label: 'Save Recipe',
+                                icon: Icons.bookmark_border,
+                                scale: scale,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -599,7 +654,7 @@ class _RecipeCard extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Quick View Modal  (frame 2.0.10)
+// Quick View Modal — fixed: centered title, 310×221 card, clean labels
 // ═══════════════════════════════════════════════════════════════
 class _QuickViewModal extends StatelessWidget {
   final RecipeModel recipe;
@@ -618,213 +673,288 @@ class _QuickViewModal extends StatelessWidget {
     required this.onSeeMore,
   });
 
+  // Strips any trailing numbers/spaces from tag label
+  // e.g. "Label 01" → "Label", "Gluten Free" → "Gluten Free"
+  String _cleanLabel(String raw) {
+    // Remove trailing space+digits pattern like " 01", " 02", " 1" etc.
+    return raw.replaceAll(RegExp(r'\s+\d+$'), '').trim();
+  }
+
   @override
   Widget build(BuildContext context) {
+    // 310px card width at 390px base → proportional to screen
+    final cardWidth = 310.0 * scale;
+    final cardHeight = 221.0 * scale;
+    final cardRadius = 18.0 * scale;
+
     return GestureDetector(
       onTap: onClose,
       child: Container(
         color: Colors.black.withValues(alpha: 0.45),
-        child: Center(
-          child: GestureDetector(
-            onTap: () {}, // prevent dismiss when tapping inside
-            child: Container(
-              margin: EdgeInsets.symmetric(horizontal: 16 * scale),
-              constraints: BoxConstraints(maxWidth: 380 * scale),
-              decoration: BoxDecoration(
-                color: AppColors.pureWhite,
-                borderRadius: BorderRadius.circular(16 * scale),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // ── Top bar with close ──
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      16 * scale,
-                      12 * scale,
-                      8 * scale,
-                      0,
+        alignment: Alignment.center,
+        child: GestureDetector(
+          onTap: () {},
+          child: Container(
+            // modal itself is slightly wider than card to give padding
+            margin: EdgeInsets.symmetric(
+              horizontal: 20 * scale,
+              vertical: 36 * scale,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.pureWhite,
+              borderRadius: BorderRadius.circular(24 * scale),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24 * scale),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // ── Close button ──────────────────────────────
+                    Padding(
+                      padding: EdgeInsets.only(
+                        top: 14 * scale,
+                        right: 14 * scale,
+                      ),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: GestureDetector(
+                          onTap: onClose,
+                          child: Icon(
+                            Icons.close_rounded,
+                            size: 22 * scale,
+                            color: AppColors.black,
+                          ),
+                        ),
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
+
+                    // ── Title & Description — CENTERED ────────────
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        16 * scale,
+                        2 * scale,
+                        16 * scale,
+                        0,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            recipe.title,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.inter(
+                              fontSize: 20 * scale,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.vibrantPink,
+                            ),
+                          ),
+                          SizedBox(height: 3 * scale),
+                          Text(
+                            recipe.description,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.inter(
+                              fontSize: 13 * scale,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.darkGrey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: 16 * scale),
+
+                    // ── 310 × 221 rounded card (image + meta) ─────
+                    Center(
+                      child: Container(
+                        width: cardWidth,
+                        height: cardHeight,
+                        decoration: BoxDecoration(
+                          color: AppColors.pureWhite,
+                          borderRadius: BorderRadius.circular(cardRadius),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 14,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(cardRadius),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                recipe.title,
-                                style: GoogleFonts.inter(
-                                  fontSize: 18 * scale,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.vibrantPink,
+                              // ── Recipe image (top ~145 / 221 of card) ──
+                              Expanded(
+                                flex: 145,
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: recipe.imageUrl != null
+                                      ? Image.asset(
+                                          recipe.imageUrl!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              Container(
+                                                color: AppColors.softGrey,
+                                                child: Icon(
+                                                  Icons.image_outlined,
+                                                  color: AppColors.clearGrey,
+                                                  size: 36 * scale,
+                                                ),
+                                              ),
+                                        )
+                                      : Container(
+                                          color: AppColors.softGrey,
+                                          child: Icon(
+                                            Icons.image_outlined,
+                                            color: AppColors.clearGrey,
+                                            size: 36 * scale,
+                                          ),
+                                        ),
                                 ),
                               ),
-                              SizedBox(height: 2 * scale),
-                              Text(
-                                recipe.description,
-                                style: GoogleFonts.inter(
-                                  fontSize: 13 * scale,
-                                  color: AppColors.darkGrey,
+
+                              // ── Servings & Time (bottom ~76 / 221) ──
+                              Expanded(
+                                flex: 76,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    _MetaItem(
+                                      label: 'Servings',
+                                      icon: Icons.restaurant_rounded,
+                                      value: '${recipe.servings}',
+                                      scale: scale,
+                                    ),
+                                    SizedBox(width: 44 * scale),
+                                    _MetaItem(
+                                      label: 'Time',
+                                      icon: Icons.access_time_rounded,
+                                      value: '${recipe.timeOfPreparation} min',
+                                      scale: scale,
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.close,
-                            size: 22 * scale,
-                            color: AppColors.darkGrey,
-                          ),
-                          onPressed: onClose,
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
 
-                  // ── Recipe image ──
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16 * scale,
-                      vertical: 8 * scale,
+                    SizedBox(height: 16 * scale),
+
+                    // ── Diet Types ────────────────────────────────
+                    _QuickTagSection(
+                      title: 'Diet Types',
+                      tags: recipe.dietTags.isNotEmpty
+                          ? recipe.dietTags.map(_cleanLabel).toList()
+                          : ['Label', 'Label', 'Label', 'Label'],
+                      scale: scale,
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12 * scale),
+
+                    SizedBox(height: 12 * scale),
+
+                    // ── Free of Ingredients ───────────────────────
+                    _QuickTagSection(
+                      title: 'Free of Ingredients',
+                      tags: recipe.freeOfIngredients.isNotEmpty
+                          ? recipe.freeOfIngredients.map(_cleanLabel).toList()
+                          : ['Label', 'Label', 'Label', 'Label'],
+                      scale: scale,
+                    ),
+
+                    SizedBox(height: 22 * scale),
+
+                    // ── Save Recipe Button ────────────────────────
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
                       child: SizedBox(
                         width: double.infinity,
-                        height: 160 * scale,
-                        child: recipe.imageUrl != null
-                            ? Image.asset(
-                                recipe.imageUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
-                                  color: AppColors.softGrey,
-                                  child: Icon(
-                                    Icons.image,
-                                    color: AppColors.clearGrey,
-                                    size: 48 * scale,
-                                  ),
-                                ),
-                              )
-                            : Container(color: AppColors.softGrey),
-                      ),
-                    ),
-                  ),
-
-                  // ── Servings & Time ──
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16 * scale),
-                    child: Row(
-                      children: [
-                        _InfoChip(
-                          icon: Icons.fork_right,
-                          label: 'Servings',
-                          value: '${recipe.servings}',
-                          scale: scale,
-                          color: AppColors.vibrantPink,
-                        ),
-                        SizedBox(width: 24 * scale),
-                        _InfoChip(
-                          icon: Icons.access_time,
-                          label: 'Time',
-                          value: '${recipe.timeOfPreparation} min',
-                          scale: scale,
-                          color: AppColors.vibrantPink,
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  SizedBox(height: 10 * scale),
-
-                  // ── Diet Types ──
-                  _LabelSection(
-                    title: 'Diet Types',
-                    labels: recipe.dietTags,
-                    scale: scale,
-                  ),
-
-                  // ── Free of Ingredients ──
-                  _LabelSection(
-                    title: 'Free of Ingredients',
-                    labels: recipe.freeOfIngredients,
-                    scale: scale,
-                  ),
-
-                  SizedBox(height: 12 * scale),
-
-                  // ── Save Recipe Button ──
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16 * scale),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 48 * scale,
-                      child: ElevatedButton.icon(
-                        onPressed: onSave,
-                        icon: Icon(
-                          Icons.bookmark_border,
-                          size: 18 * scale,
-                          color: AppColors.pureWhite,
-                        ),
-                        label: Text(
-                          'Save Recipe',
-                          style: GoogleFonts.inter(
-                            fontSize: 15 * scale,
-                            fontWeight: FontWeight.w600,
+                        height: 50 * scale,
+                        child: ElevatedButton.icon(
+                          onPressed: onSave,
+                          icon: Icon(
+                            Icons.bookmark_border_rounded,
+                            size: 20 * scale,
                             color: AppColors.pureWhite,
                           ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.royalPurple,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12 * scale),
+                          label: Text(
+                            'Save Recipe',
+                            style: GoogleFonts.inter(
+                              fontSize: 15 * scale,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.pureWhite,
+                            ),
                           ),
-                          elevation: 0,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 8 * scale),
-
-                  // ── See More Details Button ──
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16 * scale),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 48 * scale,
-                      child: OutlinedButton(
-                        onPressed: onSeeMore,
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.royalPurple),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12 * scale),
-                          ),
-                        ),
-                        child: Text(
-                          'See More Details',
-                          style: GoogleFonts.inter(
-                            fontSize: 15 * scale,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.royalPurple,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.royalPurple,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                            elevation: 0,
                           ),
                         ),
                       ),
                     ),
-                  ),
 
-                  SizedBox(height: 12 * scale),
+                    SizedBox(height: 10 * scale),
 
-                  // ── Swipe hint ──
-                  Text(
-                    'Swipe up to see similar',
-                    style: GoogleFonts.inter(
-                      fontSize: 12 * scale,
-                      color: AppColors.neutralGrey,
+                    // ── See More Details Button ───────────────────
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 50 * scale,
+                        child: OutlinedButton(
+                          onPressed: onSeeMore,
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(
+                              color: AppColors.royalPurple,
+                              width: 1.5,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                          ),
+                          child: Text(
+                            'See More Details',
+                            style: GoogleFonts.inter(
+                              fontSize: 15 * scale,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.royalPurple,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 12 * scale),
-                ],
+
+                    SizedBox(height: 12 * scale),
+
+                    // ── Swipe hint — centered ─────────────────────
+                    Center(
+                      child: Text(
+                        'Swipe up to see similar',
+                        style: GoogleFonts.inter(
+                          fontSize: 12 * scale,
+                          color: AppColors.neutralGrey,
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: 14 * scale),
+                  ],
+                ),
               ),
             ),
           ),
@@ -834,123 +964,250 @@ class _QuickViewModal extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// More Actions Popup  (frame 2.0.11)
-// ═══════════════════════════════════════════════════════════════
-class _MoreActionsPopup extends StatelessWidget {
-  final String recipeId;
+// ── Quick tag section ─────────────────────────────────────────────
+class _QuickTagSection extends StatelessWidget {
+  final String title;
+  final List<String> tags;
   final double scale;
-  final Size size;
-  final VoidCallback onDismiss;
-  final VoidCallback onSeeMore;
-  final VoidCallback onSave;
 
-  const _MoreActionsPopup({
-    required this.recipeId,
+  const _QuickTagSection({
+    required this.title,
+    required this.tags,
     required this.scale,
-    required this.size,
-    required this.onDismiss,
-    required this.onSeeMore,
-    required this.onSave,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onDismiss,
-      child: Container(
-        color: Colors.transparent,
-        child: Align(
-          alignment: Alignment.centerRight,
-          child: Padding(
-            padding: EdgeInsets.only(right: 16 * scale, top: 100 * scale),
-            child: GestureDetector(
-              onTap: () {},
-              child: Container(
-                width: 190 * scale,
-                decoration: BoxDecoration(
-                  color: AppColors.pureWhite,
-                  borderRadius: BorderRadius.circular(12 * scale),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.12),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _PopupItem(
-                      icon: Icons.remove_red_eye_outlined,
-                      label: 'See More Details',
-                      scale: scale,
-                      onTap: onSeeMore,
-                    ),
-                    const Divider(height: 1, color: AppColors.clearGrey),
-                    _PopupItem(
-                      icon: Icons.bookmark_border,
-                      label: 'Save Recipe',
-                      scale: scale,
-                      onTap: onSave,
-                    ),
-                  ],
-                ),
-              ),
+    // Always exactly 4 slots
+    final display = List.generate(
+      4,
+      (i) => i < tags.length ? tags[i] : 'Label',
+    );
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: 15 * scale,
+              fontWeight: FontWeight.w700,
+              color: AppColors.black,
             ),
           ),
-        ),
+          SizedBox(height: 10 * scale),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: display
+                .map((tag) => _QuickPillTag(label: tag, scale: scale))
+                .toList(),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _PopupItem extends StatelessWidget {
-  final IconData icon;
+// ── Single pill tag — circle + label below ────────────────────────
+class _QuickPillTag extends StatelessWidget {
   final String label;
   final double scale;
-  final VoidCallback onTap;
 
-  const _PopupItem({
-    required this.icon,
-    required this.label,
-    required this.scale,
-    required this.onTap,
-  });
+  const _QuickPillTag({required this.label, required this.scale});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12 * scale),
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: 14 * scale,
-          vertical: 14 * scale,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 14 * scale,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.black,
+    final circleSize = 52.0 * scale;
+
+    return SizedBox(
+      width: circleSize,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: circleSize,
+            height: circleSize,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.pureWhite,
+              border: Border.all(color: AppColors.clearGrey, width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
                 ),
+              ],
+            ),
+            child: Center(
+              child: Icon(
+                Icons.hexagon_outlined,
+                size: 20 * scale,
+                color: AppColors.black,
               ),
             ),
-            Icon(icon, size: 18 * scale, color: AppColors.darkGrey),
-          ],
-        ),
+          ),
+          SizedBox(height: 5 * scale),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 11 * scale,
+              fontWeight: FontWeight.w500,
+              color: AppColors.black,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
+// ── Quick view tag section (Diet Types / Free of Ingredients) ──────
+// // Small circles in a row of 4 — exactly like Figma screenshot
+// class _QuickTagSection extends StatelessWidget {
+//   final String title;
+//   final List<String> tags;
+//   final double scale;
+
+//   const _QuickTagSection({
+//     required this.title,
+//     required this.tags,
+//     required this.scale,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     // Always show exactly 4 slots
+//     final displayTags = List.generate(
+//       4,
+//       (i) => i < tags.length ? tags[i] : 'Label',
+//     );
+
+//     return Padding(
+//       padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Text(
+//             title,
+//             style: GoogleFonts.inter(
+//               fontSize: 15 * scale,
+//               fontWeight: FontWeight.w700,
+//               color: AppColors.black,
+//             ),
+//           ),
+//           SizedBox(height: 10 * scale),
+//           Row(
+//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//             children: displayTags
+//                 .map((tag) => _QuickPillTag(label: tag, scale: scale))
+//                 .toList(),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
+// // ── Single pill tag — small circle with icon + label below ─────────
+// class _QuickPillTag extends StatelessWidget {
+//   final String label;
+//   final double scale;
+
+//   const _QuickPillTag({required this.label, required this.scale});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final circleSize = 54.0 * scale;
+
+//     return SizedBox(
+//       width: circleSize,
+//       child: Column(
+//         mainAxisSize: MainAxisSize.min,
+//         children: [
+//           Container(
+//             width: circleSize,
+//             height: circleSize,
+//             decoration: BoxDecoration(
+//               shape: BoxShape.circle,
+//               color: AppColors.pureWhite,
+//               border: Border.all(color: AppColors.clearGrey, width: 1.2),
+//               boxShadow: [
+//                 BoxShadow(
+//                   color: Colors.black.withValues(alpha: 0.04),
+//                   blurRadius: 4,
+//                   offset: const Offset(0, 1),
+//                 ),
+//               ],
+//             ),
+//             child: Center(
+//               child: Icon(
+//                 Icons.hexagon_outlined,
+//                 size: 22 * scale,
+//                 color: AppColors.black,
+//               ),
+//             ),
+//           ),
+//           SizedBox(height: 4 * scale),
+//           Text(
+//             label,
+//             textAlign: TextAlign.center,
+//             maxLines: 1,
+//             overflow: TextOverflow.ellipsis,
+//             style: GoogleFonts.inter(
+//               fontSize: 11 * scale,
+//               fontWeight: FontWeight.w500,
+//               color: AppColors.black,
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
 // ═══════════════════════════════════════════════════════════════
-// Filter Bottom Sheet  (frame 2.0.12)
+// More Actions Popup
+// ═══════════════════════════════════════════════════════════════
+// ── Internal helper for the popup menu items ──────────────────────
+class _PopupItemRow extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final double scale;
+
+  const _PopupItemRow({
+    required this.label,
+    required this.icon,
+    required this.scale,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 14 * scale,
+              fontWeight: FontWeight.w500,
+              color: AppColors.black,
+            ),
+          ),
+        ),
+        Icon(icon, size: 18 * scale, color: AppColors.darkGrey),
+      ],
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Filter Bottom Sheet
 // ═══════════════════════════════════════════════════════════════
 class _FilterSheet extends ConsumerStatefulWidget {
   final double scale;
@@ -995,6 +1252,11 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   @override
   Widget build(BuildContext context) {
     final s = widget.scale;
+
+    final bool isDirty =
+        _localFilter.filter2Tags.isNotEmpty ||
+        _localFilter.filter3Tags.isNotEmpty ||
+        _localFilter.sortBy != 'Most Recent';
 
     return Container(
       decoration: BoxDecoration(
@@ -1115,7 +1377,9 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 Navigator.of(context).pop();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.vibrantPink,
+                backgroundColor: isDirty
+                    ? AppColors.vibrantPink
+                    : AppColors.softLavender,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12 * s),
@@ -1126,7 +1390,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 style: GoogleFonts.inter(
                   fontSize: 15 * s,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.pureWhite,
+                  color: isDirty ? AppColors.pureWhite : AppColors.neutralGrey,
                 ),
               ),
             ),
@@ -1237,43 +1501,43 @@ class _TagChips extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════
 // Reusable sub-widgets
 // ═══════════════════════════════════════════════════════════════
-class _InfoChip extends StatelessWidget {
-  final IconData icon;
+class _MetaItem extends StatelessWidget {
   final String label;
+  final IconData icon;
   final String value;
   final double scale;
-  final Color color;
 
-  const _InfoChip({
-    required this.icon,
+  const _MetaItem({
     required this.label,
+    required this.icon,
     required this.value,
     required this.scale,
-    required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       children: [
-        Icon(icon, size: 18 * scale, color: color),
-        SizedBox(width: 4 * scale),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 13 * scale,
+            fontWeight: FontWeight.w500,
+            color: AppColors.vibrantPink,
+          ),
+        ),
+        SizedBox(height: 6 * scale),
+        Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 11 * scale,
-                color: AppColors.darkGrey,
-              ),
-            ),
+            Icon(icon, size: 20 * scale, color: AppColors.vibrantPink),
+            SizedBox(width: 6 * scale),
             Text(
               value,
               style: GoogleFonts.inter(
-                fontSize: 14 * scale,
+                fontSize: 18 * scale,
                 fontWeight: FontWeight.w700,
-                color: color,
+                color: AppColors.vibrantPink,
               ),
             ),
           ],
@@ -1283,68 +1547,3 @@ class _InfoChip extends StatelessWidget {
   }
 }
 
-class _LabelSection extends StatelessWidget {
-  final String title;
-  final List<String> labels;
-  final double scale;
-
-  const _LabelSection({
-    required this.title,
-    required this.labels,
-    required this.scale,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (labels.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16 * scale, 8 * scale, 16 * scale, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              fontSize: 13 * scale,
-              fontWeight: FontWeight.w600,
-              color: AppColors.black,
-            ),
-          ),
-          SizedBox(height: 6 * scale),
-          Wrap(
-            spacing: 8 * scale,
-            runSpacing: 6 * scale,
-            children: labels.map((l) {
-              return Container(
-                width: 52 * scale,
-                height: 52 * scale,
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.clearGrey),
-                  borderRadius: BorderRadius.circular(8 * scale),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.circle_outlined,
-                      size: 20 * scale,
-                      color: AppColors.neutralGrey,
-                    ),
-                    SizedBox(height: 2 * scale),
-                    Text(
-                      l,
-                      style: GoogleFonts.inter(
-                        fontSize: 10 * scale,
-                        color: AppColors.darkGrey,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-}

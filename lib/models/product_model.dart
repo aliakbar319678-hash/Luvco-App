@@ -53,4 +53,17 @@ class ProductModel {
     ingredients: ingredients ?? this.ingredients,
     isSaved: isSaved ?? this.isSaved,
   );
+
+  /// Fallback demo product used when route extras are missing
+  static ProductModel demo() => const ProductModel(
+    id: 'demo_001',
+    name: 'Name of the Product',
+    description: 'Other data from the product.',
+    imageAsset: 'assets/images/nutila.png',
+    thumbnailAsset: 'assets/images/nutila.png',
+    isSustainable: false,
+    labels: ['Label', 'Label', 'Label', 'Label'],
+    allergens: ['Label', 'Label', 'Label', 'Label'],
+    ingredients: ['Ingredient Name', 'Ingredient Name', 'Ingredient Name'],
+  );
 }

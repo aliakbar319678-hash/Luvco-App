@@ -235,7 +235,7 @@ class _ExploreActionCards extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20 * scale),
+      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
       child: Column(
         children: [
           _PurpleActionCard(
@@ -274,59 +274,68 @@ class _PurpleActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(
-          horizontal: 20 * scale,
-          vertical: 38 * scale,
-        ),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF7B52D3), Color(0xFF6034B8)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16 * scale),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.royalPurple.withValues(alpha: 0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
+      child: SizedBox(
+        width: 344 * scale,
+        height: 92 * scale,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF7B52D3), Color(0xFF6034B8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.inter(
-                      fontSize: 16 * scale.clamp(0.85, 1.2),
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.pureWhite,
-                    ),
-                  ),
-                  SizedBox(height: 4 * scale),
-                  Text(
-                    subtitle,
-                    style: GoogleFonts.inter(
-                      fontSize: 13 * scale.clamp(0.85, 1.2),
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.pureWhite.withValues(alpha: 0.8),
-                    ),
-                  ),
-                ],
+            borderRadius: BorderRadius.circular(18 * scale),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.royalPurple.withValues(alpha: 0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
-            ),
-            Icon(
-              Icons.search_rounded,
-              color: AppColors.pureWhite,
-              size: 22 * scale.clamp(0.85, 1.2),
-            ),
-          ],
+            ],
+          ),
+          padding: EdgeInsets.only(
+            top: 19 * scale,
+            bottom: 19 * scale,
+            left: 24 * scale,
+            right: 24 * scale,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.inter(
+                        fontSize: 16 * scale.clamp(0.85, 1.2),
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.pureWhite,
+                      ),
+                    ),
+                    SizedBox(height: 4 * scale),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 13 * scale.clamp(0.85, 1.2),
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.pureWhite.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.search_rounded,
+                color: AppColors.pureWhite,
+                size: 22 * scale.clamp(0.85, 1.2),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -658,21 +667,23 @@ class _RecentRecipesRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20 * scale),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: recipes.asMap().entries.map((entry) {
-          final index = entry.key;
-          final recipe = entry.value;
-          return Expanded(
-            child: Container(
-              margin: EdgeInsets.only(
-                right: index < recipes.length - 1 ? 10 * scale : 0,
+      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: recipes.asMap().entries.map((entry) {
+            final index = entry.key;
+            final recipe = entry.value;
+            return Expanded(
+              child: Container(
+                margin: EdgeInsets.only(
+                  right: index < recipes.length - 1 ? 16 * scale : 0,
+                ),
+                child: _RecentRecipeCard(recipe: recipe, scale: scale),
               ),
-              child: _RecentRecipeCard(recipe: recipe, scale: scale),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }

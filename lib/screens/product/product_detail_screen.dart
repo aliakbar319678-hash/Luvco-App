@@ -45,7 +45,7 @@ class ProductDetailScreen extends ConsumerWidget {
                     physics: const BouncingScrollPhysics(),
                     padding: EdgeInsets.only(bottom: 100 * scale),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         // ── Title & subtitle ──
                         Padding(
@@ -56,10 +56,11 @@ class ProductDetailScreen extends ConsumerWidget {
                             0,
                           ),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
                                 state.product.name,
+                                textAlign: TextAlign.center,
                                 style: GoogleFonts.inter(
                                   fontSize: 20 * scale,
                                   fontWeight: FontWeight.w800,
@@ -69,6 +70,7 @@ class ProductDetailScreen extends ConsumerWidget {
                               SizedBox(height: 4 * scale),
                               Text(
                                 state.product.description,
+                                textAlign: TextAlign.center,
                                 style: GoogleFonts.inter(
                                   fontSize: 13 * scale,
                                   color: AppColors.darkGrey,
@@ -253,7 +255,7 @@ class _ProductDetailHeader extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Product image card with badges + heart
+// Product image card with badges + heart  — Figma exact match
 // ═══════════════════════════════════════════════════════════════
 class _ProductImageCard extends StatelessWidget {
   final ProductModel product;
@@ -270,11 +272,22 @@ class _ProductImageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Derive labels from model
+    final sustainLabel = product.isSustainable ? 'Sustainable' : 'Unsustainable';
+    final sustainColor = product.isSustainable
+        ? const Color(0xFF43A047)
+        : const Color(0xFFE53935);
+    const safeLabel = 'Safe';
+    const safeColor = Color(0xFF43A047);
+
+    // ONE unified card — tabs at top clipped by clipBehavior, image below
     return Container(
       width: double.infinity,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppColors.pureWhite,
         borderRadius: BorderRadius.circular(20 * scale),
+        border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -283,25 +296,19 @@ class _ProductImageCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Stack(
+      child: Column(
         children: [
-          // ── Top badge row ──
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
+          // ── Status tabs — flush at top ─────────────────────────────
+          IntrinsicHeight(
             child: Row(
               children: [
-                // Left: Unsustainable (red)
+                // Left: Unsustainable / Sustainable
                 Expanded(
                   child: Container(
-                    height: 38 * scale,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE53935),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20 * scale),
-                        bottomRight: Radius.circular(12 * scale),
-                      ),
+                    color: sustainColor,
+                    padding: EdgeInsets.symmetric(
+                      vertical: 10 * scale,
+                      horizontal: 4 * scale,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -313,7 +320,7 @@ class _ProductImageCard extends StatelessWidget {
                         ),
                         SizedBox(width: 5 * scale),
                         Text(
-                          'Unsustainable',
+                          sustainLabel,
                           style: GoogleFonts.inter(
                             color: Colors.white,
                             fontSize: 12 * scale,
@@ -324,16 +331,13 @@ class _ProductImageCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Right: Safe (green)
+                // Right: Safe
                 Expanded(
                   child: Container(
-                    height: 38 * scale,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF43A047),
-                      borderRadius: BorderRadius.only(
-                        topRight: Radius.circular(20 * scale),
-                        bottomLeft: Radius.circular(12 * scale),
-                      ),
+                    color: safeColor,
+                    padding: EdgeInsets.symmetric(
+                      vertical: 10 * scale,
+                      horizontal: 4 * scale,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -345,7 +349,7 @@ class _ProductImageCard extends StatelessWidget {
                         ),
                         SizedBox(width: 5 * scale),
                         Text(
-                          'Safe',
+                          safeLabel,
                           style: GoogleFonts.inter(
                             color: Colors.white,
                             fontSize: 12 * scale,
@@ -360,49 +364,52 @@ class _ProductImageCard extends StatelessWidget {
             ),
           ),
 
-          // ── Product image ──
-          Padding(
-            padding: EdgeInsets.only(
-              top: 52 * scale,
-              bottom: 20 * scale,
-              left: 20 * scale,
-              right: 20 * scale,
-            ),
-            child: Center(
-              child: product.imageAsset != null
-                  ? Image.asset(
-                      product.imageAsset!,
-                      height: 180 * scale,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => Icon(
-                        Icons.image_outlined,
-                        size: 80 * scale,
-                        color: AppColors.neutralGrey,
-                      ),
-                    )
-                  : Icon(
-                      Icons.image_outlined,
-                      size: 80 * scale,
-                      color: AppColors.neutralGrey,
-                    ),
-            ),
-          ),
-
-          // ── Heart icon (top-right inside card) ──
-          Positioned(
-            top: 50 * scale,
-            right: 14 * scale,
-            child: GestureDetector(
-              onTap: onFavoriteTap,
-              behavior: HitTestBehavior.opaque,
-              child: Icon(
-                isFavorite
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
-                color: isFavorite ? AppColors.vibrantPink : AppColors.black,
-                size: 24 * scale,
+          // ── White image area with heart overlay ───────────────────
+          Stack(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  vertical: 24 * scale,
+                  horizontal: 20 * scale,
+                ),
+                color: AppColors.pureWhite,
+                child: Center(
+                  child: product.imageAsset != null
+                      ? Image.asset(
+                          product.imageAsset!,
+                          height: 180 * scale,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => Icon(
+                            Icons.image_outlined,
+                            size: 80 * scale,
+                            color: AppColors.neutralGrey,
+                          ),
+                        )
+                      : Icon(
+                          Icons.image_outlined,
+                          size: 80 * scale,
+                          color: AppColors.neutralGrey,
+                        ),
+                ),
               ),
-            ),
+              // Heart icon — top-right overlay
+              Positioned(
+                top: 12 * scale,
+                right: 14 * scale,
+                child: GestureDetector(
+                  onTap: onFavoriteTap,
+                  behavior: HitTestBehavior.opaque,
+                  child: Icon(
+                    isFavorite
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    color: isFavorite ? AppColors.vibrantPink : AppColors.black,
+                    size: 24 * scale,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -447,51 +454,49 @@ class _HexagonLabelRow extends StatelessWidget {
     final items = labels.isEmpty
         ? const ['Label', 'Label', 'Label', 'Label']
         : labels;
-    return Padding(
+    // No horizontal padding here — outer padding (16*scale) aligns with _SectionTitle
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
       padding: EdgeInsets.symmetric(horizontal: 16 * scale),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        child: Row(
-          children: items.map((label) {
-            return Padding(
-              padding: EdgeInsets.only(right: 12 * scale),
-              child: Column(
-                children: [
-                  Container(
-                    width: 52 * scale,
-                    height: 52 * scale,
-                    decoration: BoxDecoration(
-                      color: AppColors.pureWhite,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+      child: Row(
+        children: items.map((label) {
+          return Padding(
+            padding: EdgeInsets.only(right: 16 * scale),
+            child: Column(
+              children: [
+                Container(
+                  width: 58 * scale,
+                  height: 58 * scale,
+                  decoration: BoxDecoration(
+                    color: AppColors.pureWhite,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.clearGrey,
+                      width: 1.2,
                     ),
+                  ),
+                  child: Center(
                     child: Icon(
                       Icons.hexagon_outlined,
                       color: AppColors.black,
                       size: 26 * scale,
                     ),
                   ),
-                  SizedBox(height: 6 * scale),
-                  Text(
-                    label,
-                    style: GoogleFonts.inter(
-                      fontSize: 11 * scale,
-                      color: AppColors.black,
-                      fontWeight: FontWeight.w500,
-                    ),
+                ),
+                SizedBox(height: 6 * scale),
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: 11 * scale,
+                    color: AppColors.black,
+                    fontWeight: FontWeight.w500,
                   ),
-                ],
-              ),
-            );
-          }).toList(),
-        ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -763,25 +768,42 @@ class _CheckboxDialog extends StatelessWidget {
       onTap: onDismiss,
       child: Container(
         color: Colors.black.withValues(alpha: 0.4),
-        child: Center(
+        // ── Align to BOTTOM ── (matches Figma 2.1.2 & 2.1.3)
+        child: Align(
+          alignment: Alignment.bottomCenter,
           child: GestureDetector(
             onTap: () {},
             child: Container(
-              margin: EdgeInsets.symmetric(horizontal: 20 * scale),
-              constraints: BoxConstraints(maxWidth: 380 * scale),
+              width: double.infinity,
               decoration: BoxDecoration(
                 color: AppColors.pureWhite,
-                borderRadius: BorderRadius.circular(16 * scale),
+                // Only top corners rounded — bottom sheet style
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(24 * scale),
+                ),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Drag handle
+                  Center(
+                    child: Container(
+                      margin: EdgeInsets.only(top: 12 * scale, bottom: 4 * scale),
+                      width: 40 * scale,
+                      height: 4 * scale,
+                      decoration: BoxDecoration(
+                        color: AppColors.clearGrey,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+
                   // ── Header ──
                   Padding(
                     padding: EdgeInsets.fromLTRB(
                       20 * scale,
-                      20 * scale,
+                      12 * scale,
                       14 * scale,
                       0,
                     ),
@@ -825,7 +847,6 @@ class _CheckboxDialog extends StatelessWidget {
                         ),
                         child: Row(
                           children: [
-                            // Custom checkbox
                             Container(
                               width: 22 * scale,
                               height: 22 * scale,
@@ -872,7 +893,7 @@ class _CheckboxDialog extends StatelessWidget {
                       20 * scale,
                       0,
                       20 * scale,
-                      20 * scale,
+                      MediaQuery.paddingOf(context).bottom + 20 * scale,
                     ),
                     child: SizedBox(
                       width: double.infinity,

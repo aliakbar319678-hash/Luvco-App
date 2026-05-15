@@ -1,9 +1,12 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/product_model.dart';
 import '../../providers/barcode_scanner_provider.dart';
@@ -19,6 +22,7 @@ class BarcodeScannerScreen extends ConsumerWidget {
     final state = ref.watch(barcodeScannerProvider);
     final notifier = ref.read(barcodeScannerProvider.notifier);
     final size = MediaQuery.sizeOf(context);
+    final padding = MediaQuery.paddingOf(context);
     final scale = (size.width / 390).clamp(0.85, 1.3);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -30,84 +34,123 @@ class BarcodeScannerScreen extends ConsumerWidget {
         body: Stack(
           fit: StackFit.expand,
           children: [
-            // ── Full screen camera background ──
-            _CameraBackground(scale: scale),
-
-            // ── Top navigation icons (back + close) ──
-            _TopNavIcons(
-              scale: scale,
-              onBack: () => context.pop(),
-              onClose: () => context.pop(),
+            // ══════════════════════════════════════════
+            // LAYER 1 — Full-screen camera background
+            // ══════════════════════════════════════════
+            Positioned.fill(
+              child: _CameraFeed(
+                blurred:
+                    state.scanState == BarcodeScanState.cameraPermission ||
+                    state.scanState == BarcodeScanState.cardOpen ||
+                    state.scanState == BarcodeScanState.addToList ||
+                    state.scanState == BarcodeScanState.addToRecipe,
+                isScanning: state.scanState == BarcodeScanState.scanning,
+              ),
             ),
 
-            // ── State-specific overlays ──
+            // ══════════════════════════════════════════
+            // LAYER 2 — Top nav (always visible)
+            // ══════════════════════════════════════════
+            Positioned(
+              top: padding.top + 6 * scale,
+              left: 20 * scale,
+              right: 20 * scale,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Back chevron
+                  _NavIconButton(
+                    icon: Icons.chevron_left,
+                    size: 30 * scale,
+                    scale: scale,
+                    onTap: () => context.pop(),
+                  ),
+                  // Close X
+                  _NavIconButton(
+                    icon: Icons.close,
+                    size: 22 * scale,
+                    scale: scale,
+                    onTap: () => context.pop(),
+                  ),
+                ],
+              ),
+            ),
+
+            // ══════════════════════════════════════════
+            // LAYER 3 — State-specific overlays
+            // ══════════════════════════════════════════
+
+            // ── 2.2.0 Camera Permission ──
             if (state.scanState == BarcodeScanState.cameraPermission)
-              _CameraPermissionDialog(
+              _PermissionDialog(
                 scale: scale,
-                size: size,
                 onAllow: notifier.allowCamera,
                 onDeny: () => context.pop(),
               ),
 
+            // ── 2.2.1 Scanning frame + button ──
             if (state.scanState == BarcodeScanState.scanning)
-              _ScanOverlay(
+              _ScanningLayer(
                 scale: scale,
                 size: size,
-                onScanTap: notifier.simulateScan,
-                onNotFoundTap: notifier.simulateNotFound,
+                padding: padding,
               ),
 
+            // ── 2.2.2 Not found card ──
             if (state.scanState == BarcodeScanState.notFound)
-              _NotFoundCard(
+              _NotFoundLayer(
                 scale: scale,
                 size: size,
+                padding: padding,
                 onRetry: notifier.retryScanning,
               ),
 
+            // ── 2.2.3 Product card ──
             if (state.scanState == BarcodeScanState.cardOpen ||
                 state.scanState == BarcodeScanState.addToList ||
                 state.scanState == BarcodeScanState.addToRecipe)
-              _ProductCardOverlay(
+              _ProductCardLayer(
                 product: state.scannedProduct ?? _demoScannedProduct,
                 isFavorite: state.isFavorite,
                 scale: scale,
                 size: size,
+                padding: padding,
                 onClose: notifier.closeCard,
-                onToggleFavorite: notifier.toggleFavorite,
+                onFavorite: notifier.toggleFavorite,
                 onAddToList: notifier.openAddToList,
                 onAddToRecipe: notifier.openAddToRecipe,
-                onSeeMoreDetails: () {
+                onSeeMore: () {
+                  // ── Capture product BEFORE closeCard() resets state ──
+                  final product =
+                      state.scannedProduct ?? _demoScannedProduct;
+                  context.push('/product-detail', extra: product);
                   notifier.closeCard();
-                  context.push(
-                    '/product-detail',
-                    extra: state.scannedProduct ?? _demoScannedProduct,
-                  );
                 },
               ),
 
-            // ── Add To Shopping List Dialog ──
+            // ── 2.2.4 Add to Shopping List dialog ──
             if (state.scanState == BarcodeScanState.addToList)
-              _CheckboxDialog(
+              _ListCheckboxDialog(
                 title: 'Which shopping list do you want\nto add this product?',
                 items: state.shoppingLists,
                 selected: state.selectedLists,
                 buttonLabel: 'Save On List',
                 scale: scale,
-                size: size,
+                padding: padding,
                 onToggle: notifier.toggleList,
                 onSave: notifier.saveOnList,
                 onDismiss: notifier.closeDialog,
               ),
 
-            // ── Add To Recipe Dialog ──
+            // ── 2.2.5 Add to Recipe dialog ──
             if (state.scanState == BarcodeScanState.addToRecipe)
-              _CheckboxDialog(
+              _ListCheckboxDialog(
                 title: 'Which recipe do you want to add\nthis product?',
                 items: state.recipes,
                 selected: state.selectedRecipes,
                 buttonLabel: 'Save On Recipe',
                 scale: scale,
-                size: size,
+                padding: padding,
                 onToggle: notifier.toggleRecipe,
                 onSave: notifier.saveOnRecipe,
                 onDismiss: notifier.closeDialog,
@@ -119,111 +162,140 @@ class BarcodeScannerScreen extends ConsumerWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Camera background (simulated — replace with real camera plugin)
-// ═══════════════════════════════════════════════════════════════
-class _CameraBackground extends StatelessWidget {
+// ─────────────────────────────────────────────────────────
+// Shared nav icon button
+// ─────────────────────────────────────────────────────────
+class _NavIconButton extends StatelessWidget {
+  final IconData icon;
+  final double size;
   final double scale;
-  const _CameraBackground({required this.scale});
+  final VoidCallback onTap;
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF2A1A0E), Color(0xFF3D2B1A), Color(0xFF2A1A0E)],
-        ),
-      ),
-      child: Stack(
-        children: [
-          // Simulated blurred product image in background
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/nutila.png',
-              fit: BoxFit.cover,
-              color: Colors.black.withValues(alpha: 0.55),
-              colorBlendMode: BlendMode.darken,
-              errorBuilder: (_, __, ___) => Container(color: Colors.black87),
-            ),
-          ),
-          // Blur effect simulation with dark overlay
-          Positioned.fill(
-            child: Container(color: Colors.black.withValues(alpha: 0.3)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// Top nav icons — back (left) + close (right) — white
-// ═══════════════════════════════════════════════════════════════
-class _TopNavIcons extends StatelessWidget {
-  final double scale;
-  final VoidCallback onBack;
-  final VoidCallback onClose;
-
-  const _TopNavIcons({
+  const _NavIconButton({
+    required this.icon,
+    required this.size,
     required this.scale,
-    required this.onBack,
-    required this.onClose,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final top = MediaQuery.paddingOf(context).top;
-    return Positioned(
-      top: top + 8 * scale,
-      left: 16 * scale,
-      right: 16 * scale,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GestureDetector(
-            onTap: onBack,
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              width: 40 * scale,
-              height: 40 * scale,
-              alignment: Alignment.center,
-              child: Icon(
-                Icons.chevron_left,
-                color: Colors.white,
-                size: 28 * scale,
-              ),
-            ),
-          ),
-          GestureDetector(
-            onTap: onClose,
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              width: 40 * scale,
-              height: 40 * scale,
-              alignment: Alignment.center,
-              child: Icon(Icons.close, color: Colors.white, size: 22 * scale),
-            ),
-          ),
-        ],
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 40 * scale,
+        height: 40 * scale,
+        child: Center(
+          child: Icon(icon, color: Colors.white, size: size),
+        ),
       ),
     );
   }
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Frame 2.2.0 — Camera permission iOS-style dialog
+// Camera Feed — warm tan gradient simulating real camera view
 // ═══════════════════════════════════════════════════════════════
-class _CameraPermissionDialog extends StatelessWidget {
+// ═══════════════════════════════════════════════════════════════
+// Camera Feed — real-time camera using mobile_scanner
+// ═══════════════════════════════════════════════════════════════
+class _CameraFeed extends ConsumerStatefulWidget {
+  final bool blurred;
+  final bool isScanning;
+
+  const _CameraFeed({required this.blurred, required this.isScanning});
+
+  @override
+  ConsumerState<_CameraFeed> createState() => _CameraFeedState();
+}
+
+class _CameraFeedState extends ConsumerState<_CameraFeed> {
+  late MobileScannerController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = MobileScannerController(
+      facing: CameraFacing.back,
+    );
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final notifier = ref.read(barcodeScannerProvider.notifier);
+
+    final Widget bg = Stack(
+      children: [
+        // Real camera view
+        MobileScanner(
+          controller: controller,
+          onDetect: (capture) {
+            if (!widget.isScanning) return;
+            final List<Barcode> barcodes = capture.barcodes;
+            for (final barcode in barcodes) {
+              if (barcode.rawValue != null) {
+                notifier.onBarcodeScanned(barcode.rawValue);
+                break;
+              }
+            }
+          },
+          placeholderBuilder: (context) => Container(
+            color: Colors.black,
+            child: Center(
+              child: Opacity(
+                opacity: 0.2,
+                child: Image.asset(
+                  'assets/images/nutila.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // Fallback UI if camera isn't active/visible
+        if (!widget.isScanning)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.4),
+            ),
+          ),
+      ],
+    );
+
+    if (!widget.blurred) return bg;
+
+    return Stack(
+      children: [
+        bg,
+        ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+            child: Container(color: Colors.black.withValues(alpha: 0.15)),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 2.2.0 — Camera Permission dialog (iOS style)
+// ═══════════════════════════════════════════════════════════════
+class _PermissionDialog extends StatelessWidget {
   final double scale;
-  final Size size;
   final VoidCallback onAllow;
   final VoidCallback onDeny;
 
-  const _CameraPermissionDialog({
+  const _PermissionDialog({
     required this.scale,
-    required this.size,
     required this.onAllow,
     required this.onDeny,
   });
@@ -232,33 +304,32 @@ class _CameraPermissionDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 48 * scale),
-        constraints: BoxConstraints(maxWidth: 310 * scale),
+        margin: EdgeInsets.symmetric(horizontal: 52 * scale),
+        constraints: BoxConstraints(maxWidth: 300 * scale),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.95),
+          color: const Color(0xFFF2F2F2).withValues(alpha: 0.98),
           borderRadius: BorderRadius.circular(14 * scale),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Title + body ──
             Padding(
               padding: EdgeInsets.fromLTRB(
-                16 * scale,
-                20 * scale,
-                16 * scale,
-                16 * scale,
+                18 * scale,
+                22 * scale,
+                18 * scale,
+                18 * scale,
               ),
               child: Column(
                 children: [
                   Text(
-                    '"Luvco" would like to access\nthe camera',
+                    'Luvco would like to access\nthe camera',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
-                      fontSize: 14 * scale,
+                      fontSize: 13 * scale,
                       fontWeight: FontWeight.w700,
                       color: Colors.black,
-                      height: 1.35,
+                      height: 1.4,
                     ),
                   ),
                   SizedBox(height: 6 * scale),
@@ -267,6 +338,7 @@ class _CameraPermissionDialog extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 12 * scale,
+                      fontWeight: FontWeight.w400,
                       color: Colors.black87,
                       height: 1.4,
                     ),
@@ -274,56 +346,42 @@ class _CameraPermissionDialog extends StatelessWidget {
                 ],
               ),
             ),
-
-            // ── Divider ──
-            Divider(height: 1, color: Colors.grey.withValues(alpha: 0.4)),
-
-            // ── Don't Allow / OK row ──
-            IntrinsicHeight(
+            Container(height: 0.5, color: Colors.grey.withValues(alpha: 0.45)),
+            SizedBox(
+              height: 44 * scale,
               child: Row(
                 children: [
                   Expanded(
-                    child: TextButton(
-                      onPressed: onDeny,
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 12 * scale),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(14 * scale),
+                    child: GestureDetector(
+                      onTap: onDeny,
+                      child: Container(
+                        color: Colors.transparent,
+                        alignment: Alignment.center,
+                        child: Text(
+                          "Don't Allow",
+                          style: GoogleFonts.inter(
+                            fontSize: 14 * scale,
+                            fontWeight: FontWeight.w400,
+                            color: const Color(0xFF007AFF),
                           ),
-                        ),
-                      ),
-                      child: Text(
-                        "Don't Allow",
-                        style: GoogleFonts.inter(
-                          fontSize: 14 * scale,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF007AFF),
                         ),
                       ),
                     ),
                   ),
-                  VerticalDivider(
-                    width: 1,
-                    color: Colors.grey.withValues(alpha: 0.4),
-                  ),
+                  Container(width: 0.5, color: Colors.grey.withValues(alpha: 0.45)),
                   Expanded(
-                    child: TextButton(
-                      onPressed: onAllow,
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 12 * scale),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.only(
-                            bottomRight: Radius.circular(14 * scale),
+                    child: GestureDetector(
+                      onTap: onAllow,
+                      child: Container(
+                        color: Colors.transparent,
+                        alignment: Alignment.center,
+                        child: Text(
+                          'OK',
+                          style: GoogleFonts.inter(
+                            fontSize: 14 * scale,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF007AFF),
                           ),
-                        ),
-                      ),
-                      child: Text(
-                        'OK',
-                        style: GoogleFonts.inter(
-                          fontSize: 14 * scale,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF007AFF),
                         ),
                       ),
                     ),
@@ -339,82 +397,77 @@ class _CameraPermissionDialog extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Frame 2.2.1 — Scan overlay with corner brackets + button
+// 2.2.1 — Scanning overlay: dark mask + L-brackets + button
 // ═══════════════════════════════════════════════════════════════
-class _ScanOverlay extends StatelessWidget {
+class _ScanningLayer extends StatelessWidget {
   final double scale;
   final Size size;
-  final VoidCallback onScanTap;
-  final VoidCallback onNotFoundTap;
+  final EdgeInsets padding;
 
-  const _ScanOverlay({
+  const _ScanningLayer({
     required this.scale,
     required this.size,
-    required this.onScanTap,
-    required this.onNotFoundTap,
+    required this.padding,
   });
 
   @override
   Widget build(BuildContext context) {
-    final frameSize = 240.0 * scale;
+    final frameW = 260.0 * scale;
+    final frameH = 220.0 * scale;
+    final cx = size.width / 2;
+    final cy = size.height * 0.42;
 
     return Stack(
       children: [
-        // ── Dark overlay with hole in center ──
+        // Dark mask with transparent hole
         CustomPaint(
           size: Size(size.width, size.height),
-          painter: _ScanHolePainter(frameSize: frameSize, screenSize: size),
-        ),
-
-        // ── Corner brackets ──
-        Center(
-          child: SizedBox(
-            width: frameSize,
-            height: frameSize,
-            child: CustomPaint(painter: _CornerBracketsPainter(scale: scale)),
+          painter: _ScanMaskPainter(
+            frameLeft: cx - frameW / 2,
+            frameTop: cy - frameH / 2,
+            frameRight: cx + frameW / 2,
+            frameBottom: cy + frameH / 2,
+            radius: 14.0,
           ),
         ),
 
-        // ── Bottom "Scan A Barcode" button ──
+        // L-bracket corners
         Positioned(
-          bottom: MediaQuery.paddingOf(context).bottom + 40 * scale,
+          left: cx - frameW / 2,
+          top: cy - frameH / 2,
+          width: frameW,
+          height: frameH,
+          child: CustomPaint(painter: _CornerBracketPainter(scale: scale)),
+        ),
+
+        // Scan info label (instead of button since it's real-time now)
+        Positioned(
+          bottom: padding.bottom + 36 * scale,
           left: 0,
           right: 0,
           child: Center(
-            child: GestureDetector(
-              onTap: onScanTap,
-              child: Container(
-                height: 52 * scale,
-                padding: EdgeInsets.symmetric(horizontal: 40 * scale),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30 * scale),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.qr_code_scanner_rounded,
-                      size: 20 * scale,
-                      color: AppColors.black,
-                    ),
-                    SizedBox(width: 8 * scale),
-                    Text(
-                      'Scan A Barcode',
-                      style: GoogleFonts.inter(
-                        fontSize: 15 * scale,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.black,
-                      ),
-                    ),
-                  ],
+            child: Container(
+              height: 50 * scale,
+              padding: EdgeInsets.symmetric(horizontal: 36 * scale),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(30 * scale),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  'Scanning Real-Time...',
+                  style: GoogleFonts.inter(
+                    fontSize: 15 * scale,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.black,
+                  ),
                 ),
               ),
             ),
@@ -425,223 +478,325 @@ class _ScanOverlay extends StatelessWidget {
   }
 }
 
-// Dark overlay with transparent rectangle hole
-class _ScanHolePainter extends CustomPainter {
-  final double frameSize;
-  final Size screenSize;
+class _ScanMaskPainter extends CustomPainter {
+  final double frameLeft, frameTop, frameRight, frameBottom, radius;
 
-  const _ScanHolePainter({required this.frameSize, required this.screenSize});
+  const _ScanMaskPainter({
+    required this.frameLeft,
+    required this.frameTop,
+    required this.frameRight,
+    required this.frameBottom,
+    required this.radius,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.black.withValues(alpha: 0.55);
-    final cx = size.width / 2;
-    final cy = size.height / 2 - 40;
-    final half = frameSize / 2;
-    const r = 12.0;
-
-    // Full screen rect
-    final full = Rect.fromLTWH(0, 0, size.width, size.height);
-    // Hole rect
+    final paint = Paint()..color = Colors.black.withValues(alpha: 0.52);
     final hole = RRect.fromRectAndRadius(
-      Rect.fromLTRB(cx - half, cy - half, cx + half, cy + half),
-      const Radius.circular(r),
+      Rect.fromLTRB(frameLeft, frameTop, frameRight, frameBottom),
+      Radius.circular(radius),
     );
-
     final path = Path()
-      ..addRect(full)
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
       ..addRRect(hole)
       ..fillType = PathFillType.evenOdd;
-
     canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _ScanMaskPainter old) =>
+      old.frameLeft != frameLeft || old.frameTop != frameTop;
 }
 
-// White corner bracket lines
-class _CornerBracketsPainter extends CustomPainter {
+class _CornerBracketPainter extends CustomPainter {
   final double scale;
-  const _CornerBracketsPainter({required this.scale});
+  const _CornerBracketPainter({required this.scale});
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = Colors.white
-      ..strokeWidth = 3.5 * scale
+      ..strokeWidth = 3.2 * scale
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
 
-    final len = 28.0 * scale;
-    const r = 10.0;
+    final arm = 26.0 * scale;
+    final w = size.width;
+    final h = size.height;
 
     // Top-left
-    canvas.drawLine(const Offset(r, 0), Offset(r + len, 0), paint);
-    canvas.drawLine(const Offset(0, r), Offset(0, r + len), paint);
-    canvas.drawArc(
-      const Rect.fromLTWH(0, 0, r * 2, r * 2),
-      -3.14,
-      1.57,
-      false,
-      paint,
-    );
-
+    canvas.drawLine(Offset(0, arm), Offset.zero, paint);
+    canvas.drawLine(Offset.zero, Offset(arm, 0), paint);
     // Top-right
-    canvas.drawLine(
-      Offset(size.width - r - len, 0),
-      Offset(size.width - r, 0),
-      paint,
-    );
-    canvas.drawLine(Offset(size.width, r), Offset(size.width, r + len), paint);
-    canvas.drawArc(
-      Rect.fromLTWH(size.width - r * 2, 0, r * 2, r * 2),
-      -1.57,
-      1.57,
-      false,
-      paint,
-    );
-
+    canvas.drawLine(Offset(w - arm, 0), Offset(w, 0), paint);
+    canvas.drawLine(Offset(w, 0), Offset(w, arm), paint);
     // Bottom-left
-    canvas.drawLine(
-      Offset(r, size.height),
-      Offset(r + len, size.height),
-      paint,
-    );
-    canvas.drawLine(
-      Offset(0, size.height - r - len),
-      Offset(0, size.height - r),
-      paint,
-    );
-    canvas.drawArc(
-      Rect.fromLTWH(0, size.height - r * 2, r * 2, r * 2),
-      1.57,
-      1.57,
-      false,
-      paint,
-    );
-
+    canvas.drawLine(Offset(0, h - arm), Offset(0, h), paint);
+    canvas.drawLine(Offset(0, h), Offset(arm, h), paint);
     // Bottom-right
-    canvas.drawLine(
-      Offset(size.width - r - len, size.height),
-      Offset(size.width - r, size.height),
-      paint,
-    );
-    canvas.drawLine(
-      Offset(size.width, size.height - r - len),
-      Offset(size.width, size.height - r),
-      paint,
-    );
-    canvas.drawArc(
-      Rect.fromLTWH(size.width - r * 2, size.height - r * 2, r * 2, r * 2),
-      0,
-      1.57,
-      false,
-      paint,
-    );
+    canvas.drawLine(Offset(w - arm, h), Offset(w, h), paint);
+    canvas.drawLine(Offset(w, h - arm), Offset(w, h), paint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter old) => false;
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Frame 2.2.2 — Product not found card
+// 2.2.2 — Product NOT FOUND  (pixel-perfect match to Figma)
+//
+// Layout (top → bottom inside white card):
+//   • Red/pink square icon container (64×64, radius 16)
+//     └─ Custom barcode-scan-error icon drawn with CustomPaint
+//        (matches the Figma icon exactly: rectangular frame +
+//         broken centre scan line with gap — all in AppColors.errorRed)
+//   • 18px gap
+//   • "Product not found, try to\nscan again"  — Inter SemiBold 15
+//
+// The white card sits at vertical centre of the screen.
+// Behind: dark semi-transparent scrim (opacity 0.45).
+// Bottom: the "Scan A Barcode" pill is translucent white w/ white text.
 // ═══════════════════════════════════════════════════════════════
-class _NotFoundCard extends StatelessWidget {
+class _NotFoundLayer extends StatelessWidget {
   final double scale;
   final Size size;
+  final EdgeInsets padding;
   final VoidCallback onRetry;
 
-  const _NotFoundCard({
+  const _NotFoundLayer({
     required this.scale,
     required this.size,
+    required this.padding,
     required this.onRetry,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: GestureDetector(
-        onTap: onRetry,
-        child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 32 * scale),
-          constraints: BoxConstraints(maxWidth: 300 * scale),
-          padding: EdgeInsets.symmetric(
-            horizontal: 24 * scale,
-            vertical: 28 * scale,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20 * scale),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 20,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Red scan-error icon
-              Container(
-                width: 64 * scale,
-                height: 64 * scale,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFEBEB),
-                  borderRadius: BorderRadius.circular(16 * scale),
+    return Stack(
+      children: [
+        // ── Dark scrim ──
+        Positioned.fill(
+          child: Container(color: Colors.black.withValues(alpha: 0.45)),
+        ),
+
+        // ── Centre card ──
+        Center(
+          child: Container(
+            margin: EdgeInsets.symmetric(horizontal: 50 * scale),
+            constraints: BoxConstraints(maxWidth: 290 * scale),
+            padding: EdgeInsets.symmetric(
+              horizontal: 28 * scale,
+              vertical: 32 * scale,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20 * scale),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
                 ),
-                child: Icon(
-                  Icons.document_scanner_outlined,
-                  color: AppColors.errorRed,
-                  size: 36 * scale,
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Red icon container
+                Container(
+                  width: 64 * scale,
+                  height: 64 * scale,
+                  decoration: BoxDecoration(
+                    // Light pink/red background exactly as in Figma
+                    color: const Color(0xFFFFEEEE),
+                    borderRadius: BorderRadius.circular(16 * scale),
+                  ),
+                  child: Center(
+                    child: SizedBox(
+                      width: 36 * scale,
+                      height: 36 * scale,
+                      child: CustomPaint(
+                        painter: _ScanErrorIconPainter(scale: scale),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              SizedBox(height: 16 * scale),
-              Text(
-                'Product not found, try to\nscan again',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  fontSize: 15 * scale,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.black,
-                  height: 1.4,
+
+                SizedBox(height: 18 * scale),
+
+                // Message text
+                Text(
+                  'Product not found, try to\nscan again',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 15 * scale,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.black,
+                    height: 1.5,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
+
+        // ── Bottom pill button ──
+        Positioned(
+          bottom: padding.bottom + 36 * scale,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: GestureDetector(
+              onTap: onRetry,
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                height: 50 * scale,
+                padding: EdgeInsets.symmetric(horizontal: 36 * scale),
+                decoration: BoxDecoration(
+                  // Semi-transparent white — matches Figma 2.2.2 bottom button
+                  color: Colors.white.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(30 * scale),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.55),
+                    width: 1,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    'Scan A Barcode',
+                    style: GoogleFonts.inter(
+                      fontSize: 15 * scale,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// Custom painter that draws the scan-error icon exactly as
+// shown in the Figma frame 2.2.2:
+//   • Rounded-corner rectangular frame (like a viewfinder/barcode box)
+//   • Two corner L-shapes inside (top-left, bottom-right) — mimicking
+//     the standard barcode-reader bracket icon in red
+//   • A horizontal scan line through the middle with a gap/break
+//     in the centre (indicating "not found")
+// All strokes are AppColors.errorRed (#E53935)
+// ─────────────────────────────────────────────────────────────
+class _ScanErrorIconPainter extends CustomPainter {
+  final double scale;
+  const _ScanErrorIconPainter({required this.scale});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const color = AppColors.errorRed;
+    final strokeW = 2.2 * scale;
+
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeW
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    final w = size.width;
+    final h = size.height;
+    final arm = w * 0.28; // length of each L arm
+    final r = w * 0.10; // corner radius of the outer frame
+
+    // ── Outer rounded rectangle frame ──
+    final frameRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, w, h),
+      Radius.circular(r),
+    );
+    canvas.drawRRect(frameRect, paint);
+
+    // ── Inner L-bracket: top-left corner ──
+    final innerPaint = Paint()
+      ..color = color
+      ..strokeWidth = strokeW * 1.4
+      ..strokeCap = StrokeCap.square
+      ..style = PaintingStyle.stroke;
+
+    // top-left horizontal
+    canvas.drawLine(Offset(r, h * 0.18), Offset(r + arm, h * 0.18), innerPaint);
+    // top-left vertical
+    canvas.drawLine(Offset(r, h * 0.18), Offset(r, h * 0.18 + arm), innerPaint);
+
+    // ── Inner L-bracket: bottom-right corner ──
+    // bottom-right horizontal
+    canvas.drawLine(
+      Offset(w - r - arm, h * 0.82),
+      Offset(w - r, h * 0.82),
+      innerPaint,
+    );
+    // bottom-right vertical
+    canvas.drawLine(
+      Offset(w - r, h * 0.82 - arm),
+      Offset(w - r, h * 0.82),
+      innerPaint,
+    );
+
+    // ── Horizontal scan line with centre gap ──
+    final scanPaint = Paint()
+      ..color = color
+      ..strokeWidth = strokeW * 0.9
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    final midY = h * 0.5;
+    final gapHalf = w * 0.10;
+
+    // Left half of scan line
+    canvas.drawLine(
+      Offset(w * 0.12, midY),
+      Offset(w / 2 - gapHalf, midY),
+      scanPaint,
+    );
+    // Right half of scan line
+    canvas.drawLine(
+      Offset(w / 2 + gapHalf, midY),
+      Offset(w * 0.88, midY),
+      scanPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
+}
+
 // ═══════════════════════════════════════════════════════════════
-// Frame 2.2.3 — Scanned product card overlay (bottom sheet style)
+// 2.2.3 — Product card bottom sheet
 // ═══════════════════════════════════════════════════════════════
-class _ProductCardOverlay extends StatelessWidget {
+class _ProductCardLayer extends StatelessWidget {
   final ProductModel product;
   final bool isFavorite;
   final double scale;
   final Size size;
+  final EdgeInsets padding;
   final VoidCallback onClose;
-  final VoidCallback onToggleFavorite;
+  final VoidCallback onFavorite;
   final VoidCallback onAddToList;
   final VoidCallback onAddToRecipe;
-  final VoidCallback onSeeMoreDetails;
+  final VoidCallback onSeeMore;
 
-  const _ProductCardOverlay({
+  const _ProductCardLayer({
     required this.product,
     required this.isFavorite,
     required this.scale,
     required this.size,
+    required this.padding,
     required this.onClose,
-    required this.onToggleFavorite,
+    required this.onFavorite,
     required this.onAddToList,
     required this.onAddToRecipe,
-    required this.onSeeMoreDetails,
+    required this.onSeeMore,
   });
 
   @override
@@ -650,7 +805,7 @@ class _ProductCardOverlay extends StatelessWidget {
       alignment: Alignment.bottomCenter,
       child: Container(
         width: double.infinity,
-        constraints: BoxConstraints(maxHeight: size.height * 0.82),
+        constraints: BoxConstraints(maxHeight: size.height * 0.84),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24 * scale)),
@@ -658,43 +813,44 @@ class _ProductCardOverlay extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Drag handle ──
             SizedBox(height: 10 * scale),
+            // Drag handle
             Container(
-              width: 40 * scale,
+              width: 38 * scale,
               height: 4 * scale,
               decoration: BoxDecoration(
                 color: AppColors.clearGrey,
                 borderRadius: BorderRadius.circular(2 * scale),
               ),
             ),
-            SizedBox(height: 8 * scale),
-
-            Expanded(
+            SizedBox(height: 6 * scale),
+            Flexible(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.symmetric(horizontal: 20 * scale),
+                padding: EdgeInsets.fromLTRB(
+                  20 * scale,
+                  4 * scale,
+                  20 * scale,
+                  padding.bottom + 16 * scale,
+                ),
                 child: Column(
                   children: [
-                    // ── Close button row ──
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Spacer(),
-                        GestureDetector(
-                          onTap: onClose,
+                    // Close row
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: GestureDetector(
+                        onTap: onClose,
+                        behavior: HitTestBehavior.opaque,
+                        child: Padding(
+                          padding: EdgeInsets.all(4 * scale),
                           child: Icon(
                             Icons.close,
                             size: 22 * scale,
                             color: AppColors.black,
                           ),
                         ),
-                      ],
+                      ),
                     ),
-
-                    SizedBox(height: 4 * scale),
-
-                    // ── Product name + subtitle ──
                     Text(
                       product.name,
                       textAlign: TextAlign.center,
@@ -713,114 +869,52 @@ class _ProductCardOverlay extends StatelessWidget {
                         color: AppColors.darkGrey,
                       ),
                     ),
-
                     SizedBox(height: 14 * scale),
-
-                    // ── Image section with badges ──
-                    _CardImageSection(
+                    _ImageWithBadges(
                       product: product,
                       isFavorite: isFavorite,
                       scale: scale,
-                      onFavoriteTap: onToggleFavorite,
+                      onFavorite: onFavorite,
                     ),
-
                     SizedBox(height: 20 * scale),
-
-                    // ── Labels and Certifications ──
-                    _CardSectionTitle(
+                    _SectionLabel(
                       title: 'Labels and Certifications',
                       scale: scale,
                     ),
                     SizedBox(height: 10 * scale),
-                    _HexLabelRow(labels: product.labels, scale: scale),
-
+                    _HexRow(labels: product.labels, scale: scale),
                     SizedBox(height: 20 * scale),
-
-                    // ── Possible allergens ──
-                    _CardSectionTitle(
-                      title: 'Possible allergens',
-                      scale: scale,
-                    ),
+                    _SectionLabel(title: 'Possible allergens', scale: scale),
                     SizedBox(height: 10 * scale),
-                    _HexLabelRow(labels: product.allergens, scale: scale),
-
+                    _HexRow(labels: product.allergens, scale: scale),
                     SizedBox(height: 24 * scale),
-
-                    // ── Add To List + Add To Recipe outline buttons ──
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: onAddToList,
-                            icon: Icon(
-                              Icons.shopping_basket_outlined,
-                              size: 16 * scale,
-                              color: AppColors.royalPurple,
-                            ),
-                            label: Text(
-                              'Add To List',
-                              style: GoogleFonts.inter(
-                                fontSize: 13 * scale,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.royalPurple,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(
-                                color: AppColors.royalPurple,
-                                width: 1.2,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30 * scale),
-                              ),
-                              padding: EdgeInsets.symmetric(
-                                vertical: 12 * scale,
-                              ),
-                            ),
+                          child: _OutlineIconBtn(
+                            icon: Icons.shopping_basket_outlined,
+                            label: 'Add To List',
+                            scale: scale,
+                            onTap: onAddToList,
                           ),
                         ),
                         SizedBox(width: 10 * scale),
                         Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: onAddToRecipe,
-                            icon: Icon(
-                              Icons.restaurant_menu_outlined,
-                              size: 16 * scale,
-                              color: AppColors.royalPurple,
-                            ),
-                            label: Text(
-                              'Add To Recipe',
-                              style: GoogleFonts.inter(
-                                fontSize: 13 * scale,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.royalPurple,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(
-                                color: AppColors.royalPurple,
-                                width: 1.2,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30 * scale),
-                              ),
-                              padding: EdgeInsets.symmetric(
-                                vertical: 12 * scale,
-                              ),
-                            ),
+                          child: _OutlineIconBtn(
+                            icon: Icons.restaurant_menu_outlined,
+                            label: 'Add To Recipe',
+                            scale: scale,
+                            onTap: onAddToRecipe,
                           ),
                         ),
                       ],
                     ),
-
                     SizedBox(height: 10 * scale),
-
-                    // ── See More Details solid button ──
                     SizedBox(
                       width: double.infinity,
                       height: 50 * scale,
                       child: ElevatedButton(
-                        onPressed: onSeeMoreDetails,
+                        onPressed: onSeeMore,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.royalPurple,
                           elevation: 0,
@@ -838,10 +932,7 @@ class _ProductCardOverlay extends StatelessWidget {
                         ),
                       ),
                     ),
-
                     SizedBox(height: 10 * scale),
-
-                    // ── Swipe hint ──
                     Text(
                       'Swipe up to see similar',
                       style: GoogleFonts.inter(
@@ -849,10 +940,7 @@ class _ProductCardOverlay extends StatelessWidget {
                         color: AppColors.neutralGrey,
                       ),
                     ),
-
-                    SizedBox(
-                      height: MediaQuery.paddingOf(context).bottom + 12 * scale,
-                    ),
+                    SizedBox(height: 8 * scale),
                   ],
                 ),
               ),
@@ -864,53 +952,55 @@ class _ProductCardOverlay extends StatelessWidget {
   }
 }
 
-// ── Card image section with badges + heart ──
-class _CardImageSection extends StatelessWidget {
+// ─────────────────────────────────────────────────────────
+// Product image card with sustainability badges + heart
+// ─────────────────────────────────────────────────────────
+class _ImageWithBadges extends StatelessWidget {
   final ProductModel product;
   final bool isFavorite;
   final double scale;
-  final VoidCallback onFavoriteTap;
+  final VoidCallback onFavorite;
 
-  const _CardImageSection({
+  const _ImageWithBadges({
     required this.product,
     required this.isFavorite,
     required this.scale,
-    required this.onFavoriteTap,
+    required this.onFavorite,
   });
 
   @override
   Widget build(BuildContext context) {
+    // ── ONE unified card — exact Figma match ──────────────────────────
+    // Top: [Unsustainable red | Safe green] tabs with rounded top corners
+    // Below: white image area with centered product image + heart overlay
     return Container(
       width: double.infinity,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppColors.pureWhite,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16 * scale),
+        border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: Colors.black.withValues(alpha: 0.07),
             blurRadius: 12,
             offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: Stack(
+      child: Column(
         children: [
-          // ── Badges top row ──
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
+          // ── Status tabs — flush at top, rounded by clipBehavior ──────
+          IntrinsicHeight(
             child: Row(
               children: [
+                // Unsustainable (red)
                 Expanded(
                   child: Container(
-                    height: 36 * scale,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE53935),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16 * scale),
-                        bottomRight: Radius.circular(10 * scale),
-                      ),
+                    color: const Color(0xFFE53935),
+                    padding: EdgeInsets.symmetric(
+                      vertical: 10 * scale,
+                      horizontal: 4 * scale,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -918,13 +1008,13 @@ class _CardImageSection extends StatelessWidget {
                         Icon(
                           Icons.eco_outlined,
                           color: Colors.white,
-                          size: 14 * scale,
+                          size: 15 * scale,
                         ),
-                        SizedBox(width: 4 * scale),
+                        SizedBox(width: 5 * scale),
                         Text(
                           'Unsustainable',
                           style: GoogleFonts.inter(
-                            fontSize: 11 * scale,
+                            fontSize: 12 * scale,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
@@ -933,15 +1023,13 @@ class _CardImageSection extends StatelessWidget {
                     ),
                   ),
                 ),
+                // Safe (green)
                 Expanded(
                   child: Container(
-                    height: 36 * scale,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF43A047),
-                      borderRadius: BorderRadius.only(
-                        topRight: Radius.circular(16 * scale),
-                        bottomLeft: Radius.circular(10 * scale),
-                      ),
+                    color: const Color(0xFF43A047),
+                    padding: EdgeInsets.symmetric(
+                      vertical: 10 * scale,
+                      horizontal: 4 * scale,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -949,13 +1037,13 @@ class _CardImageSection extends StatelessWidget {
                         Icon(
                           Icons.flag_outlined,
                           color: Colors.white,
-                          size: 14 * scale,
+                          size: 15 * scale,
                         ),
-                        SizedBox(width: 4 * scale),
+                        SizedBox(width: 5 * scale),
                         Text(
                           'Safe',
                           style: GoogleFonts.inter(
-                            fontSize: 11 * scale,
+                            fontSize: 12 * scale,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
@@ -968,49 +1056,54 @@ class _CardImageSection extends StatelessWidget {
             ),
           ),
 
-          // ── Product image ──
-          Padding(
-            padding: EdgeInsets.only(
-              top: 46 * scale,
-              bottom: 16 * scale,
-              left: 16 * scale,
-              right: 16 * scale,
-            ),
-            child: Center(
-              child: product.imageAsset != null
-                  ? Image.asset(
-                      product.imageAsset!,
-                      height: 140 * scale,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => Icon(
-                        Icons.image_outlined,
-                        size: 64 * scale,
-                        color: AppColors.neutralGrey,
-                      ),
-                    )
-                  : Icon(
-                      Icons.image_outlined,
-                      size: 64 * scale,
-                      color: AppColors.neutralGrey,
-                    ),
-            ),
-          ),
-
-          // ── Heart icon ──
-          Positioned(
-            top: 46 * scale,
-            right: 12 * scale,
-            child: GestureDetector(
-              onTap: onFavoriteTap,
-              behavior: HitTestBehavior.opaque,
-              child: Icon(
-                isFavorite
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
-                color: isFavorite ? AppColors.vibrantPink : AppColors.black,
-                size: 22 * scale,
+          // ── White image area with heart overlay ───────────────────────
+          Stack(
+            children: [
+              // Centered product image
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  vertical: 20 * scale,
+                  horizontal: 16 * scale,
+                ),
+                color: Colors.white,
+                child: Center(
+                  child: product.imageAsset != null
+                      ? Image.asset(
+                          product.imageAsset!,
+                          height: 150 * scale,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => Icon(
+                            Icons.image_outlined,
+                            size: 60 * scale,
+                            color: AppColors.neutralGrey,
+                          ),
+                        )
+                      : Icon(
+                          Icons.image_outlined,
+                          size: 60 * scale,
+                          color: AppColors.neutralGrey,
+                        ),
+                ),
               ),
-            ),
+
+              // Heart icon — top-right overlay
+              Positioned(
+                top: 10 * scale,
+                right: 12 * scale,
+                child: GestureDetector(
+                  onTap: onFavorite,
+                  behavior: HitTestBehavior.opaque,
+                  child: Icon(
+                    isFavorite
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    color: isFavorite ? AppColors.vibrantPink : AppColors.black,
+                    size: 22 * scale,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1018,33 +1111,35 @@ class _CardImageSection extends StatelessWidget {
   }
 }
 
-// ── Card section title ──
-class _CardSectionTitle extends StatelessWidget {
+// ─────────────────────────────────────────────────
+// Section label
+// ─────────────────────────────────────────────────
+class _SectionLabel extends StatelessWidget {
   final String title;
   final double scale;
-  const _CardSectionTitle({required this.title, required this.scale});
+  const _SectionLabel({required this.title, required this.scale});
 
   @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        title,
-        style: GoogleFonts.inter(
-          fontSize: 14 * scale,
-          fontWeight: FontWeight.w700,
-          color: AppColors.black,
-        ),
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.centerLeft,
+    child: Text(
+      title,
+      style: GoogleFonts.inter(
+        fontSize: 14 * scale,
+        fontWeight: FontWeight.w700,
+        color: AppColors.black,
       ),
-    );
-  }
+    ),
+  );
 }
 
-// ── Hexagon labels horizontal row ──
-class _HexLabelRow extends StatelessWidget {
+// ─────────────────────────────────────────────────
+// Horizontal scrollable hex/circle label row
+// ─────────────────────────────────────────────────
+class _HexRow extends StatelessWidget {
   final List<String> labels;
   final double scale;
-  const _HexLabelRow({required this.labels, required this.scale});
+  const _HexRow({required this.labels, required this.scale});
 
   @override
   Widget build(BuildContext context) {
@@ -1055,64 +1150,112 @@ class _HexLabelRow extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
       child: Row(
-        children: items.map((label) {
-          return Padding(
-            padding: EdgeInsets.only(right: 10 * scale),
-            child: Column(
-              children: [
-                Container(
-                  width: 50 * scale,
-                  height: 50 * scale,
-                  decoration: BoxDecoration(
-                    color: AppColors.pureWhite,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.clearGrey),
-                  ),
-                  child: Icon(
-                    Icons.hexagon_outlined,
-                    color: AppColors.black,
-                    size: 24 * scale,
-                  ),
+        children: items
+            .map(
+              (l) => Padding(
+                padding: EdgeInsets.only(right: 10 * scale),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 50 * scale,
+                      height: 50 * scale,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.clearGrey),
+                      ),
+                      child: Icon(
+                        Icons.hexagon_outlined,
+                        color: AppColors.black,
+                        size: 24 * scale,
+                      ),
+                    ),
+                    SizedBox(height: 5 * scale),
+                    Text(
+                      l,
+                      style: GoogleFonts.inter(
+                        fontSize: 11 * scale,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.black,
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(height: 5 * scale),
-                Text(
-                  label,
-                  style: GoogleFonts.inter(
-                    fontSize: 11 * scale,
-                    color: AppColors.black,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────
+// Outlined icon button (Add To List / Add To Recipe)
+// ─────────────────────────────────────────────────
+class _OutlineIconBtn extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final double scale;
+  final VoidCallback onTap;
+
+  const _OutlineIconBtn({
+    required this.icon,
+    required this.label,
+    required this.scale,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 44 * scale,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30 * scale),
+          border: Border.all(color: AppColors.royalPurple, width: 1.2),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16 * scale, color: AppColors.royalPurple),
+            SizedBox(width: 6 * scale),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 13 * scale,
+                fontWeight: FontWeight.w600,
+                color: AppColors.royalPurple,
+              ),
             ),
-          );
-        }).toList(),
+          ],
+        ),
       ),
     );
   }
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Frames 2.2.4 & 2.2.5 — Checkbox dialog (Add to List / Recipe)
+// 2.2.4 & 2.2.5 — Checkbox bottom-sheet dialog
 // ═══════════════════════════════════════════════════════════════
-class _CheckboxDialog extends StatelessWidget {
+class _ListCheckboxDialog extends StatelessWidget {
   final String title;
   final List<String> items;
   final List<String> selected;
   final String buttonLabel;
   final double scale;
-  final Size size;
+  final EdgeInsets padding;
   final ValueChanged<String> onToggle;
   final VoidCallback onSave;
   final VoidCallback onDismiss;
 
-  const _CheckboxDialog({
+  const _ListCheckboxDialog({
     required this.title,
     required this.items,
     required this.selected,
     required this.buttonLabel,
     required this.scale,
-    required this.size,
+    required this.padding,
     required this.onToggle,
     required this.onSave,
     required this.onDismiss,
@@ -1140,13 +1283,13 @@ class _CheckboxDialog extends StatelessWidget {
                 20 * scale,
                 20 * scale,
                 20 * scale,
-                MediaQuery.paddingOf(context).bottom + 20 * scale,
+                padding.bottom + 20 * scale,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Header ──
+                  // Header
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1171,14 +1314,14 @@ class _CheckboxDialog extends StatelessWidget {
                       ),
                     ],
                   ),
+                  SizedBox(height: 16 * scale),
 
-                  SizedBox(height: 14 * scale),
-
-                  // ── Checkbox list ──
+                  // Checkboxes
                   ...items.map((item) {
-                    final isChecked = selected.contains(item);
-                    return InkWell(
+                    final checked = selected.contains(item);
+                    return GestureDetector(
                       onTap: () => onToggle(item),
+                      behavior: HitTestBehavior.opaque,
                       child: Padding(
                         padding: EdgeInsets.symmetric(vertical: 11 * scale),
                         child: Row(
@@ -1187,18 +1330,18 @@ class _CheckboxDialog extends StatelessWidget {
                               width: 22 * scale,
                               height: 22 * scale,
                               decoration: BoxDecoration(
-                                color: isChecked
+                                color: checked
                                     ? AppColors.royalPurple
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(4 * scale),
                                 border: Border.all(
-                                  color: isChecked
+                                  color: checked
                                       ? AppColors.royalPurple
                                       : AppColors.inputBorder,
                                   width: 1.5,
                                 ),
                               ),
-                              child: isChecked
+                              child: checked
                                   ? Icon(
                                       Icons.check,
                                       size: 14 * scale,
@@ -1223,7 +1366,7 @@ class _CheckboxDialog extends StatelessWidget {
 
                   SizedBox(height: 20 * scale),
 
-                  // ── Save button ──
+                  // Save button
                   SizedBox(
                     width: double.infinity,
                     height: 52 * scale,
@@ -1257,7 +1400,9 @@ class _CheckboxDialog extends StatelessWidget {
   }
 }
 
-// ── Demo product fallback ──
+// ─────────────────────────────────────────────────
+// Demo product fallback
+// ─────────────────────────────────────────────────
 const _demoScannedProduct = ProductModel(
   id: 'scan_001',
   name: 'Name of the Product',

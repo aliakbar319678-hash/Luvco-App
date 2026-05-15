@@ -538,71 +538,210 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
+    return Center(
+      child: SizedBox(
+        width: 344 * widget.scale,
+        height: 134 * widget.scale,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.pureWhite,
+            borderRadius: BorderRadius.circular(20 * widget.scale),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // ── Badges ──
-          Row(
+          child: Column(
             children: [
-              Expanded(
-                child: Container(
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: widget.data.badge1Color,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      bottomRight: Radius.circular(12),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(widget.data.badge1Icon, color: Colors.white, size: 16),
-                      const SizedBox(width: 6),
-                      Text(
-                        widget.data.badge1Label,
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 12 * widget.scale,
-                          fontWeight: FontWeight.w600,
+              // ── Badges (Top Row) — 34px height ──
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 34 * widget.scale,
+                      decoration: BoxDecoration(
+                        color: widget.data.badge1Color,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(20 * widget.scale),
+                          bottomRight: Radius.circular(12 * widget.scale),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Container(
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: widget.data.badge2Color,
-                    borderRadius: const BorderRadius.only(
-                      topRight: Radius.circular(20),
-                      bottomLeft: Radius.circular(12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(widget.data.badge1Icon,
+                              color: Colors.white, size: 14 * widget.scale),
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
+                              widget.data.badge1Label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 10 * widget.scale,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
+                  Expanded(
+                    child: Container(
+                      height: 34 * widget.scale,
+                      decoration: BoxDecoration(
+                        color: widget.data.badge2Color,
+                        borderRadius: BorderRadius.only(
+                          topRight: Radius.circular(20 * widget.scale),
+                          bottomLeft: Radius.circular(12 * widget.scale),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(widget.data.badge2Icon,
+                              color: Colors.white, size: 14 * widget.scale),
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
+                              widget.data.badge2Label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 10 * widget.scale,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              // ── Content area — 100px height ──
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 14 * widget.scale),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(widget.data.badge2Icon, color: Colors.white, size: 16),
-                      const SizedBox(width: 6),
-                      Text(
-                        widget.data.badge2Label,
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 12 * widget.scale,
-                          fontWeight: FontWeight.w600,
+                      // Product Image - 75px to fit 100px content area
+                      Container(
+                        width: 75 * widget.scale,
+                        height: 75 * widget.scale,
+                        decoration: BoxDecoration(
+                          color: AppColors.softGrey,
+                          borderRadius:
+                              BorderRadius.circular(12 * widget.scale),
+                        ),
+                        child: widget.data.item.thumbnailAsset != null
+                            ? ClipRRect(
+                                borderRadius:
+                                    BorderRadius.circular(12 * widget.scale),
+                                child: Image.asset(
+                                  widget.data.item.thumbnailAsset!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                      Icons.image,
+                                      color: AppColors.neutralGrey),
+                                ),
+                              )
+                            : const Icon(Icons.image,
+                                color: AppColors.neutralGrey),
+                      ),
+                      SizedBox(width: 12 * widget.scale),
+
+                      // Name and Description
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              widget.data.item.name,
+                              style: GoogleFonts.inter(
+                                fontSize: 12 * widget.scale,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              widget.data.item.description,
+                              style: GoogleFonts.inter(
+                                fontSize: 10 * widget.scale,
+                                color: AppColors.darkGrey,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // More Actions Icon
+                      CustomPopupMenu(
+                        controller: _menuController,
+                        pressType: PressType.singleClick,
+                        barrierColor: Colors.transparent,
+                        showArrow: false,
+                        verticalMargin: -10,
+                        horizontalMargin: 10,
+                        menuBuilder: () => ClipRRect(
+                          borderRadius:
+                              BorderRadius.circular(12 * widget.scale),
+                          child: Container(
+                            width: 210 * widget.scale,
+                            decoration: BoxDecoration(
+                              color: AppColors.pureWhite,
+                              borderRadius:
+                                  BorderRadius.circular(12 * widget.scale),
+                              boxShadow: [
+                                BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.15),
+                                    blurRadius: 18,
+                                    offset: const Offset(0, 6)),
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _MenuOption(
+                                  label: 'See More Details',
+                                  icon: Icons.remove_red_eye_outlined,
+                                  onTap: () {
+                                    _menuController.hideMenu();
+                                    _openDetails();
+                                  },
+                                ),
+                                const Divider(
+                                    height: 1,
+                                    thickness: 1,
+                                    color: Color(0xFFEEEEEE)),
+                                _MenuOption(
+                                  label: 'Add to this shopping list',
+                                  icon: Icons.shopping_bag_outlined,
+                                  onTap: () {
+                                    _menuController.hideMenu();
+                                    _handleAddProduct();
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(6.0 * widget.scale),
+                          child: Icon(Icons.more_horiz,
+                              color: AppColors.darkGrey,
+                              size: 18 * widget.scale),
                         ),
                       ),
                     ],
@@ -611,114 +750,7 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
               ),
             ],
           ),
-
-          // ── Content ──
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                // Image
-                Container(
-                  width: 60 * widget.scale,
-                  height: 60 * widget.scale,
-                  decoration: BoxDecoration(
-                    color: AppColors.softGrey,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: widget.data.item.thumbnailAsset != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.asset(
-                            widget.data.item.thumbnailAsset!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Icon(Icons.image, color: AppColors.neutralGrey),
-                          ),
-                        )
-                      : const Icon(Icons.image, color: AppColors.neutralGrey),
-                ),
-                const SizedBox(width: 16),
-                
-                // Texts
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.data.item.name,
-                        style: GoogleFonts.inter(
-                          fontSize: 14 * widget.scale,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        widget.data.item.description,
-                        style: GoogleFonts.inter(
-                          fontSize: 12 * widget.scale,
-                          color: AppColors.darkGrey,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(width: 8),
-
-                // Menu
-                CustomPopupMenu(
-                  controller: _menuController,
-                  pressType: PressType.singleClick,
-                  barrierColor: Colors.transparent,
-                  showArrow: false,
-                  verticalMargin: -10,
-                  horizontalMargin: 10,
-                  menuBuilder: () => ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      width: 220,
-                      decoration: BoxDecoration(
-                        color: AppColors.pureWhite,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 20, offset: const Offset(0, 6)),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _MenuOption(
-                            label: 'See More Details',
-                            icon: Icons.remove_red_eye_outlined,
-                            onTap: () {
-                              _menuController.hideMenu();
-                              _openDetails();
-                            },
-                          ),
-                          const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
-                          _MenuOption(
-                            label: 'Add to this shopping list',
-                            icon: Icons.shopping_bag_outlined,
-                            onTap: () {
-                              _menuController.hideMenu();
-                              _handleAddProduct();
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  child: const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Icon(Icons.more_horiz, color: AppColors.darkGrey),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
