@@ -455,46 +455,42 @@ class _HexagonLabelRow extends StatelessWidget {
         ? const ['Label', 'Label', 'Label', 'Label']
         : labels;
     // No horizontal padding here — outer padding (16*scale) aligns with _SectionTitle
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
+    return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16 * scale),
       child: Row(
-        children: items.map((label) {
-          return Padding(
-            padding: EdgeInsets.only(right: 16 * scale),
-            child: Column(
-              children: [
-                Container(
-                  width: 58 * scale,
-                  height: 58 * scale,
-                  decoration: BoxDecoration(
-                    color: AppColors.pureWhite,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.clearGrey,
-                      width: 1.2,
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.hexagon_outlined,
-                      color: AppColors.black,
-                      size: 26 * scale,
-                    ),
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: items.take(4).map((label) { // Take 4 to prevent overflow
+          return Column(
+            children: [
+              Container(
+                width: 58 * scale,
+                height: 58 * scale,
+                decoration: BoxDecoration(
+                  color: AppColors.pureWhite,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.clearGrey,
+                    width: 1.2,
                   ),
                 ),
-                SizedBox(height: 6 * scale),
-                Text(
-                  label,
-                  style: GoogleFonts.inter(
-                    fontSize: 11 * scale,
+                child: Center(
+                  child: Icon(
+                    Icons.hexagon_outlined,
                     color: AppColors.black,
-                    fontWeight: FontWeight.w500,
+                    size: 26 * scale,
                   ),
                 ),
-              ],
-            ),
+              ),
+              SizedBox(height: 6 * scale),
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 11 * scale,
+                  color: AppColors.black,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           );
         }).toList(),
       ),

@@ -360,49 +360,43 @@ class _HexagonLabelsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        children: List.generate(4, (index) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: Column(
-              children: [
-                Container(
-                  width: 50 * scale.clamp(0.85, 1.2),
-                  height: 50 * scale.clamp(0.85, 1.2),
-                  decoration: BoxDecoration(
-                    color: AppColors.pureWhite,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: List.generate(4, (index) {
+        return Column(
+          children: [
+            Container(
+              width: 50 * scale.clamp(0.85, 1.2),
+              height: 50 * scale.clamp(0.85, 1.2),
+              decoration: BoxDecoration(
+                color: AppColors.pureWhite,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                  child: Icon(
-                    Icons.hexagon_outlined,
-                    color: AppColors.black,
-                    size: 24 * scale.clamp(0.85, 1.2),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Label',
-                  style: GoogleFonts.inter(
-                    fontSize: 11 * scale.clamp(0.85, 1.2),
-                    color: AppColors.black,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+                ],
+              ),
+              child: Icon(
+                Icons.hexagon_outlined,
+                color: AppColors.black,
+                size: 24 * scale.clamp(0.85, 1.2),
+              ),
             ),
-          );
-        }),
-      ),
+            const SizedBox(height: 8),
+            Text(
+              'Label',
+              style: GoogleFonts.inter(
+                fontSize: 11 * scale.clamp(0.85, 1.2),
+                color: AppColors.black,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        );
+      }),
     );
   }
 }

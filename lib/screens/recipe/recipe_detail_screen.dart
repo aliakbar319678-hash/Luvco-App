@@ -1057,75 +1057,83 @@ class _ProductCard extends StatelessWidget {
             ),
           ),
 
-          // ── Product image area with heart icon ─────────────────────
-          Stack(
-            children: [
-              // White background + centered product image
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(
-                  vertical: 20 * scale,
-                  horizontal: 16 * scale,
-                ),
-                color: AppColors.pureWhite,
-                child: Center(
-                  child: SizedBox(
-                    height: 160 * scale,
-                    child: product.imageAsset != null
-                        ? Image.asset(
-                            product.imageAsset!,
-                            fit: BoxFit.contain,
-                            errorBuilder: (_, __, ___) => Icon(
-                              Icons.image_outlined,
-                              size: 64 * scale,
-                              color: AppColors.clearGrey,
-                            ),
-                          )
-                        : Icon(
+          // ── Product Info Area ──────────────────────────────────────
+          Container(
+            color: AppColors.pureWhite,
+            padding: EdgeInsets.symmetric(
+              vertical: 20 * scale,
+              horizontal: 16 * scale,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Product Image
+                SizedBox(
+                  width: 64 * scale,
+                  height: 64 * scale,
+                  child: product.imageAsset != null
+                      ? Image.asset(
+                          product.imageAsset!,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => Icon(
                             Icons.image_outlined,
-                            size: 64 * scale,
+                            size: 32 * scale,
                             color: AppColors.clearGrey,
                           ),
-                  ),
+                        )
+                      : Icon(
+                          Icons.image_outlined,
+                          size: 32 * scale,
+                          color: AppColors.clearGrey,
+                        ),
                 ),
-              ),
-
-              // Heart icon — top-right overlay
-              Positioned(
-                top: 12 * scale,
-                right: 14 * scale,
-                child: GestureDetector(
-                  onTap: () {},
-                  child: Icon(
-                    Icons.favorite_border_rounded,
-                    size: 24 * scale.clamp(0.85, 1.2),
-                    color: AppColors.black,
-                  ),
-                ),
-              ),
-
-              // Delete button — top-left, only for owners
-              if (isOwner && onDelete != null)
-                Positioned(
-                  top: 8 * scale,
-                  left: 8 * scale,
-                  child: GestureDetector(
-                    onTap: onDelete,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
+                SizedBox(width: 16 * scale),
+                // Text Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product.name,
+                        style: GoogleFonts.inter(
+                          fontSize: 14 * scale.clamp(0.85, 1.2),
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.black,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        product.otherData,
+                        style: GoogleFonts.inter(
+                          fontSize: 13 * scale.clamp(0.85, 1.2),
+                          color: AppColors.darkGrey,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                // Delete Button
+                if (isOwner && onDelete != null) ...[
+                  SizedBox(width: 12 * scale),
+                  GestureDetector(
+                    onTap: onDelete,
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
                       child: Icon(
                         Icons.delete_outline_rounded,
-                        size: 20 * scale.clamp(0.85, 1.2),
-                        color: Colors.red,
+                        size: 24 * scale.clamp(0.85, 1.2),
+                        color: AppColors.black,
                       ),
                     ),
                   ),
-                ),
-            ],
+                ],
+              ],
+            ),
           ),
         ],
       ),

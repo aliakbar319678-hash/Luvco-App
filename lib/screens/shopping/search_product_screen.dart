@@ -539,42 +539,37 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: SizedBox(
+      child: Container(
         width: 344 * widget.scale,
-        height: 134 * widget.scale,
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.pureWhite,
-            borderRadius: BorderRadius.circular(20 * widget.scale),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
+        height: 108 * widget.scale,
+        decoration: BoxDecoration(
+          color: AppColors.pureWhite,
+          borderRadius: BorderRadius.circular(16 * widget.scale),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16 * widget.scale),
           child: Column(
             children: [
-              // ── Badges (Top Row) — 34px height ──
+              // ── Badges (Top Row) ──
               Row(
                 children: [
                   Expanded(
                     child: Container(
-                      height: 34 * widget.scale,
-                      decoration: BoxDecoration(
-                        color: widget.data.badge1Color,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(20 * widget.scale),
-                          bottomRight: Radius.circular(12 * widget.scale),
-                        ),
-                      ),
+                      height: 28 * widget.scale,
+                      color: widget.data.badge1Color,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(widget.data.badge1Icon,
-                              color: Colors.white, size: 14 * widget.scale),
-                          const SizedBox(width: 5),
+                              color: Colors.white, size: 12 * widget.scale),
+                          const SizedBox(width: 4),
                           Flexible(
                             child: Text(
                               widget.data.badge1Label,
@@ -593,20 +588,14 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
                   ),
                   Expanded(
                     child: Container(
-                      height: 34 * widget.scale,
-                      decoration: BoxDecoration(
-                        color: widget.data.badge2Color,
-                        borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(20 * widget.scale),
-                          bottomLeft: Radius.circular(12 * widget.scale),
-                        ),
-                      ),
+                      height: 28 * widget.scale,
+                      color: widget.data.badge2Color,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(widget.data.badge2Icon,
-                              color: Colors.white, size: 14 * widget.scale),
-                          const SizedBox(width: 5),
+                              color: Colors.white, size: 12 * widget.scale),
+                          const SizedBox(width: 4),
                           Flexible(
                             child: Text(
                               widget.data.badge2Label,
@@ -626,25 +615,25 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
                 ],
               ),
 
-              // ── Content area — 100px height ──
+              // ── Content area ──
               Expanded(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 14 * widget.scale),
                   child: Row(
                     children: [
-                      // Product Image - 75px to fit 100px content area
+                      // Product Image
                       Container(
-                        width: 75 * widget.scale,
-                        height: 75 * widget.scale,
+                        width: 56 * widget.scale,
+                        height: 56 * widget.scale,
                         decoration: BoxDecoration(
                           color: AppColors.softGrey,
                           borderRadius:
-                              BorderRadius.circular(12 * widget.scale),
+                              BorderRadius.circular(10 * widget.scale),
                         ),
                         child: widget.data.item.thumbnailAsset != null
                             ? ClipRRect(
                                 borderRadius:
-                                    BorderRadius.circular(12 * widget.scale),
+                                    BorderRadius.circular(10 * widget.scale),
                                 child: Image.asset(
                                   widget.data.item.thumbnailAsset!,
                                   fit: BoxFit.cover,
@@ -667,16 +656,18 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
                             Text(
                               widget.data.item.name,
                               style: GoogleFonts.inter(
-                                fontSize: 12 * widget.scale,
+                                fontSize: 14 * widget.scale,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.black,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 2),
                             Text(
                               widget.data.item.description,
                               style: GoogleFonts.inter(
-                                fontSize: 10 * widget.scale,
+                                fontSize: 12 * widget.scale,
                                 color: AppColors.darkGrey,
                               ),
                               maxLines: 2,
@@ -741,7 +732,7 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
                           padding: EdgeInsets.all(6.0 * widget.scale),
                           child: Icon(Icons.more_horiz,
                               color: AppColors.darkGrey,
-                              size: 18 * widget.scale),
+                              size: 22 * widget.scale),
                         ),
                       ),
                     ],

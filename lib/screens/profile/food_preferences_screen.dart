@@ -925,33 +925,36 @@ class _AddManuallyModalState extends State<_AddManuallyModal> {
             }),
 
             // ── Add More ──
-            GestureDetector(
-              onTap: _addMore,
-              child: Row(
-                children: [
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: const BoxDecoration(
-                      color: AppColors.royalPurple,
-                      shape: BoxShape.circle,
+            Center(
+              child: GestureDetector(
+                onTap: _addMore,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: const BoxDecoration(
+                        color: AppColors.black,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.add,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 16,
+                    const SizedBox(width: 8),
+                    Text(
+                      'Add More',
+                      style: GoogleFonts.inter(
+                        fontSize: 13 * s.clamp(0.85, 1.2),
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.black,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Add More',
-                    style: GoogleFonts.inter(
-                      fontSize: 13 * s.clamp(0.85, 1.2),
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.darkGrey,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 
@@ -1179,56 +1182,80 @@ class _DeleteConfirmDialog extends StatelessWidget {
                   color: AppColors.pureWhite,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
-                      'Do you want to delete\n"Custom Item"?',
-                      style: GoogleFonts.inter(
-                        fontSize: 16 * s.clamp(0.85, 1.2),
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.black,
-                        height: 1.3,
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                      child: Text(
+                        'Do you want to delete\n"Custom Item"?',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 16 * s.clamp(0.85, 1.2),
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.black,
+                          height: 1.3,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Lorem ipsum dolor sit amet,\nconsectetur adipiscing elit.',
-                      style: GoogleFonts.inter(
-                        fontSize: 12 * s.clamp(0.85, 1.2),
-                        color: AppColors.neutralGrey,
-                        height: 1.4,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        'Lorem ipsum dolor sit amet,\nconsectetur adipiscing elit.',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 12 * s.clamp(0.85, 1.2),
+                          color: AppColors.neutralGrey,
+                          height: 1.4,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        GestureDetector(
-                          onTap: onCancel,
-                          child: Text(
-                            'Cancel',
-                            style: GoogleFonts.inter(
-                              fontSize: 14 * s.clamp(0.85, 1.2),
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.darkGrey,
+                    const Divider(height: 1, color: AppColors.clearGrey),
+                    IntrinsicHeight(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: onCancel,
+                              behavior: HitTestBehavior.opaque,
+                              child: Container(
+                                alignment: Alignment.center,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                child: Text(
+                                  'Cancel',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14 * s.clamp(0.85, 1.2),
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF007AFF),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                        GestureDetector(
-                          onTap: onDelete,
-                          child: Text(
-                            'Delete',
-                            style: GoogleFonts.inter(
-                              fontSize: 14 * s.clamp(0.85, 1.2),
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.errorRed,
+                          const VerticalDivider(width: 1, color: AppColors.clearGrey),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: onDelete,
+                              behavior: HitTestBehavior.opaque,
+                              child: Container(
+                                alignment: Alignment.center,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                child: Text(
+                                  'Delete',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14 * s.clamp(0.85, 1.2),
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.errorRed,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),
