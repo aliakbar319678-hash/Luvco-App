@@ -80,7 +80,6 @@ class UserProfileScreen extends ConsumerWidget {
                             viewMode: viewMode,
                             size: size,
                             scale: scale,
-                            ref: ref,
                           )
                         else if (activeTab == ProfileTab.myRecipes)
                           const MyRecipesTab()
@@ -414,23 +413,22 @@ class _TabDivider extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 // Shopping Lists Tab content
 // ─────────────────────────────────────────────────────────────────
-class _ShoppingListsTab extends StatelessWidget {
+class _ShoppingListsTab extends ConsumerWidget {
   final List<ShoppingListModel> lists;
   final ShoppingListViewMode viewMode;
   final Size size;
   final double scale;
-  final WidgetRef ref;
+  // Uses ref directly for view mode toggles — no prop-drilling needed
 
   const _ShoppingListsTab({
     required this.lists,
     required this.viewMode,
     required this.size,
     required this.scale,
-    required this.ref,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: size.width * 0.058),
       child: Column(
@@ -499,9 +497,9 @@ class _ShoppingListsTab extends StatelessWidget {
           if (lists.isEmpty)
             _EmptyState(scale: scale, size: size)
           else if (viewMode == ShoppingListViewMode.grid)
-            _GridView(lists: lists, size: size, ref: ref)
+            _GridView(lists: lists, size: size)
           else
-            _ListView(lists: lists, ref: ref),
+            _ListView(lists: lists),
         ],
       ),
     );
@@ -570,15 +568,17 @@ class _EmptyState extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 // Grid view
 // ─────────────────────────────────────────────────────────────────
-class _GridView extends StatelessWidget {
+/// Grid view is now a [ConsumerWidget] so it reads the shopping-list
+/// provider directly rather than receiving a [WidgetRef] as a prop.
+/// This eliminates ref prop-drilling and enables correct selective rebuilds.
+class _GridView extends ConsumerWidget {
   final List<ShoppingListModel> lists;
   final Size size;
-  final WidgetRef ref;
 
-  const _GridView({required this.lists, required this.size, required this.ref});
+  const _GridView({required this.lists, required this.size});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -593,24 +593,33 @@ class _GridView extends StatelessWidget {
         final list = lists[index];
         return ShoppingListGridCard(
           list: list,
-          onAction: (action) => _handleAction(context, action, list),
+          onAction: (action) => _handleAction(context, ref, action, list),
           onTap: () => context.push('/shopping-list/${list.id}'),
         );
       },
     );
   }
 
-  void _handleAction(BuildContext context, String action, ShoppingListModel list) {
+  void _handleAction(
+    BuildContext context,
+    WidgetRef ref,
+    String action,
+    ShoppingListModel list,
+  ) {
     if (action == 'edit') {
-      _showEditDialog(context, list);
+      _showEditDialog(context, ref, list);
     } else if (action == 'duplicate') {
-      _showDuplicateSuccess(context, list.id);
+      _showDuplicateSuccess(context, ref, list.id);
     } else if (action == 'delete') {
-      _showDeleteDialog(context, list);
+      _showDeleteDialog(context, ref, list);
     }
   }
 
-  void _showEditDialog(BuildContext context, ShoppingListModel list) {
+  void _showEditDialog(
+    BuildContext context,
+    WidgetRef ref,
+    ShoppingListModel list,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -618,30 +627,34 @@ class _GridView extends StatelessWidget {
       builder: (_) => LuvcoEditListBottomSheet(
         initialTitle: list.title,
         initialDescription: list.description,
-        onSave: (title, desc) => ref
-            .read(shoppingListProvider.notifier)
-            .editList(list.id, title, desc),
+        onSave: (title, desc) =>
+            ref.read(shoppingListProvider.notifier).editList(list.id, title, desc),
       ),
     );
   }
 
-  void _showDuplicateSuccess(BuildContext context, String id) {
+  void _showDuplicateSuccess(
+    BuildContext context,
+    WidgetRef ref,
+    String id,
+  ) {
     ref.read(shoppingListProvider.notifier).duplicateList(id);
     showDialog(
       context: context,
       builder: (_) => const LuvcoDuplicateSuccessOverlay(),
     );
-    Future.delayed(
-      const Duration(seconds: 2),
-      () {
-        if (context.mounted) {
-          Navigator.of(context, rootNavigator: true).pop();
-        }
-      },
-    );
+    Future.delayed(const Duration(seconds: 2), () {
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    });
   }
 
-  void _showDeleteDialog(BuildContext context, ShoppingListModel list) {
+  void _showDeleteDialog(
+    BuildContext context,
+    WidgetRef ref,
+    ShoppingListModel list,
+  ) {
     showDialog(
       context: context,
       builder: (_) => LuvcoDeleteConfirmDialog(
@@ -656,20 +669,22 @@ class _GridView extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 // List view
 // ─────────────────────────────────────────────────────────────────
-class _ListView extends StatelessWidget {
+/// List view is a [ConsumerWidget] — reads shopping-list provider itself
+/// rather than accepting [WidgetRef] as a prop (eliminates ref prop-drilling).
+/// Also deduplicates action handling with _GridView by using the same helper.
+class _ListView extends ConsumerWidget {
   final List<ShoppingListModel> lists;
-  final WidgetRef ref;
 
-  const _ListView({required this.lists, required this.ref});
+  const _ListView({required this.lists});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       children: lists
           .map(
             (list) => ShoppingListListCard(
               list: list,
-              onAction: (action) => _handleAction(context, action, list),
+              onAction: (action) => _handleAction(context, ref, action, list),
               onTap: () => context.push('/shopping-list/${list.id}'),
             ),
           )
@@ -677,7 +692,12 @@ class _ListView extends StatelessWidget {
     );
   }
 
-  void _handleAction(BuildContext context, String action, ShoppingListModel list) {
+  void _handleAction(
+    BuildContext context,
+    WidgetRef ref,
+    String action,
+    ShoppingListModel list,
+  ) {
     if (action == 'edit') {
       showModalBottomSheet(
         context: context,
@@ -686,9 +706,8 @@ class _ListView extends StatelessWidget {
         builder: (_) => LuvcoEditListBottomSheet(
           initialTitle: list.title,
           initialDescription: list.description,
-          onSave: (title, desc) => ref
-              .read(shoppingListProvider.notifier)
-              .editList(list.id, title, desc),
+          onSave: (title, desc) =>
+              ref.read(shoppingListProvider.notifier).editList(list.id, title, desc),
         ),
       );
     } else if (action == 'duplicate') {
@@ -697,14 +716,11 @@ class _ListView extends StatelessWidget {
         context: context,
         builder: (_) => const LuvcoDuplicateSuccessOverlay(),
       );
-      Future.delayed(
-        const Duration(seconds: 2),
-        () {
-          if (context.mounted) {
-            Navigator.of(context, rootNavigator: true).pop();
-          }
-        },
-      );
+      Future.delayed(const Duration(seconds: 2), () {
+        if (context.mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+      });
     } else if (action == 'delete') {
       showDialog(
         context: context,

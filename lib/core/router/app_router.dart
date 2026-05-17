@@ -1,10 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:luvco_logo/screens/auth/forgot_password_screen.dart';
 import 'package:luvco_logo/screens/auth/login_screen.dart';
-import 'package:luvco_logo/screens/auth/new_password_screen.dart'; // ← NEW
+import 'package:luvco_logo/screens/auth/new_password_screen.dart';
 import 'package:luvco_logo/screens/auth/otp_verification_screen.dart';
-import 'package:luvco_logo/screens/auth/password_updated_screen.dart'; // ← NEW
+import 'package:luvco_logo/screens/auth/password_updated_screen.dart';
 import 'package:luvco_logo/screens/auth/signup_otp_screen.dart';
 import 'package:luvco_logo/screens/auth/signup_screen.dart';
 import 'package:luvco_logo/screens/recipe/new_recipe_screen.dart';
@@ -29,131 +30,253 @@ import 'package:luvco_logo/screens/product/product_detail_screen.dart';
 import 'package:luvco_logo/screens/scanner/barcode_scanner_screen.dart';
 import 'package:luvco_logo/models/product_model.dart';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared transition builder — smooth fade + subtle upward slide.
+// GPU-friendly: uses opacity + translate only (no clipping, no scale distortion).
+// Duration is intentionally short (220ms) to feel snappy without lagging.
+// ─────────────────────────────────────────────────────────────────────────────
+Page<void> _fadeSlide({
+  required LocalKey key,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: key,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 220),
+    reverseTransitionDuration: const Duration(milliseconds: 180),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      // Fade + slight slide up — the most performant combo for mobile
+      return FadeTransition(
+        opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.04), // barely 4% down → feels natural
+            end: Offset.zero,
+          ).animate(
+            CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+          ),
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// App Router Provider
+// Using Provider (not StateNotifierProvider) — the GoRouter is immutable after
+// creation and should never be rebuilt. ref.read() is used at the call site.
+// ─────────────────────────────────────────────────────────────────────────────
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
     routes: [
-      GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
-      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(
+        path: '/',
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const SplashScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/login',
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const LoginScreen(),
+        ),
+      ),
       GoRoute(
         path: '/forgot-password',
-        builder: (context, state) => const ForgotPasswordScreen(),
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const ForgotPasswordScreen(),
+        ),
       ),
       GoRoute(
         path: '/otp-verification',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final email = state.uri.queryParameters['email'] ?? '';
-          return OtpVerificationScreen(email: email);
+          return _fadeSlide(
+            key: state.pageKey,
+            child: OtpVerificationScreen(email: email),
+          );
         },
       ),
       GoRoute(
-        path: '/new-password', // ← NEW
-        builder: (context, state) => const NewPasswordScreen(),
+        path: '/new-password',
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const NewPasswordScreen(),
+        ),
       ),
       GoRoute(
-        path: '/password-updated', // ← NEW
-        builder: (context, state) => const PasswordUpdatedScreen(),
+        path: '/password-updated',
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const PasswordUpdatedScreen(),
+        ),
       ),
-
       GoRoute(
         path: '/signup',
-        builder: (context, state) => const SignupScreen(),
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const SignupScreen(),
+        ),
       ),
       GoRoute(
         path: '/signup-verify',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final email = state.uri.queryParameters['email'] ?? '';
-          return SignupOtpScreen(email: email);
+          return _fadeSlide(
+            key: state.pageKey,
+            child: SignupOtpScreen(email: email),
+          );
         },
       ),
       GoRoute(
         path: '/onboarding',
-        builder: (context, state) => const OnboardingScreen(),
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const OnboardingScreen(),
+        ),
         routes: [
           GoRoute(
             path: 'diet',
-            builder: (context, state) => const DietPreferenceScreen(),
+            pageBuilder: (context, state) => _fadeSlide(
+              key: state.pageKey,
+              child: const DietPreferenceScreen(),
+            ),
           ),
           GoRoute(
             path: 'allergy',
-            builder: (context, state) => const FoodAllergyScreen(),
+            pageBuilder: (context, state) => _fadeSlide(
+              key: state.pageKey,
+              child: const FoodAllergyScreen(),
+            ),
           ),
         ],
       ),
       GoRoute(
         path: '/profile',
-        builder: (context, state) => const UserProfileScreen(),
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const UserProfileScreen(),
+        ),
       ),
       GoRoute(
         path: '/new-shopping-list',
-        builder: (context, state) => const NewShoppingListScreen(),
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const NewShoppingListScreen(),
+        ),
       ),
       GoRoute(
         path: '/account-settings',
-        builder: (context, state) => const AccountSettingsScreen(),
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const AccountSettingsScreen(),
+        ),
       ),
       GoRoute(
         path: '/shopping-list/:id',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final listId = state.pathParameters['id'] ?? '';
-          return ShoppingListDetailScreen(listId: listId);
+          return _fadeSlide(
+            key: state.pageKey,
+            child: ShoppingListDetailScreen(listId: listId),
+          );
         },
       ),
       GoRoute(
         path: '/search-product/:id',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final listId = state.pathParameters['id'] ?? '';
-          return SearchProductScreen(listId: listId);
+          return _fadeSlide(
+            key: state.pageKey,
+            child: SearchProductScreen(listId: listId),
+          );
         },
       ),
       GoRoute(
         path: '/favorites',
-        builder: (context, state) => const FavoritesScreen(),
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const FavoritesScreen(),
+        ),
       ),
       GoRoute(
         path: '/new-recipe',
-        builder: (context, state) => const NewRecipeScreen(),
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const NewRecipeScreen(),
+        ),
       ),
       GoRoute(
         path: '/recipe-detail',
-        builder: (context, state) {
-          final recipe = state.extra as RecipeDetailModel? ?? demoRecipeDetail;
-          return RecipeDetailScreen(recipe: recipe);
+        pageBuilder: (context, state) {
+          final recipe =
+              state.extra as RecipeDetailModel? ?? demoRecipeDetail;
+          return _fadeSlide(
+            key: state.pageKey,
+            child: RecipeDetailScreen(recipe: recipe),
+          );
         },
       ),
       GoRoute(
         path: '/food-challenges',
-        builder: (context, state) => const FoodPreferencesScreen(isDiet: false),
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const FoodPreferencesScreen(isDiet: false),
+        ),
       ),
       GoRoute(
         path: '/food-diet',
-        builder: (context, state) => const FoodPreferencesScreen(isDiet: true),
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const FoodPreferencesScreen(isDiet: true),
+        ),
       ),
       GoRoute(
         path: '/home',
-        builder: (context, state) => const UserDashboardScreen(),
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const UserDashboardScreen(),
+        ),
       ),
       GoRoute(
         path: '/dashboard-search',
-        builder: (context, state) => const DashboardSearchProductScreen(),
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const DashboardSearchProductScreen(),
+        ),
       ),
       GoRoute(
         path: '/search-recipe',
-        builder: (context, state) => const SearchRecipeScreen(),
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const SearchRecipeScreen(),
+        ),
       ),
       GoRoute(
         path: '/product-detail',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final product = state.extra is ProductModel
               ? state.extra as ProductModel
               : ProductModel.demo();
-          return ProductDetailScreen(product: product);
+          return _fadeSlide(
+            key: state.pageKey,
+            child: ProductDetailScreen(product: product),
+          );
         },
       ),
       GoRoute(
         path: '/barcode-scanner',
-        builder: (context, state) => const BarcodeScannerScreen(),
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const BarcodeScannerScreen(),
+        ),
       ),
     ],
   );
 });
+

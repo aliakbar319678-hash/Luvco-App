@@ -4,21 +4,17 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/responsive_utils.dart';
 import '../../providers/dashboard_provider.dart';
 
 import '../../models/recipe_model.dart';
 import '../../widgets/bottom_nav_bar.dart';
 
-class UserDashboardScreen extends ConsumerWidget {
+class UserDashboardScreen extends StatelessWidget {
   const UserDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(dashboardProvider);
-    final size = MediaQuery.sizeOf(context);
-    final scale = size.width / 390;
-    final topPadding = MediaQuery.paddingOf(context).top;
-
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.pageBackground,
       body: Column(
@@ -29,24 +25,20 @@ class UserDashboardScreen extends ConsumerWidget {
               physics: const BouncingScrollPhysics(),
               slivers: [
                 // ── Greeting ──
-                SliverToBoxAdapter(
-                  child: _GreetingHeader(
-                    username: state.username,
-                    scale: scale,
-                    topPadding: topPadding,
-                  ),
+                const SliverToBoxAdapter(
+                  child: _GreetingHeader(),
                 ),
 
-                SliverToBoxAdapter(child: SizedBox(height: 24 * scale)),
+                SliverToBoxAdapter(child: SizedBox(height: context.s(24))),
 
                 // ── Explore New Products Section ──
                 SliverToBoxAdapter(
                   child: Container(
-                    margin: EdgeInsets.symmetric(horizontal: 16 * scale),
-                    padding: EdgeInsets.symmetric(vertical: 24 * scale),
+                    margin: EdgeInsets.symmetric(horizontal: context.s(16)),
+                    padding: EdgeInsets.symmetric(vertical: context.s(24)),
                     decoration: BoxDecoration(
                       color: AppColors.pureWhite,
-                      borderRadius: BorderRadius.circular(20 * scale),
+                      borderRadius: BorderRadius.circular(context.s(20)),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.04),
@@ -57,62 +49,53 @@ class UserDashboardScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        _SectionTitle(
+                        const _SectionTitle(
                           icon: 'assets/icons/microscope_icon.png',
                           title: 'Explore new products',
-                          scale: scale,
                           isAssetIcon: true,
                         ),
-                        SizedBox(height: 16 * scale),
-                        _ExploreActionCards(scale: scale),
-                        SizedBox(height: 12 * scale),
-                        _QuickActionCards(scale: scale, context: context),
+                        SizedBox(height: context.s(16)),
+                        const _ExploreActionCards(),
+                        SizedBox(height: context.s(12)),
+                        const _QuickActionCards(),
                       ],
                     ),
                   ),
                 ),
 
-                SliverToBoxAdapter(child: SizedBox(height: 28 * scale)),
+                SliverToBoxAdapter(child: SizedBox(height: context.s(28))),
 
                 // ── Recommended Products ──
-                SliverToBoxAdapter(
+                const SliverToBoxAdapter(
                   child: _SectionTitle(
                     icon: '💡',
                     title: 'Recommended products',
-                    scale: scale,
                   ),
                 ),
 
-                SliverToBoxAdapter(child: SizedBox(height: 12 * scale)),
+                SliverToBoxAdapter(child: SizedBox(height: context.s(12))),
 
-                SliverToBoxAdapter(
-                  child: _RecommendedProductsRow(
-                    products: state.recommendedProducts,
-                    scale: scale,
-                  ),
+                const SliverToBoxAdapter(
+                  child: _RecommendedProductsRow(),
                 ),
 
-                SliverToBoxAdapter(child: SizedBox(height: 28 * scale)),
+                SliverToBoxAdapter(child: SizedBox(height: context.s(28))),
 
                 // ── Recently Viewed Recipes ──
-                SliverToBoxAdapter(
+                const SliverToBoxAdapter(
                   child: _SectionTitle(
                     icon: '🕐',
                     title: 'Recipes recently viewed',
-                    scale: scale,
                   ),
                 ),
 
-                SliverToBoxAdapter(child: SizedBox(height: 12 * scale)),
+                SliverToBoxAdapter(child: SizedBox(height: context.s(12))),
 
-                SliverToBoxAdapter(
-                  child: _RecentRecipesRow(
-                    recipes: state.recentlyViewedRecipes,
-                    scale: scale,
-                  ),
+                const SliverToBoxAdapter(
+                  child: _RecentRecipesRow(),
                 ),
 
-                SliverToBoxAdapter(child: SizedBox(height: 24 * scale)),
+                SliverToBoxAdapter(child: SizedBox(height: context.s(24))),
               ],
             ),
           ),
@@ -128,31 +111,26 @@ class UserDashboardScreen extends ConsumerWidget {
 // ─────────────────────────────────────────────────────────────────
 // Greeting Header
 // ─────────────────────────────────────────────────────────────────
-class _GreetingHeader extends StatelessWidget {
-  final String username;
-  final double scale;
-  final double topPadding;
-
-  const _GreetingHeader({
-    required this.username,
-    required this.scale,
-    required this.topPadding,
-  });
+class _GreetingHeader extends ConsumerWidget {
+  const _GreetingHeader();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Selective watching! Only rebuilds when username changes.
+    final username = ref.watch(dashboardProvider.select((s) => s.username));
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.only(
-        top: topPadding + 24 * scale,
-        bottom: 32 * scale,
-        left: 20 * scale,
-        right: 20 * scale,
+        top: context.topPadding + context.s(24),
+        bottom: context.s(32),
+        left: context.s(20),
+        right: context.s(20),
       ),
       decoration: BoxDecoration(
         color: AppColors.pureWhite,
         borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(32 * scale),
+          bottom: Radius.circular(context.s(32)),
         ),
         boxShadow: [
           BoxShadow(
@@ -168,7 +146,7 @@ class _GreetingHeader extends StatelessWidget {
           Text(
             'Hi, $username!',
             style: GoogleFonts.inter(
-              fontSize: 24 * scale.clamp(0.85, 1.3),
+              fontSize: context.s(24),
               fontWeight: FontWeight.w700,
               color: AppColors.vibrantPink,
             ),
@@ -185,35 +163,33 @@ class _GreetingHeader extends StatelessWidget {
 class _SectionTitle extends StatelessWidget {
   final String icon;
   final String title;
-  final double scale;
   final bool isAssetIcon;
 
   const _SectionTitle({
     required this.icon,
     required this.title,
-    required this.scale,
     this.isAssetIcon = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20 * scale),
+      padding: EdgeInsets.symmetric(horizontal: context.s(20)),
       child: Row(
         children: [
           isAssetIcon
               ? Image.asset(
                   icon,
-                  width: 26 * scale.clamp(0.85, 1.3),
-                  height: 26 * scale.clamp(0.85, 1.3),
+                  width: context.s(26),
+                  height: context.s(26),
                   color: AppColors.black,
                 )
-              : Text(icon, style: TextStyle(fontSize: 24 * scale.clamp(0.85, 1.3))),
-          SizedBox(width: 10 * scale),
+              : Text(icon, style: TextStyle(fontSize: context.s(24))),
+          SizedBox(width: context.s(10)),
           Text(
             title,
             style: GoogleFonts.inter(
-              fontSize: 22 * scale.clamp(0.85, 1.3),
+              fontSize: context.s(22),
               fontWeight: FontWeight.w700,
               color: AppColors.black,
             ),
@@ -228,27 +204,23 @@ class _SectionTitle extends StatelessWidget {
 // Explore Action Cards (Search Products + Find Recipe)
 // ─────────────────────────────────────────────────────────────────
 class _ExploreActionCards extends StatelessWidget {
-  final double scale;
-
-  const _ExploreActionCards({required this.scale});
+  const _ExploreActionCards();
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+      padding: EdgeInsets.symmetric(horizontal: context.s(16)),
       child: Column(
         children: [
           _PurpleActionCard(
             title: 'Search New Products',
             subtitle: 'Search products by name or brand',
-            scale: scale,
             onTap: () => context.push('/dashboard-search'),
           ),
-          SizedBox(height: 10 * scale),
+          SizedBox(height: context.s(10)),
           _PurpleActionCard(
             title: 'Find New Recipe',
             subtitle: 'Search for a recipe by ingredient or diet type',
-            scale: scale,
             onTap: () => context.push('/search-recipe'),
           ),
         ],
@@ -260,13 +232,11 @@ class _ExploreActionCards extends StatelessWidget {
 class _PurpleActionCard extends StatelessWidget {
   final String title;
   final String subtitle;
-  final double scale;
   final VoidCallback onTap;
 
   const _PurpleActionCard({
     required this.title,
     required this.subtitle,
-    required this.scale,
     required this.onTap,
   });
 
@@ -275,8 +245,8 @@ class _PurpleActionCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 344 * scale,
-        height: 92 * scale,
+        width: context.s(344),
+        height: context.s(92),
         child: Container(
           decoration: BoxDecoration(
             gradient: const LinearGradient(
@@ -284,7 +254,7 @@ class _PurpleActionCard extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(18 * scale),
+            borderRadius: BorderRadius.circular(context.s(18)),
             boxShadow: [
               BoxShadow(
                 color: AppColors.royalPurple.withValues(alpha: 0.3),
@@ -293,11 +263,9 @@ class _PurpleActionCard extends StatelessWidget {
               ),
             ],
           ),
-          padding: EdgeInsets.only(
-            top: 19 * scale,
-            bottom: 19 * scale,
-            left: 24 * scale,
-            right: 24 * scale,
+          padding: EdgeInsets.symmetric(
+            vertical: context.s(19),
+            horizontal: context.s(24),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -310,18 +278,18 @@ class _PurpleActionCard extends StatelessWidget {
                     Text(
                       title,
                       style: GoogleFonts.inter(
-                        fontSize: 16 * scale.clamp(0.85, 1.2),
+                        fontSize: context.s(16),
                         fontWeight: FontWeight.w700,
                         color: AppColors.pureWhite,
                       ),
                     ),
-                    SizedBox(height: 4 * scale),
+                    SizedBox(height: context.s(4)),
                     Text(
                       subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        fontSize: 13 * scale.clamp(0.85, 1.2),
+                        fontSize: context.s(13),
                         fontWeight: FontWeight.w400,
                         color: AppColors.pureWhite.withValues(alpha: 0.8),
                       ),
@@ -332,7 +300,7 @@ class _PurpleActionCard extends StatelessWidget {
               Icon(
                 Icons.search_rounded,
                 color: AppColors.pureWhite,
-                size: 22 * scale.clamp(0.85, 1.2),
+                size: context.s(22),
               ),
             ],
           ),
@@ -346,31 +314,26 @@ class _PurpleActionCard extends StatelessWidget {
 // Quick Action Cards (Scan Barcode + Create Shopping List)
 // ─────────────────────────────────────────────────────────────────
 class _QuickActionCards extends StatelessWidget {
-  final double scale;
-  final BuildContext context;
-
-  const _QuickActionCards({required this.scale, required this.context});
+  const _QuickActionCards();
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20 * scale),
+      padding: EdgeInsets.symmetric(horizontal: context.s(20)),
       child: Row(
         children: [
           Expanded(
             child: _PinkQuickCard(
               icon: Icons.qr_code_scanner_rounded,
               title: 'Scan the Barcode of a Product',
-              scale: scale,
               onTap: () => context.push('/barcode-scanner'),
             ),
           ),
-          SizedBox(width: 10 * scale),
+          SizedBox(width: context.s(10)),
           Expanded(
             child: _PinkQuickCard(
               icon: Icons.shopping_bag_outlined,
               title: 'Create New Shopping List',
-              scale: scale,
               onTap: () => context.push('/new-shopping-list'),
             ),
           ),
@@ -383,13 +346,11 @@ class _QuickActionCards extends StatelessWidget {
 class _PinkQuickCard extends StatelessWidget {
   final IconData icon;
   final String title;
-  final double scale;
   final VoidCallback onTap;
 
   const _PinkQuickCard({
     required this.icon,
     required this.title,
-    required this.scale,
     required this.onTap,
   });
 
@@ -398,15 +359,15 @@ class _PinkQuickCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 180 * scale,
-        padding: EdgeInsets.all(16 * scale),
+        height: context.s(180),
+        padding: EdgeInsets.all(context.s(16)),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [Color(0xFFFF3D7F), Color(0xFFE8005A)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(16 * scale),
+          borderRadius: BorderRadius.circular(context.s(16)),
           boxShadow: [
             BoxShadow(
               color: AppColors.vibrantPink.withValues(alpha: 0.35),
@@ -424,13 +385,13 @@ class _PinkQuickCard extends StatelessWidget {
               child: Icon(
                 icon,
                 color: AppColors.pureWhite,
-                size: 24 * scale.clamp(0.85, 1.2),
+                size: context.s(24),
               ),
             ),
             Text(
               title,
               style: GoogleFonts.inter(
-                fontSize: 15 * scale.clamp(0.85, 1.2),
+                fontSize: context.s(15),
                 fontWeight: FontWeight.w700,
                 color: AppColors.pureWhite,
                 height: 1.3,
@@ -446,16 +407,16 @@ class _PinkQuickCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 // Recommended Products Row
 // ─────────────────────────────────────────────────────────────────
-class _RecommendedProductsRow extends StatelessWidget {
-  final List<RecommendedProduct> products;
-  final double scale;
-
-  const _RecommendedProductsRow({required this.products, required this.scale});
+class _RecommendedProductsRow extends ConsumerWidget {
+  const _RecommendedProductsRow();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Selective watch
+    final products = ref.watch(dashboardProvider.select((s) => s.recommendedProducts));
+
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20 * scale),
+      padding: EdgeInsets.symmetric(horizontal: context.s(20)),
       child: Row(
         children: products.asMap().entries.map((entry) {
           final index = entry.key;
@@ -463,9 +424,9 @@ class _RecommendedProductsRow extends StatelessWidget {
           return Expanded(
             child: Container(
               margin: EdgeInsets.only(
-                right: index < products.length - 1 ? 10 * scale : 0,
+                right: index < products.length - 1 ? context.s(10) : 0,
               ),
-              child: _RecommendedProductCard(item: item, scale: scale),
+              child: _RecommendedProductCard(item: item),
             ),
           );
         }).toList(),
@@ -476,16 +437,15 @@ class _RecommendedProductsRow extends StatelessWidget {
 
 class _RecommendedProductCard extends StatelessWidget {
   final RecommendedProduct item;
-  final double scale;
 
-  const _RecommendedProductCard({required this.item, required this.scale});
+  const _RecommendedProductCard({required this.item});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.pureWhite,
-        borderRadius: BorderRadius.circular(16 * scale),
+        borderRadius: BorderRadius.circular(context.s(16)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
@@ -500,12 +460,12 @@ class _RecommendedProductCard extends StatelessWidget {
           // ── Safe Badge ──
           Container(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 8 * scale),
+            padding: EdgeInsets.symmetric(vertical: context.s(8)),
             decoration: BoxDecoration(
               color: const Color(0xFF2DB34B),
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(16 * scale),
-                topRight: Radius.circular(16 * scale),
+                topLeft: Radius.circular(context.s(16)),
+                topRight: Radius.circular(context.s(16)),
               ),
             ),
             child: Row(
@@ -514,13 +474,13 @@ class _RecommendedProductCard extends StatelessWidget {
                 Icon(
                   Icons.flag_rounded,
                   color: AppColors.pureWhite,
-                  size: 13 * scale.clamp(0.85, 1.1),
+                  size: context.s(13),
                 ),
-                SizedBox(width: 4 * scale),
+                SizedBox(width: context.s(4)),
                 Text(
                   'Safe',
                   style: GoogleFonts.inter(
-                    fontSize: 14 * scale.clamp(0.85, 1.2),
+                    fontSize: context.s(14),
                     fontWeight: FontWeight.w700,
                     color: AppColors.pureWhite,
                   ),
@@ -532,7 +492,7 @@ class _RecommendedProductCard extends StatelessWidget {
           // ── Sustainability Badge ──
           Container(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 8 * scale),
+            padding: EdgeInsets.symmetric(vertical: context.s(8)),
             decoration: BoxDecoration(
               color: item.isGreenBadge
                   ? const Color(0xFF1E9E38)
@@ -546,13 +506,13 @@ class _RecommendedProductCard extends StatelessWidget {
                       ? Icons.eco_rounded
                       : Icons.warning_amber_rounded,
                   color: AppColors.pureWhite,
-                  size: 12 * scale.clamp(0.85, 1.1),
+                  size: context.s(12),
                 ),
-                SizedBox(width: 3 * scale),
+                SizedBox(width: context.s(3)),
                 Text(
                   item.sustainabilityLabel,
                   style: GoogleFonts.inter(
-                    fontSize: 13 * scale.clamp(0.85, 1.2),
+                    fontSize: context.s(13),
                     fontWeight: FontWeight.w600,
                     color: AppColors.pureWhite,
                   ),
@@ -565,30 +525,32 @@ class _RecommendedProductCard extends StatelessWidget {
           Stack(
             children: [
               Padding(
-                padding: EdgeInsets.fromLTRB(32 * scale, 24 * scale, 32 * scale, 16 * scale),
+                padding: EdgeInsets.fromLTRB(context.s(32), context.s(24), context.s(32), context.s(16)),
                 child: AspectRatio(
                   aspectRatio: 1.0,
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8 * scale),
+                    borderRadius: BorderRadius.circular(context.s(8)),
                     child: item.product.thumbnailAsset != null
                         ? Image.asset(
                             item.product.thumbnailAsset!,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
-                                _ProductPlaceholder(scale: scale),
+                            // Decode at display size → 4-16x less GPU memory
+                            cacheWidth: 200,
+                            cacheHeight: 200,
+                            errorBuilder: (_, __, ___) => const _ProductPlaceholder(),
                           )
-                        : _ProductPlaceholder(scale: scale),
+                        : const _ProductPlaceholder(),
                   ),
                 ),
               ),
               Positioned(
-                top: 12 * scale,
-                right: 12 * scale,
+                top: context.s(12),
+                right: context.s(12),
                 child: GestureDetector(
                   onTap: () {},
                   child: Icon(
                     Icons.more_horiz,
-                    size: 24 * scale.clamp(0.85, 1.2),
+                    size: context.s(24),
                     color: AppColors.black,
                   ),
                 ),
@@ -599,10 +561,10 @@ class _RecommendedProductCard extends StatelessWidget {
           // ── Product Info ──
           Padding(
             padding: EdgeInsets.fromLTRB(
-              16 * scale,
-              4 * scale,
-              16 * scale,
-              24 * scale,
+              context.s(16),
+              context.s(4),
+              context.s(16),
+              context.s(24),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -610,18 +572,18 @@ class _RecommendedProductCard extends StatelessWidget {
                 Text(
                   item.product.name,
                   style: GoogleFonts.inter(
-                    fontSize: 16 * scale.clamp(0.85, 1.2),
+                    fontSize: context.s(16),
                     fontWeight: FontWeight.w700,
                     color: AppColors.black,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(height: 6 * scale),
+                SizedBox(height: context.s(6)),
                 Text(
                   item.product.description,
                   style: GoogleFonts.inter(
-                    fontSize: 14 * scale.clamp(0.85, 1.2),
+                    fontSize: context.s(14),
                     color: AppColors.darkGrey,
                   ),
                   maxLines: 2,
@@ -637,8 +599,7 @@ class _RecommendedProductCard extends StatelessWidget {
 }
 
 class _ProductPlaceholder extends StatelessWidget {
-  final double scale;
-  const _ProductPlaceholder({required this.scale});
+  const _ProductPlaceholder();
 
   @override
   Widget build(BuildContext context) {
@@ -648,7 +609,7 @@ class _ProductPlaceholder extends StatelessWidget {
         child: Icon(
           Icons.image_outlined,
           color: AppColors.neutralGrey,
-          size: 32 * scale.clamp(0.85, 1.1),
+          size: context.s(32),
         ),
       ),
     );
@@ -658,32 +619,35 @@ class _ProductPlaceholder extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 // Recently Viewed Recipes Row
 // ─────────────────────────────────────────────────────────────────
-class _RecentRecipesRow extends StatelessWidget {
-  final List<RecipeModel> recipes;
-  final double scale;
-
-  const _RecentRecipesRow({required this.recipes, required this.scale});
+class _RecentRecipesRow extends ConsumerWidget {
+  const _RecentRecipesRow();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Selective watch — only rebuilds when recentlyViewedRecipes changes
+    final recipes = ref.watch(
+      dashboardProvider.select((s) => s.recentlyViewedRecipes),
+    );
+
+    // Fixed height replaces IntrinsicHeight.
+    // IntrinsicHeight triggers a 2-pass layout (O(2N) instead of O(N)).
+    // Recipe cards have a predictable structure so a clamped height is safe.
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: recipes.asMap().entries.map((entry) {
-            final index = entry.key;
-            final recipe = entry.value;
-            return Expanded(
-              child: Container(
-                margin: EdgeInsets.only(
-                  right: index < recipes.length - 1 ? 16 * scale : 0,
-                ),
-                child: _RecentRecipeCard(recipe: recipe, scale: scale),
+      padding: EdgeInsets.symmetric(horizontal: context.s(16)),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: recipes.asMap().entries.map((entry) {
+          final index = entry.key;
+          final recipe = entry.value;
+          return Expanded(
+            child: Container(
+              margin: EdgeInsets.only(
+                right: index < recipes.length - 1 ? context.s(16) : 0,
               ),
-            );
-          }).toList(),
-        ),
+              child: _RecentRecipeCard(recipe: recipe),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -691,9 +655,8 @@ class _RecentRecipesRow extends StatelessWidget {
 
 class _RecentRecipeCard extends StatelessWidget {
   final RecipeModel recipe;
-  final double scale;
 
-  const _RecentRecipeCard({required this.recipe, required this.scale});
+  const _RecentRecipeCard({required this.recipe});
 
   @override
   Widget build(BuildContext context) {
@@ -702,7 +665,7 @@ class _RecentRecipeCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.pureWhite,
-          borderRadius: BorderRadius.circular(16 * scale),
+          borderRadius: BorderRadius.circular(context.s(16)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.06),
@@ -719,8 +682,8 @@ class _RecentRecipeCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(16 * scale),
-                    topRight: Radius.circular(16 * scale),
+                    topLeft: Radius.circular(context.s(16)),
+                    topRight: Radius.circular(context.s(16)),
                   ),
                   child: AspectRatio(
                     aspectRatio: 1.0,
@@ -728,28 +691,30 @@ class _RecentRecipeCard extends StatelessWidget {
                         ? Image.asset(
                             recipe.imageUrl!,
                             fit: BoxFit.cover,
+                            cacheWidth: 400,
+                            cacheHeight: 400,
                             errorBuilder: (_, __, ___) => Container(
                               color: AppColors.clearGrey,
                               child: Center(
                                 child: Icon(
                                   Icons.restaurant_rounded,
                                   color: AppColors.neutralGrey,
-                                  size: 28 * scale,
+                                  size: context.s(28),
                                 ),
                               ),
                             ),
                           )
-                        : Container(color: AppColors.clearGrey),
+                        : const ColoredBox(color: AppColors.clearGrey),
                   ),
                 ),
                 Positioned(
-                  top: 12 * scale,
-                  right: 12 * scale,
+                  top: context.s(12),
+                  right: context.s(12),
                   child: GestureDetector(
                     onTap: () {},
                     child: Icon(
                       Icons.more_horiz,
-                      size: 24 * scale.clamp(0.85, 1.2),
+                      size: context.s(24),
                       color: AppColors.pureWhite,
                     ),
                   ),
@@ -760,10 +725,10 @@ class _RecentRecipeCard extends StatelessWidget {
             // ── Info ──
             Padding(
               padding: EdgeInsets.fromLTRB(
-                16 * scale,
-                12 * scale,
-                16 * scale,
-                16 * scale,
+                context.s(16),
+                context.s(12),
+                context.s(16),
+                context.s(16),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -771,31 +736,31 @@ class _RecentRecipeCard extends StatelessWidget {
                   Text(
                     recipe.title,
                     style: GoogleFonts.inter(
-                      fontSize: 16 * scale.clamp(0.85, 1.2),
+                      fontSize: context.s(16),
                       fontWeight: FontWeight.w700,
                       color: AppColors.vibrantPink,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 6 * scale),
+                  SizedBox(height: context.s(6)),
                   Text(
                     recipe.description,
                     style: GoogleFonts.inter(
-                      fontSize: 14 * scale.clamp(0.85, 1.2),
+                      fontSize: context.s(14),
                       color: AppColors.darkGrey,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 12 * scale),
+                  SizedBox(height: context.s(12)),
                   // ── Diet Tags ──
                   Wrap(
                     spacing: 4,
                     runSpacing: 4,
                     children: recipe.dietTags
                         .take(3)
-                        .map((tag) => _DietTagChip(label: tag, scale: scale))
+                        .map((tag) => _DietTagChip(label: tag))
                         .toList(),
                   ),
                 ],
@@ -810,14 +775,13 @@ class _RecentRecipeCard extends StatelessWidget {
 
 class _DietTagChip extends StatelessWidget {
   final String label;
-  final double scale;
 
-  const _DietTagChip({required this.label, required this.scale});
+  const _DietTagChip({required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 4 * scale),
+      padding: EdgeInsets.symmetric(horizontal: context.s(10), vertical: context.s(4)),
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(20),
@@ -826,7 +790,7 @@ class _DietTagChip extends StatelessWidget {
       child: Text(
         label,
         style: GoogleFonts.inter(
-          fontSize: 11 * scale.clamp(0.85, 1.1),
+          fontSize: context.s(11),
           fontWeight: FontWeight.w500,
           color: AppColors.darkGrey,
         ),

@@ -70,7 +70,7 @@ const demoRecipeDetail = RecipeDetailModel(
   id: 'demo_1',
   title: 'Recipe Title',
   description: 'Short description of the recipe.',
-  imageUrl: 'assets/images/pasta_pic.png',
+  imageUrl: 'assets/images/rice_image.png',
   servings: 2,
   timeMinutes: 30,
   dietTypes: ['Label', 'Label', 'Label', 'Label'],

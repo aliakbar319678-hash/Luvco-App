@@ -77,9 +77,12 @@ const _demoState = DashboardState(
   ],
 );
 
-// ── Provider ──────────────────────────────────────────────────────
-class DashboardNotifier extends StateNotifier<DashboardState> {
-  DashboardNotifier() : super(_demoState);
+// ── Provider (Modern Notifier Syntax) ─────────────────────────────
+class DashboardNotifier extends Notifier<DashboardState> {
+  @override
+  DashboardState build() {
+    return _demoState;
+  }
 
   void updateUsername(String name) {
     state = DashboardState(
@@ -90,7 +93,6 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
   }
 }
 
-final dashboardProvider =
-    StateNotifierProvider<DashboardNotifier, DashboardState>(
-      (_) => DashboardNotifier(),
-    );
+final dashboardProvider = NotifierProvider<DashboardNotifier, DashboardState>(
+  () => DashboardNotifier(),
+);

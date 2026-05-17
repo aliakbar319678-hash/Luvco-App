@@ -37,17 +37,13 @@ class RecipeDetailScreen extends ConsumerWidget {
             // ── Background color ──────────────────────────────────────
             Container(color: AppColors.pageBackground),
 
-            // ── Main scrollable content ───────────────────────────────
+            // ── Scrollable body — watches detail + activeTab ONLY ─────
+            // Splitting into granular Consumers: tab switches don't rebuild
+            // the overlays, popup toggles don't rebuild the scroll body.
             Consumer(
               builder: (context, ref, _) {
                 final detail = ref.watch(recipeDetailProvider(recipe));
                 final activeTab = ref.watch(recipeDetailTabProvider);
-                final showMoreActions = ref.watch(
-                  recipeDetailMoreActionsProvider,
-                );
-                final showDupSuccess = ref.watch(
-                  recipeDuplicatedSuccessProvider,
-                );
 
                 return Stack(
                   children: [
@@ -57,13 +53,8 @@ class RecipeDetailScreen extends ConsumerWidget {
                         physics: const BouncingScrollPhysics(),
                         child: Column(
                           children: [
-                            // Space for the header so content starts below its visual center
                             SizedBox(height: 75 * scale),
-
-                            // ── Hero Image ──────────────────────────
                             _HeroImage(recipe: detail, scale: scale),
-
-                            // ── Overlap content card ────────────────
                             Transform.translate(
                               offset: Offset(0, -30 * scale),
                               child: Container(
@@ -76,44 +67,22 @@ class RecipeDetailScreen extends ConsumerWidget {
                                 child: Column(
                                   children: [
                                     const SizedBox(height: 12),
-                                    // ── Recipe meta info ──────────────
-                                    _RecipeMetaSection(
-                                      recipe: detail,
-                                      scale: scale,
-                                    ),
-
+                                    _RecipeMetaSection(recipe: detail, scale: scale),
                                     const SizedBox(height: 8),
-
-                                    // ── Diet chips ────────────────────
-                                    _DietChipsSection(
-                                      recipe: detail,
-                                      scale: scale,
-                                    ),
-
+                                    _DietChipsSection(recipe: detail, scale: scale),
                                     const SizedBox(height: 16),
-
-                                    // ── Tab bar ───────────────────────
                                     _RecipeTabBar(
                                       activeTab: activeTab,
                                       scale: scale,
                                       onChanged: (i) =>
-                                          ref
-                                                  .read(
-                                                    recipeDetailTabProvider
-                                                        .notifier,
-                                                  )
-                                                  .state =
-                                              i,
+                                          ref.read(recipeDetailTabProvider.notifier).state = i,
                                     ),
-
-                                    // ── Tab content ───────────────────
                                     _TabContent(
                                       recipe: detail,
                                       activeTab: activeTab,
                                       scale: scale,
                                       size: size,
                                     ),
-
                                     const SizedBox(height: 40),
                                   ],
                                 ),
@@ -134,85 +103,59 @@ class RecipeDetailScreen extends ConsumerWidget {
                         padding: padding,
                         onBack: () => context.pop(),
                         onMore: detail.isOwner
-                            ? () =>
-                                  ref
-                                          .read(
-                                            recipeDetailMoreActionsProvider
-                                                .notifier,
-                                          )
-                                          .state =
-                                      true
+                            ? () => ref
+                                    .read(recipeDetailMoreActionsProvider.notifier)
+                                    .state = true
                             : null,
                       ),
                     ),
-
-                    // ── More actions popup ───────────────────────────
-                    if (showMoreActions)
-                      _MoreActionsOverlay(
-                        recipe: detail,
-                        scale: scale,
-                        onDismiss: () =>
-                            ref
-                                    .read(
-                                      recipeDetailMoreActionsProvider.notifier,
-                                    )
-                                    .state =
-                                false,
-                        onEdit: () {
-                          ref
-                                  .read(
-                                    recipeDetailMoreActionsProvider.notifier,
-                                  )
-                                  .state =
-                              false;
-                          _openEditSheet(context, ref, detail, scale);
-                        },
-                        onDuplicate: () {
-                          ref
-                                  .read(
-                                    recipeDetailMoreActionsProvider.notifier,
-                                  )
-                                  .state =
-                              false;
-                          ref
-                              .read(myRecipesProvider.notifier)
-                              .duplicateRecipe(detail.id);
-                          ref
-                                  .read(
-                                    recipeDuplicatedSuccessProvider.notifier,
-                                  )
-                                  .state =
-                              true;
-                          Future.delayed(const Duration(seconds: 2), () {
-                            if (context.mounted) {
-                              ref
-                                      .read(
-                                        recipeDuplicatedSuccessProvider
-                                            .notifier,
-                                      )
-                                      .state =
-                                  false;
-                            }
-                          });
-                        },
-                        onDelete: () {
-                          ref
-                                  .read(
-                                    recipeDetailMoreActionsProvider.notifier,
-                                  )
-                                  .state =
-                              false;
-                          ref
-                              .read(myRecipesProvider.notifier)
-                              .deleteRecipe(detail.id);
-                          context.pop();
-                        },
-                      ),
-
-                    // ── Duplicate success toast ──────────────────────
-                    if (showDupSuccess) const _DuplicateSuccessOverlay(),
                   ],
                 );
+              },
+            ),
+
+            // ── More actions popup — separate Consumer ─────────────────
+            // Only rebuilds when showMoreActions changes. Completely isolated
+            // from the scroll body above.
+            Consumer(
+              builder: (context, ref, _) {
+                final showMoreActions = ref.watch(recipeDetailMoreActionsProvider);
+                if (!showMoreActions) return const SizedBox.shrink();
+                final detail = ref.watch(recipeDetailProvider(recipe));
+                return _MoreActionsOverlay(
+                  recipe: detail,
+                  scale: scale,
+                  onDismiss: () =>
+                      ref.read(recipeDetailMoreActionsProvider.notifier).state = false,
+                  onEdit: () {
+                    ref.read(recipeDetailMoreActionsProvider.notifier).state = false;
+                    _openEditSheet(context, ref, detail, scale);
+                  },
+                  onDuplicate: () {
+                    ref.read(recipeDetailMoreActionsProvider.notifier).state = false;
+                    ref.read(myRecipesProvider.notifier).duplicateRecipe(detail.id);
+                    ref.read(recipeDuplicatedSuccessProvider.notifier).state = true;
+                    Future.delayed(const Duration(seconds: 2), () {
+                      if (context.mounted) {
+                        ref.read(recipeDuplicatedSuccessProvider.notifier).state = false;
+                      }
+                    });
+                  },
+                  onDelete: () {
+                    ref.read(recipeDetailMoreActionsProvider.notifier).state = false;
+                    ref.read(myRecipesProvider.notifier).deleteRecipe(detail.id);
+                    context.pop();
+                  },
+                );
+              },
+            ),
+
+            // ── Duplicate success toast — separate Consumer ─────────────
+            Consumer(
+              builder: (context, ref, _) {
+                final showDupSuccess = ref.watch(recipeDuplicatedSuccessProvider);
+                if (!showDupSuccess) return const SizedBox.shrink();
+                return const _DuplicateSuccessOverlay();
               },
             ),
           ],
