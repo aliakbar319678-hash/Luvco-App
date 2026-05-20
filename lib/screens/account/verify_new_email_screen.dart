@@ -18,6 +18,7 @@ class VerifyNewEmailScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<VerifyNewEmailScreen> createState() =>
       _VerifyNewEmailScreenState();
+      
 }
 
 class _VerifyNewEmailScreenState extends ConsumerState<VerifyNewEmailScreen> {
