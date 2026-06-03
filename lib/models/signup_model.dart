@@ -9,5 +9,5 @@ class SignupModel {
     required this.lastName,
     required this.email,
     required this.password,
-  });
+  });//
 }

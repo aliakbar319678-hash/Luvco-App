@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/network/auth_api_service.dart';
 
 // ── OTP digits (6 slots) ─────────────────────────────────────────
 final otpDigitsProvider = StateProvider<List<String>>(
@@ -25,19 +26,22 @@ class OtpState {
 class OtpNotifier extends StateNotifier<OtpState> {
   OtpNotifier() : super(const OtpState());
 
-  Future<void> verifyCode(String code) async {
+  /// [email] is required to verify the reset code against the backend.
+  Future<void> verifyCode({required String email, required String code}) async {
     state = state.copyWith(status: OtpStatus.loading);
     try {
-      await Future.delayed(const Duration(seconds: 1));
+      final res = await AuthApiService.instance.verifyResetCode(
+        email: email,
+        code: code,
+      );
 
-      // Simulate wrong code for demo (any code other than "123456" fails)
-      if (code != '123456') {
+      if (res.success) {
+        state = state.copyWith(status: OtpStatus.success);
+      } else {
         state = state.copyWith(
           status: OtpStatus.error,
-          errorMessage: 'Wrong code, try again',
+          errorMessage: res.message ?? 'Wrong code, try again',
         );
-      } else {
-        state = state.copyWith(status: OtpStatus.success);
       }
     } catch (e) {
       state = state.copyWith(

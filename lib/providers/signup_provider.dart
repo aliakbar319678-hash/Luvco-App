@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/signup_model.dart';
+import '../core/network/auth_api_service.dart';
+import '../models/auth/register_request.dart';
 
 // ── Individual field providers ────────────────────────────────────
 final signupFirstNameProvider = StateProvider<String>((ref) => '');
@@ -47,7 +49,8 @@ class SignupState {
 
 // ── Notifier ──────────────────────────────────────────────────────
 class SignupNotifier extends StateNotifier<SignupState> {
-  SignupNotifier() : super(const SignupState());
+  final Ref ref;
+  SignupNotifier(this.ref) : super(const SignupState());
 
   Future<void> signup(SignupModel model) async {
     // ── Client-side validation ──
@@ -87,26 +90,52 @@ class SignupNotifier extends StateNotifier<SignupState> {
       return;
     }
 
-    // ── Simulate API call ──
-    state = state.copyWith(status: SignupStatus.loading);
-    try {
-      await Future.delayed(const Duration(seconds: 1));
-
-      if (model.email == 'test@luvco.com') {
-        state = const SignupState(
-          status: SignupStatus.error,
-          errorField: SignupErrorField.email,
-          errorMessage: 'Email is already associated to an account',
-        );
-        return;
-      }
-
-      state = state.copyWith(status: SignupStatus.success);
-    } catch (_) {
+    if (!ref.read(signupTermsAcceptedProvider)) {
       state = const SignupState(
         status: SignupStatus.error,
+        errorField: SignupErrorField.none,
+        errorMessage: 'You must accept the Terms and Conditions',
+      );
+      return;
+    }
+
+    if (!ref.read(signupPrivacyAcceptedProvider)) {
+      state = const SignupState(
+        status: SignupStatus.error,
+        errorField: SignupErrorField.none,
+        errorMessage: 'You must accept the Privacy Policy',
+      );
+      return;
+    }
+
+    // ── API call ──
+    state = state.copyWith(status: SignupStatus.loading);
+    try {
+      final req = RegisterRequest(
+        firstName: model.firstName,
+        lastName: model.lastName,
+        email: model.email,
+        password: model.password,
+        termsAccepted: ref.read(signupTermsAcceptedProvider),
+        privacyPolicyAccepted: ref.read(signupPrivacyAcceptedProvider),
+      );
+      
+      final res = await AuthApiService.instance.register(req);
+
+      if (res.success) {
+        state = state.copyWith(status: SignupStatus.success);
+      } else {
+        state = SignupState(
+          status: SignupStatus.error,
+          errorField: SignupErrorField.email,
+          errorMessage: res.message ?? 'Signup failed. Please try again.',
+        );
+      }
+    } catch (e) {
+      state = SignupState(
+        status: SignupStatus.error,
         errorField: SignupErrorField.email,
-        errorMessage: 'Something went wrong. Please try again.',
+        errorMessage: e.toString(),
       );
     }
   }
@@ -120,5 +149,5 @@ class SignupNotifier extends StateNotifier<SignupState> {
 
 // ── Provider ──────────────────────────────────────────────────────
 final signupProvider = StateNotifierProvider<SignupNotifier, SignupState>(
-  (_) => SignupNotifier(),
+  (ref) => SignupNotifier(ref),
 );

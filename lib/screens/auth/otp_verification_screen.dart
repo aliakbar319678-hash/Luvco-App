@@ -57,7 +57,10 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
 
   void _onSubmit() {
     if (!_isComplete) return;
-    ref.read(otpProvider.notifier).verifyCode(_fullCode);
+    ref.read(otpProvider.notifier).verifyCode(
+      email: widget.email,
+      code: _fullCode,
+    );
   }
 
   @override
@@ -67,7 +70,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
 
     ref.listen<OtpState>(otpProvider, (_, next) {
       if (next.isSuccess && context.mounted) {
-        context.push('/new-password');
+        context.push(
+          '/new-password?email=${Uri.encodeComponent(widget.email)}&code=${Uri.encodeComponent(_fullCode)}',
+        );
       }
     });
 

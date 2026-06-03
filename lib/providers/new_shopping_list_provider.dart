@@ -11,7 +11,7 @@ class NewShoppingListState {
   final List<ProductModel> searchResults;
   final List<ProductModel> addedProducts;
   final bool isSearching; // search bar is active / has text
-  final bool isCreating; // loading state while creating list
+  final bool isCreating; // loading state while creati g list
   final bool listCreated; // success overlay visible
 
   const NewShoppingListState({

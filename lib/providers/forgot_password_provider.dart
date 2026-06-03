@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/network/auth_api_service.dart';
 
 // ── Forgot password email field ──────────────────────────────────
 final forgotEmailProvider = StateProvider<String>((ref) => '');
@@ -33,7 +34,9 @@ class ForgotPasswordNotifier extends StateNotifier<ForgotPasswordState> {
   Future<void> resetPassword(String email) async {
     state = state.copyWith(status: ForgotPasswordStatus.loading);
     try {
-      await Future.delayed(const Duration(seconds: 1));
+      // The backend always returns success 200 for security (email enumeration prevention),
+      // so we treat any 200 as success regardless.
+      await AuthApiService.instance.forgotPassword(email);
       state = state.copyWith(status: ForgotPasswordStatus.success);
     } catch (e) {
       state = state.copyWith(

@@ -21,7 +21,7 @@ class HelpSupportState {
         ? null
         : (expandedSection ?? this.expandedSection),
     expandedFaqIndex: clearFaq
-        ? null
+        ? null 
         : (expandedFaqIndex ?? this.expandedFaqIndex),
   );
 }

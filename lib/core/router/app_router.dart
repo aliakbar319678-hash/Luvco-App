@@ -104,10 +104,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/new-password',
-        pageBuilder: (context, state) => _fadeSlide(
-          key: state.pageKey,
-          child: const NewPasswordScreen(),
-        ),
+        pageBuilder: (context, state) {
+          final email = state.uri.queryParameters['email'] ?? '';
+          final code = state.uri.queryParameters['code'] ?? '';
+          return _fadeSlide(
+            key: state.pageKey,
+            child: NewPasswordScreen(email: email, code: code),
+          );
+        },
       ),
       GoRoute(
         path: '/password-updated',

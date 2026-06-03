@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/auth_model.dart';
 
+import '../core/network/auth_api_service.dart';
+import '../models/auth/login_request.dart';
+
 // ── Form field providers ─────────────────────────────────────────
 final emailProvider = StateProvider<String>((ref) => '');
 final passwordProvider = StateProvider<String>((ref) => '');
@@ -28,21 +31,21 @@ class LoginNotifier extends StateNotifier<LoginState> {
   Future<void> login(AuthModel model) async {
     state = state.copyWith(status: LoginStatus.loading);
     try {
-      await Future.delayed(const Duration(seconds: 1));
-
-      // Demo: treat empty fields as wrong credentials
-      if (model.email.isEmpty || model.password.isEmpty) {
-        state = const LoginState(
+      final req = LoginRequest(email: model.email, password: model.password);
+      final res = await AuthApiService.instance.login(req);
+      
+      if (res.success) {
+        state = state.copyWith(status: LoginStatus.success);
+      } else {
+        state = LoginState(
           status: LoginStatus.error,
-          errorMessage: "We don't recognize the email or password",
+          errorMessage: res.message ?? "We don't recognize the email or password",
         );
-        return;
       }
-      state = state.copyWith(status: LoginStatus.success);
-    } catch (_) {
-      state = const LoginState(
+    } catch (e) {
+      state = LoginState(
         status: LoginStatus.error,
-        errorMessage: "We don't recognize the email or password",
+        errorMessage: e.toString(),
       );
     }
   }

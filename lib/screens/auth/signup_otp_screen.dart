@@ -75,7 +75,10 @@ class _SignupOtpScreenState extends ConsumerState<SignupOtpScreen> {
 
   void _onSubmit() {
     if (!_isComplete) return;
-    ref.read(signupOtpProvider.notifier).verifyCode(_fullCode);
+    ref.read(signupOtpProvider.notifier).verifyCode(
+      email: widget.email,
+      code: _fullCode,
+    );
   }
 
   @override

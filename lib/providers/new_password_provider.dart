@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/network/auth_api_service.dart';
 
 // ── Individual field values ───────────────────────────────────────
 final newPasswordProvider = StateProvider<String>((ref) => '');
@@ -37,6 +38,8 @@ class NewPasswordNotifier extends StateNotifier<NewPasswordState> {
   NewPasswordNotifier() : super(const NewPasswordState());
 
   Future<void> submit({
+    required String email,
+    required String code,
     required String newPassword,
     required String confirmPassword,
   }) async {
@@ -59,8 +62,20 @@ class NewPasswordNotifier extends StateNotifier<NewPasswordState> {
 
     state = state.copyWith(status: NewPasswordStatus.loading);
     try {
-      await Future.delayed(const Duration(seconds: 1));
-      state = state.copyWith(status: NewPasswordStatus.success);
+      final res = await AuthApiService.instance.resetPassword(
+        email: email,
+        code: code,
+        newPassword: newPassword,
+      );
+
+      if (res.success) {
+        state = state.copyWith(status: NewPasswordStatus.success);
+      } else {
+        state = state.copyWith(
+          status: NewPasswordStatus.error,
+          errorMessage: res.message ?? 'Failed to reset password. Please try again.',
+        );
+      }
     } catch (e) {
       state = state.copyWith(
         status: NewPasswordStatus.error,

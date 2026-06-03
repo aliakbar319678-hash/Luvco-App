@@ -17,7 +17,14 @@ final confirmPasswordTypingProvider = StateProvider<bool>((ref) => false);
 final confirmPasswordTypingTimerProvider = StateProvider<Timer?>((ref) => null);
 
 class NewPasswordScreen extends ConsumerStatefulWidget {
-  const NewPasswordScreen({super.key});
+  final String email;
+  final String code;
+
+  const NewPasswordScreen({
+    super.key,
+    required this.email,
+    required this.code,
+  });
 
   @override
   ConsumerState<NewPasswordScreen> createState() => _NewPasswordScreenState();
@@ -158,6 +165,8 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
                         ref
                             .read(newPasswordStateProvider.notifier)
                             .submit(
+                              email: widget.email,
+                              code: widget.code,
                               newPassword: newPw,
                               confirmPassword: confPw,
                             );

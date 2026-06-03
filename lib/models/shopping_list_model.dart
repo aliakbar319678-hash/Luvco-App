@@ -13,6 +13,7 @@ class ShoppingListModel {
     this.imageUrl,
   });
 
+
   ShoppingListModel copyWith({
     String? id,
     String? title,

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/network/auth_api_service.dart';
 
 // ── 6-digit OTP slots ─────────────────────────────────────────────
 final signupOtpDigitsProvider = StateProvider<List<String>>(
@@ -31,24 +32,27 @@ class SignupOtpState {
 class SignupOtpNotifier extends StateNotifier<SignupOtpState> {
   SignupOtpNotifier() : super(const SignupOtpState());
 
-  Future<void> verifyCode(String code) async {
+  /// [email] must be passed from the route parameter (e.g. /signup-verify?email=...).
+  Future<void> verifyCode({required String email, required String code}) async {
     state = state.copyWith(status: SignupOtpStatus.loading);
     try {
-      await Future.delayed(const Duration(seconds: 1));
+      final res = await AuthApiService.instance.verifyEmail(
+        email: email,
+        code: code,
+      );
 
-      // Demo: only "123456" is accepted as correct
-      if (code != '123456') {
+      if (res.success) {
+        state = state.copyWith(status: SignupOtpStatus.success);
+      } else {
         state = state.copyWith(
           status: SignupOtpStatus.error,
-          errorMessage: 'Wrong code, try again',
+          errorMessage: res.message ?? 'Wrong code, try again',
         );
-      } else {
-        state = state.copyWith(status: SignupOtpStatus.success);
       }
-    } catch (_) {
+    } catch (e) {
       state = state.copyWith(
         status: SignupOtpStatus.error,
-        errorMessage: 'Something went wrong. Please try again.',
+        errorMessage: e.toString(),
       );
     }
   }
