@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:luvco_logo/core/theme/app_colors.dart';
 import 'package:luvco_logo/providers/otp_provider.dart';
+import 'package:luvco_logo/providers/forgot_password_provider.dart';
 import 'package:luvco_logo/widgets/auth_header.dart';
 import 'package:luvco_logo/widgets/auth_error_row.dart';
 
@@ -53,6 +54,13 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     }
     ref.read(otpProvider.notifier).reset();
     _focusNodes[0].requestFocus();
+    
+    // Actually call the backend to resend the forgot password code
+    ref.read(forgotPasswordProvider.notifier).resetPassword(widget.email);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('A new code has been requested.')),
+    );
   }
 
   void _onSubmit() {

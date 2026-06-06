@@ -16,16 +16,41 @@ class AuthApiService {
   String handleError(dynamic error) {
     if (error is DioException) {
       final data = error.response?.data;
-      if (data is Map<String, dynamic> && data['message'] != null) {
-        return data['message'] as String;
+      if (data is Map<String, dynamic>) {
+        if (data['message'] != null) {
+          return data['message'] as String;
+        }
+        if (data['error'] != null && data['error'] is Map<String, dynamic>) {
+          final errorObj = data['error'] as Map<String, dynamic>;
+          if (errorObj['details'] != null && errorObj['details'] is Map<String, dynamic>) {
+            final details = errorObj['details'] as Map<String, dynamic>;
+            if (details.isNotEmpty) {
+              return details.values.join('\n');
+            }
+          }
+          if (errorObj['message'] != null) {
+            return errorObj['message'] as String;
+          }
+        }
       }
       switch (error.type) {
         case DioExceptionType.connectionTimeout:
         case DioExceptionType.sendTimeout:
         case DioExceptionType.receiveTimeout:
-          return 'Connection timed out. Please try again.';
+          return 'Connection timed out. Please check your network and try again.';
         case DioExceptionType.connectionError:
-          return 'No internet connection detected.';
+          // This fires when the device cannot reach the server.
+          // Common causes:
+          //  1. Backend server is not running (start it with: npm run dev)
+          //  2. Wrong IP address in main.dart (use your PC\'s Wi-Fi IP, not 127.0.0.1)
+          //  3. Phone and PC are not on the same Wi-Fi network
+          return 'Cannot reach the server. Please ensure the backend is running.';
+        case DioExceptionType.badResponse:
+          final status = error.response?.statusCode;
+          if (status == 401) return 'Invalid email or password.';
+          if (status == 404) return 'Resource not found.';
+          if (status == 500) return 'Server error. Please try again later.';
+          return 'Server returned an error (code: $status).';
         default:
           return 'An unexpected network error occurred.';
       }

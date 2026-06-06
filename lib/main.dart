@@ -17,9 +17,21 @@ void main() {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
   );
+  // ── Backend URL Configuration ──────────────────────────────────────────
+  // OPTION A: ADB Reverse Tunnel (USB cable required):
+  //   Run: adb reverse tcp:3000 tcp:3000
+  //   Then use: http://127.0.0.1:3000/api/v1
+  //
+  // OPTION B (Wi-Fi Mode - ACTIVE ✅): No USB cable needed!
+  //   Phone & PC must be on the same Wi-Fi network.
+  //   Your PC's Wi-Fi IP: 192.168.1.25  (run `ipconfig` if it changes)
+  //
+  // OPTION C: Android Emulator only:
+  //   Use: http://10.0.2.2:3000/api/v1
+  // ─────────────────────────────────────────────────────────────────────────
   ApiClient.instance.setBaseUrl(
-    'http://192.168.1.29:3000/api/v1',
-  ); // Physical device — same Wi-Fi as this PC
+    'http://192.168.1.25:3000/api/v1', // ← Wi-Fi: PC IP on local network
+  );
 
   runApp(const ProviderScope(child: LuvcoApp()));
 }
