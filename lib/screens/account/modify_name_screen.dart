@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/modify_name_provider.dart';
+import '../../providers/user_profile_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
 
 // ─────────────────────────────────────────────────────────────────
@@ -25,6 +26,14 @@ class _ModifyNameScreenState extends ConsumerState<ModifyNameScreen> {
   @override
   void initState() {
     super.initState();
+    final profileState = ref.read(userProfileProvider);
+    final user = profileState.valueOrNull;
+    if (user != null) {
+      ref.read(modifyNameProvider.notifier).loadCurrentName(
+        user.firstName ?? '',
+        user.lastName ?? '',
+      );
+    }
     final state = ref.read(modifyNameProvider);
     _firstNameCtrl = TextEditingController(text: state.firstName);
     _lastNameCtrl = TextEditingController(text: state.lastName);

@@ -61,7 +61,7 @@ class _VerifyNewEmailScreenState extends ConsumerState<VerifyNewEmailScreen> {
 
   void _onSubmit() {
     if (!_isComplete) return;
-    ref.read(verifyEmailProvider.notifier).verifyCode(_fullCode);
+    ref.read(verifyEmailProvider.notifier).verifyCode(_fullCode, widget.email);
   }
 
   @override

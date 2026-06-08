@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/account_settings_provider.dart';
-import '../../providers/modify_name_provider.dart';
+import '../../providers/user_profile_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import 'change_email_screen.dart';
 import 'help_support_screen.dart';
@@ -27,7 +27,20 @@ class AccountSettingsScreen extends ConsumerWidget {
     final AccountSettingsNotifier notifier = ref.read(
       accountSettingsProvider.notifier,
     );
-    final nameState = ref.watch(modifyNameProvider);
+    final userProfileAsync = ref.watch(userProfileProvider);
+
+    final displayName = userProfileAsync.maybeWhen(
+      data: (user) => '${user.firstName ?? ""} ${user.lastName ?? ""}'.trim().isEmpty
+          ? 'User Name'
+          : '${user.firstName} ${user.lastName}'.trim(),
+      orElse: () => 'User Name',
+    );
+
+    final profilePicUrl = userProfileAsync.maybeWhen(
+      data: (user) => user.profilePictureUrl,
+      orElse: () => null,
+    );
+
     final size = MediaQuery.sizeOf(context);
     final padding = MediaQuery.paddingOf(context);
     final scale = size.width / 390;
@@ -56,6 +69,7 @@ class AccountSettingsScreen extends ConsumerWidget {
                         // ── Avatar with edit pencil ──
                         _ProfileAvatar(
                           profileImage: state.profileImage,
+                          profilePicUrl: profilePicUrl,
                           scale: scale,
                           onTap: () => _showChangePhotoSheet(
                             context,
@@ -69,11 +83,7 @@ class AccountSettingsScreen extends ConsumerWidget {
 
                         // ── User Name ──
                         Text(
-                          nameState.firstName.isEmpty &&
-                                  nameState.lastName.isEmpty
-                              ? 'User Name'
-                              : '${nameState.firstName} ${nameState.lastName}'
-                                    .trim(),
+                          displayName,
                           style: GoogleFonts.inter(
                             fontSize: 18 * scale.clamp(0.85, 1.2),
                             fontWeight: FontWeight.w800,
@@ -268,11 +278,13 @@ class _AccountHeader extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 class _ProfileAvatar extends StatelessWidget {
   final File? profileImage;
+  final String? profilePicUrl;
   final double scale;
   final VoidCallback onTap;
 
   const _ProfileAvatar({
     required this.profileImage,
+    this.profilePicUrl,
     required this.scale,
     required this.onTap,
   });
@@ -313,17 +325,30 @@ class _ProfileAvatar extends StatelessWidget {
                         width: avatarSize,
                         height: avatarSize,
                       )
-                    : Image.asset(
-                        'assets/images/profile_pic.png',
-                        fit: BoxFit.cover,
-                        width: avatarSize,
-                        height: avatarSize,
-                        errorBuilder: (_, __, ___) => Icon(
-                          Icons.person_rounded,
-                          size: avatarSize * 0.55,
-                          color: AppColors.neutralGrey,
-                        ),
-                      ),
+                    : (profilePicUrl != null && profilePicUrl!.isNotEmpty)
+                        ? Image.network(
+                            profilePicUrl!,
+                            fit: BoxFit.cover,
+                            width: avatarSize,
+                            height: avatarSize,
+                            errorBuilder: (_, __, ___) => Image.asset(
+                              'assets/images/profile_pic.png',
+                              fit: BoxFit.cover,
+                              width: avatarSize,
+                              height: avatarSize,
+                            ),
+                          )
+                        : Image.asset(
+                            'assets/images/profile_pic.png',
+                            fit: BoxFit.cover,
+                            width: avatarSize,
+                            height: avatarSize,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.person_rounded,
+                              size: avatarSize * 0.55,
+                              color: AppColors.neutralGrey,
+                            ),
+                          ),
               ),
             ),
 

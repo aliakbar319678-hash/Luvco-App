@@ -1,35 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/network/preference_api_service.dart';
 import '../models/onboarding_model.dart';
 
-// ── All available diet options ───────────────────────────────────
-const List<String> kDietOptions = [
-  'Diet A',
-  'Diet Name B',
-  'Diet Type C',
-  'Diet Name D',
-  'Diet E',
-  'Diet Name F',
-  'Diet G',
-  'Diet Type H',
-  'Diet Type I',
-  'Diet J',
-  'Diet K',
-  'Diet Name L',
-];
-
-// ── All available allergy/food challenge options ─────────────────
-const List<String> kAllergyOptions = [
-  'Allergy A',
-  'Food Challenge B',
-  'Food Challenge C',
-  'Food F',
-  'Allergy D',
-  'Ingredient E',
-  'Allergy G',
-  'Food Challenge H',
-  'Food I',
-  'Allergy J',
-];
+// ── Fetch real allergy & diet options from GET /content/onboarding ─
+final onboardingOptionsProvider =
+    FutureProvider<Map<String, List<String>>>((ref) async {
+  return PreferenceApiService.instance.getOnboardingTags();
+});
 
 // ── Onboarding state notifier ────────────────────────────────────
 class OnboardingNotifier extends StateNotifier<OnboardingModel> {
@@ -61,6 +38,39 @@ class OnboardingNotifier extends StateNotifier<OnboardingModel> {
   void removeManualAllergy(String value) {
     final current = List<String>.from(state.manualAllergies)..remove(value);
     state = state.copyWith(manualAllergies: current);
+  }
+
+  /// Save all onboarding selections to the backend.
+  ///
+  /// Calls three endpoints to persist:
+  /// 1. Preset allergy tags → PUT /users/me/preferences/allergies
+  /// 2. Preset diet types  → PUT /users/me/preferences/diets
+  /// 3. Custom allergies (manual entries) → PUT /users/me/preferences/allergies/custom
+  Future<bool> submitPreferences() async {
+    final api = PreferenceApiService.instance;
+    try {
+      // Save preset allergy tags
+      if (state.selectedAllergies.isNotEmpty) {
+        await api.replaceAllergyTags(state.selectedAllergies);
+      }
+
+      // Save preset diet types
+      if (state.selectedDiets.isNotEmpty) {
+        await api.replaceDietTypes(state.selectedDiets);
+      }
+
+      // Save manual/custom allergies
+      if (state.manualAllergies.isNotEmpty) {
+        final customItems = state.manualAllergies
+            .map((name) => {'name': name, 'type': 'custom'})
+            .toList();
+        await api.replaceCustomAllergies(customItems);
+      }
+
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   void reset() => state = const OnboardingModel();

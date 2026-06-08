@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/change_email_provider.dart';
+import '../../providers/user_profile_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import 'verify_new_email_screen.dart'; // ← import added
 
@@ -47,6 +48,11 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
     final ChangeEmailState state = ref.watch(changeEmailProvider);
     final ChangeEmailNotifier notifier =
         ref.read(changeEmailProvider.notifier);
+    final userProfileAsync = ref.watch(userProfileProvider);
+    final actualEmail = userProfileAsync.maybeWhen(
+      data: (user) => user.email,
+      orElse: () => 'test@email.com',
+    );
     final size = MediaQuery.sizeOf(context);
     final padding = MediaQuery.paddingOf(context);
     final scale = size.width / 390;
@@ -90,7 +96,7 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
 
                     // ── Subtitle ──
                     Text(
-                      'Your actual email is test@email.com. What email do you want to replace it with?',
+                      'Your actual email is $actualEmail. What email do you want to replace it with?',
                       style: GoogleFonts.inter(
                         fontSize: 13 * scale.clamp(0.85, 1.2),
                         color: AppColors.darkGrey,

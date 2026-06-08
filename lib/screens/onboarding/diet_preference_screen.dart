@@ -16,6 +16,7 @@ class DietPreferenceScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.sizeOf(context);
     final onboardingState = ref.watch(onboardingProvider);
+    final onboardingOptionsAsync = ref.watch(onboardingOptionsProvider);
     final selectedDiets = onboardingState.selectedDiets;
     final hasSelection = selectedDiets.isNotEmpty;
     final scale = size.width / 390;
@@ -68,23 +69,39 @@ class DietPreferenceScreen extends ConsumerWidget {
 
                 // ── Scrollable content ──
                 Expanded(
-                  child: SingleChildScrollView(
-                    physics: const ClampingScrollPhysics(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // ── Diet chips ──
-                        PreferenceChipWrap(
-                          options: kDietOptions,
-                          selected: selectedDiets,
-                          onTap: (d) => ref
-                              .read(onboardingProvider.notifier)
-                              .toggleDiet(d),
-                        ),
-
-                        SizedBox(height: size.height * 0.020),
-                      ],
+                  child: onboardingOptionsAsync.when(
+                    loading: () => const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.royalPurple,
+                      ),
                     ),
+                    error: (err, stack) => Center(
+                      child: Text(
+                        'Failed to load options: $err',
+                        style: GoogleFonts.inter(color: AppColors.errorRed),
+                      ),
+                    ),
+                    data: (tags) {
+                      final dietOptions = tags['diets'] ?? [];
+                      return SingleChildScrollView(
+                        physics: const ClampingScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // ── Diet chips ──
+                            PreferenceChipWrap(
+                              options: dietOptions,
+                              selected: selectedDiets,
+                              onTap: (d) => ref
+                                  .read(onboardingProvider.notifier)
+                                  .toggleDiet(d),
+                            ),
+
+                            SizedBox(height: size.height * 0.020),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
 

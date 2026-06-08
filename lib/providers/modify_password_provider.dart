@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/network/user_api_service.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // Validation error types
@@ -106,9 +107,6 @@ class ModifyPasswordNotifier extends StateNotifier<ModifyPasswordState> {
   void toggleObscureConfirm() =>
       state = state.copyWith(obscureConfirm: !state.obscureConfirm);
 
-  // Demo: treat "wrongpass" as wrong current password
-  static const _fakeCurrentPassword = 'correctpass';
-
   // Password strength: at least 8 chars with letters + numbers + symbols
   bool _isStrongPassword(String pw) {
     if (pw.length < 8) return false;
@@ -119,12 +117,6 @@ class ModifyPasswordNotifier extends StateNotifier<ModifyPasswordState> {
   }
 
   Future<void> saveChanges() async {
-    // Validate current password
-    if (state.currentPassword != _fakeCurrentPassword) {
-      state = state.copyWith(currentError: PasswordFieldError.wrongCurrent);
-      return;
-    }
-
     // Validate new password strength
     if (!_isStrongPassword(state.newPassword)) {
       state = state.copyWith(newError: PasswordFieldError.weakNew);
@@ -137,10 +129,30 @@ class ModifyPasswordNotifier extends StateNotifier<ModifyPasswordState> {
       return;
     }
 
-    // All valid — simulate API call
+    // All valid — call backend change password
     state = state.copyWith(isSaving: true);
-    await Future.delayed(const Duration(milliseconds: 800));
-    state = state.copyWith(isSaving: false, saveSuccess: true);
+    try {
+      await UserApiService.instance.changePassword(
+        currentPassword: state.currentPassword,
+        newPassword: state.newPassword,
+      );
+      state = state.copyWith(isSaving: false, saveSuccess: true);
+    } catch (e) {
+      final errStr = e.toString().toLowerCase();
+      if (errStr.contains('invalid_password') || errStr.contains('incorrect') || errStr.contains('current password')) {
+        state = state.copyWith(
+          isSaving: false,
+          currentError: PasswordFieldError.wrongCurrent,
+        );
+      } else if (errStr.contains('weak') || errStr.contains('characters')) {
+        state = state.copyWith(
+          isSaving: false,
+          newError: PasswordFieldError.weakNew,
+        );
+      } else {
+        state = state.copyWith(isSaving: false);
+      }
+    }
   }
 
   void dismissSuccess() => state = state.copyWith(saveSuccess: false);

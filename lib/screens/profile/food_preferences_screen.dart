@@ -349,8 +349,7 @@ class _SelectedTabContent extends StatefulWidget {
   final FoodPreferencesModel state;
   final double scale;
   final bool isDiet;
-  final StateNotifierProvider<FoodPreferencesNotifier, FoodPreferencesModel>
-  provider;
+  final dynamic provider;
   final VoidCallback onAddChoice;
   final ValueChanged<FoodPreferenceItem> onDeleteItem;
 
@@ -472,8 +471,7 @@ class _CustomTabContent extends StatefulWidget {
   final FoodPreferencesModel state;
   final double scale;
   final bool isDiet;
-  final StateNotifierProvider<FoodPreferencesNotifier, FoodPreferencesModel>
-  provider;
+  final dynamic provider;
   final VoidCallback onAddManually;
   final ValueChanged<FoodPreferenceItem> onEditItem;
   final ValueChanged<FoodPreferenceItem> onDeleteItem;
@@ -592,8 +590,7 @@ class _CustomTabContentState extends State<_CustomTabContent> {
 class _SearchModal extends ConsumerStatefulWidget {
   final bool isDiet;
   final double scale;
-  final StateNotifierProvider<FoodPreferencesNotifier, FoodPreferencesModel>
-  provider;
+  final dynamic provider;
   final VoidCallback onClose;
   final ValueChanged<List<String>> onSave;
 
@@ -612,32 +609,13 @@ class _SearchModal extends ConsumerStatefulWidget {
 class _SearchModalState extends ConsumerState<_SearchModal> {
   final TextEditingController _ctrl = TextEditingController();
   String _query = '';
-  final List<String> _selected = [
-    'Nullam Scelerisque',
-    'Duis',
-    'Ullamcorper',
-    'Lectus',
-  ];
-
-  late final List<String> _allResults;
-
-  @override
-  void initState() {
-    super.initState();
-    _allResults = getMockSearchResults(widget.isDiet);
-  }
+  final List<String> _selected = [];
 
   @override
   void dispose() {
     _ctrl.dispose();
     super.dispose();
   }
-
-  List<String> get _filteredResults => _query.isEmpty
-      ? []
-      : _allResults
-            .where((e) => e.toLowerCase().contains(_query.toLowerCase()))
-            .toList();
 
   void _toggleChip(String label) {
     setState(() {
@@ -652,153 +630,194 @@ class _SearchModalState extends ConsumerState<_SearchModal> {
   @override
   Widget build(BuildContext context) {
     final s = widget.scale;
-    final canSave = _selected.isNotEmpty;
+    final onboardingTagsAsync = ref.watch(onboardingTagsProvider);
 
-    return GestureDetector(
-      onTap: () {}, // prevent tap-through
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-        ),
+    return onboardingTagsAsync.when(
+      loading: () => Container(
+        height: 300,
         decoration: const BoxDecoration(
           color: AppColors.pureWhite,
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Handle for bottom sheet ──
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.clearGrey,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+        child: const Center(
+          child: CircularProgressIndicator(color: AppColors.royalPurple),
+        ),
+      ),
+      error: (err, stack) => Container(
+        height: 300,
+        decoration: const BoxDecoration(
+          color: AppColors.pureWhite,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Center(
+          child: Text(
+            'Failed to load options: $err',
+            style: GoogleFonts.inter(color: AppColors.errorRed),
+          ),
+        ),
+      ),
+      data: (tags) {
+        final allResults = widget.isDiet
+            ? (tags['diets'] ?? [])
+            : (tags['allergies'] ?? []);
+
+        final filteredResults = _query.isEmpty
+            ? <String>[]
+            : allResults
+                .where((e) =>
+                    e.toLowerCase().contains(_query.toLowerCase()) &&
+                    !_selected.contains(e))
+                .toList();
+
+        final canSave = _selected.isNotEmpty;
+
+        return GestureDetector(
+          onTap: () {}, // prevent tap-through
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
             ),
-            // ── Header ──
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Search for additional choices:',
-                              style: GoogleFonts.inter(
-                                fontSize: 16 * s.clamp(0.85, 1.2),
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.black,
-                              ),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: widget.onClose,
-                            child: const Icon(
-                              Icons.close,
-                              color: AppColors.darkGrey,
-                              size: 22,
-                            ),
-                          ),
-                        ],
-                      ),
+            decoration: const BoxDecoration(
+              color: AppColors.pureWhite,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Handle for bottom sheet ──
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.clearGrey,
+                      borderRadius: BorderRadius.circular(2),
                     ),
-
-                    const SizedBox(height: 14),
-
-                    // ── Search field ──
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: _ModalSearchField(
-                        controller: _ctrl,
-                        scale: s,
-                        onChanged: (v) => setState(() => _query = v),
-                        onClear: () {
-                          _ctrl.clear();
-                          setState(() => _query = '');
-                        },
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    // ── Search results ──
-                    if (_filteredResults.isNotEmpty)
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 160),
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          padding: EdgeInsets.zero,
-                          itemCount: _filteredResults.length,
-                          itemBuilder: (_, i) => _SearchResultItem(
-                            label: _filteredResults[i],
-                            isDiet: widget.isDiet,
-                            scale: s,
-                            onTap: () => _toggleChip(_filteredResults[i]),
-                          ),
-                        ),
-                      ),
-
-                    // ── Selected chips ──
-                    if (_selected.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _selected
-                              .map(
-                                (label) => _SelectedChip(
-                                  label: label,
-                                  scale: s,
-                                  onRemove: () => _toggleChip(label),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ),
-
-                    const SizedBox(height: 16),
-
-                    // ── Save Changes button ──
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: canSave
-                              ? () => widget.onSave(_selected)
-                              : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: canSave
-                                ? AppColors.royalPurple
-                                : AppColors.faintPink,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          child: Text(
-                            'Save Changes',
-                            style: GoogleFonts.inter(
-                              fontSize: 16 * s.clamp(0.85, 1.2),
-                              fontWeight: FontWeight.w600,
-                              color: canSave
-                                  ? AppColors.pureWhite
-                                  : AppColors.lightRoyalPurple,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                // ── Header ──
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Search for additional choices:',
+                          style: GoogleFonts.inter(
+                            fontSize: 16 * s.clamp(0.85, 1.2),
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.black,
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: widget.onClose,
+                        child: const Icon(
+                          Icons.close,
+                          color: AppColors.darkGrey,
+                          size: 22,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                // ── Search field ──
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _ModalSearchField(
+                    controller: _ctrl,
+                    scale: s,
+                    onChanged: (v) => setState(() => _query = v),
+                    onClear: () {
+                      _ctrl.clear();
+                      setState(() => _query = '');
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                // ── Search results ──
+                if (filteredResults.isNotEmpty)
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 160),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      padding: EdgeInsets.zero,
+                      itemCount: filteredResults.length,
+                      itemBuilder: (_, i) => _SearchResultItem(
+                        label: filteredResults[i],
+                        isDiet: widget.isDiet,
+                        scale: s,
+                        onTap: () => _toggleChip(filteredResults[i]),
+                      ),
+                    ),
+                  ),
+
+                // ── Selected chips ──
+                if (_selected.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _selected
+                          .map(
+                            (label) => _SelectedChip(
+                              label: label,
+                              scale: s,
+                              onRemove: () => _toggleChip(label),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+
+                const SizedBox(height: 16),
+
+                // ── Save Changes button ──
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: canSave
+                          ? () => widget.onSave(_selected)
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: canSave
+                            ? AppColors.royalPurple
+                            : AppColors.faintPink,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        'Save Changes',
+                        style: GoogleFonts.inter(
+                          fontSize: 16 * s.clamp(0.85, 1.2),
+                          fontWeight: FontWeight.w600,
+                          color: canSave
+                              ? AppColors.pureWhite
+                              : AppColors.lightRoyalPurple,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

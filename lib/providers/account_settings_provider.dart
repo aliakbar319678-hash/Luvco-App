@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/network/user_api_service.dart';
+import 'user_profile_provider.dart';
 
 class AccountSettingsState {
   final File? profileImage;
@@ -29,7 +31,9 @@ class AccountSettingsState {
 }
 
 class AccountSettingsNotifier extends StateNotifier<AccountSettingsState> {
-  AccountSettingsNotifier() : super(const AccountSettingsState());
+  final Ref _ref;
+
+  AccountSettingsNotifier(this._ref) : super(const AccountSettingsState());
 
   void setPendingImage(File image) {
     state = state.copyWith(pendingImage: image);
@@ -38,14 +42,27 @@ class AccountSettingsNotifier extends StateNotifier<AccountSettingsState> {
   Future<void> saveProfileImage() async {
     if (state.pendingImage == null) return;
     state = state.copyWith(isSaving: true);
-    await Future.delayed(const Duration(milliseconds: 900));
-    // Save pendingImage → profileImage, clear pending, show success
-    state = AccountSettingsState(
-      profileImage: state.pendingImage,
-      pendingImage: null,
-      isSaving: false,
-      saveSuccess: true,
-    );
+    try {
+      final imagePath = state.pendingImage!.path;
+      final fileName = imagePath.split(Platform.pathSeparator).last;
+
+      await UserApiService.instance.uploadProfilePictureLocal(
+        state.pendingImage!,
+        fileName,
+      );
+
+      final profile = await UserApiService.instance.getProfile();
+      _ref.read(userProfileProvider.notifier).updateProfile(profile);
+
+      state = AccountSettingsState(
+        profileImage: state.pendingImage,
+        pendingImage: null,
+        isSaving: false,
+        saveSuccess: true,
+      );
+    } catch (_) {
+      state = state.copyWith(isSaving: false);
+    }
   }
 
   void cancelPendingImage() {
@@ -59,6 +76,6 @@ class AccountSettingsNotifier extends StateNotifier<AccountSettingsState> {
 
 // ── NO .autoDispose — state must survive navigation ──────────────
 final accountSettingsProvider =
-    StateNotifierProvider<AccountSettingsNotifier, AccountSettingsState>(
-      (_) => AccountSettingsNotifier(),
-    );
+    StateNotifierProvider<AccountSettingsNotifier, AccountSettingsState>((ref) {
+  return AccountSettingsNotifier(ref);
+});

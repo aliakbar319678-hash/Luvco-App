@@ -15,8 +15,8 @@ import 'food_settings_tab.dart';
 import 'package:go_router/go_router.dart';
 import '../../widgets/fab_menu_dialog.dart';
 import '../../providers/account_settings_provider.dart';
-import '../../providers/modify_name_provider.dart';
 import '../../providers/new_recipe_provider.dart';
+import '../../providers/user_profile_provider.dart';
 
 class UserProfileScreen extends ConsumerWidget {
   const UserProfileScreen({super.key});
@@ -240,10 +240,19 @@ class _ProfileInfo extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final accountState = ref.watch(accountSettingsProvider);
-    final nameState = ref.watch(modifyNameProvider);
-    final displayName = nameState.firstName.isEmpty && nameState.lastName.isEmpty
-        ? 'User Name'
-        : '${nameState.firstName} ${nameState.lastName}'.trim();
+    final userProfileAsync = ref.watch(userProfileProvider);
+
+    final displayName = userProfileAsync.maybeWhen(
+      data: (user) => '${user.firstName ?? ""} ${user.lastName ?? ""}'.trim().isEmpty
+          ? 'User Name'
+          : '${user.firstName} ${user.lastName}'.trim(),
+      orElse: () => 'User Name',
+    );
+
+    final profilePicUrl = userProfileAsync.maybeWhen(
+      data: (user) => user.profilePictureUrl,
+      orElse: () => null,
+    );
 
     return Column(
       children: [
@@ -269,10 +278,19 @@ class _ProfileInfo extends ConsumerWidget {
                     accountState.profileImage!,
                     fit: BoxFit.cover,
                   )
-                : Image.asset(
-                    'assets/images/profile_pic.png',
-                    fit: BoxFit.cover,
-                  ),
+                : (profilePicUrl != null && profilePicUrl.isNotEmpty)
+                    ? Image.network(
+                        profilePicUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Image.asset(
+                          'assets/images/profile_pic.png',
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : Image.asset(
+                        'assets/images/profile_pic.png',
+                        fit: BoxFit.cover,
+                      ),
           ),
         ),
 

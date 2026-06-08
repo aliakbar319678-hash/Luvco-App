@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/network/user_api_service.dart';
+import 'user_profile_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // State
@@ -36,7 +38,13 @@ class ModifyNameState {
 // Notifier
 // ─────────────────────────────────────────────────────────────────
 class ModifyNameNotifier extends StateNotifier<ModifyNameState> {
-  ModifyNameNotifier() : super(const ModifyNameState());
+  final Ref _ref;
+
+  ModifyNameNotifier(this._ref) : super(const ModifyNameState());
+
+  void loadCurrentName(String first, String last) {
+    state = state.copyWith(firstName: first, lastName: last);
+  }
 
   void setFirstName(String value) => state = state.copyWith(firstName: value);
 
@@ -45,9 +53,16 @@ class ModifyNameNotifier extends StateNotifier<ModifyNameState> {
   Future<void> saveChanges() async {
     if (!state.canSave) return;
     state = state.copyWith(isSaving: true);
-    // Simulate API call
-    await Future.delayed(const Duration(milliseconds: 800));
-    state = state.copyWith(isSaving: false, saveSuccess: true);
+    try {
+      final updatedUser = await UserApiService.instance.updateName(
+        firstName: state.firstName.trim(),
+        lastName: state.lastName.trim(),
+      );
+      _ref.read(userProfileProvider.notifier).updateProfile(updatedUser);
+      state = state.copyWith(isSaving: false, saveSuccess: true);
+    } catch (_) {
+      state = state.copyWith(isSaving: false);
+    }
   }
 
   void dismissSuccess() => state = state.copyWith(saveSuccess: false);
@@ -57,6 +72,6 @@ class ModifyNameNotifier extends StateNotifier<ModifyNameState> {
 
 // ── No autoDispose — name persists in session ────────────────────
 final modifyNameProvider =
-    StateNotifierProvider<ModifyNameNotifier, ModifyNameState>(
-      (_) => ModifyNameNotifier(),
-    );
+    StateNotifierProvider<ModifyNameNotifier, ModifyNameState>((ref) {
+  return ModifyNameNotifier(ref);
+});

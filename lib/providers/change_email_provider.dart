@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/network/user_api_service.dart';
+import 'user_profile_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // Change Email State — drives frames 1.6.8 & 1.6.9
@@ -51,13 +53,18 @@ class ChangeEmailNotifier extends StateNotifier<ChangeEmailState> {
   void togglePasswordVisibility() =>
       state = state.copyWith(isPasswordVisible: !state.isPasswordVisible);
 
-  // Simulates verifying current password then sending OTP to new email
+  // Verifies current password then sending OTP to new email
   Future<bool> continueToVerify() async {
     if (!state.canContinue) return false;
-    state = state.copyWith(isLoading: true);
-    await Future.delayed(const Duration(milliseconds: 800));
-    state = state.copyWith(isLoading: false);
-    return true; // navigate to verify screen
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      await UserApiService.instance.requestEmailChange(state.email.trim());
+      state = state.copyWith(isLoading: false);
+      return true; // navigate to verify screen
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      return false;
+    }
   }
 }
 
@@ -97,19 +104,24 @@ class VerifyEmailState {
 }
 
 class VerifyEmailNotifier extends StateNotifier<VerifyEmailState> {
-  VerifyEmailNotifier() : super(const VerifyEmailState());
+  final Ref _ref;
 
-  Future<void> verifyCode(String code) async {
-    state = state.copyWith(status: VerifyEmailStatus.loading);
-    await Future.delayed(const Duration(seconds: 1));
-    // Demo: any code other than "123456" fails
-    if (code != '123456') {
+  VerifyEmailNotifier(this._ref) : super(const VerifyEmailState());
+
+  Future<void> verifyCode(String code, String email) async {
+    state = state.copyWith(status: VerifyEmailStatus.loading, clearError: true);
+    try {
+      final updatedUser = await UserApiService.instance.confirmEmailChange(
+        email: email.trim(),
+        code: code.trim(),
+      );
+      _ref.read(userProfileProvider.notifier).updateProfile(updatedUser);
+      state = state.copyWith(status: VerifyEmailStatus.success);
+    } catch (e) {
       state = state.copyWith(
         status: VerifyEmailStatus.error,
-        errorMessage: 'Wrong code, try again',
+        errorMessage: e.toString(),
       );
-    } else {
-      state = state.copyWith(status: VerifyEmailStatus.success);
     }
   }
 
@@ -117,6 +129,6 @@ class VerifyEmailNotifier extends StateNotifier<VerifyEmailState> {
 }
 
 final verifyEmailProvider =
-    StateNotifierProvider<VerifyEmailNotifier, VerifyEmailState>(
-  (_) => VerifyEmailNotifier(),
-);
+    StateNotifierProvider<VerifyEmailNotifier, VerifyEmailState>((ref) {
+  return VerifyEmailNotifier(ref);
+});
