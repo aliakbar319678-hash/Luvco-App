@@ -26,17 +26,18 @@ class _ModifyNameScreenState extends ConsumerState<ModifyNameScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(modifyNameProvider.notifier).reset();
+    });
+
     final profileState = ref.read(userProfileProvider);
     final user = profileState.valueOrNull;
-    if (user != null) {
-      ref.read(modifyNameProvider.notifier).loadCurrentName(
-        user.firstName ?? '',
-        user.lastName ?? '',
-      );
-    }
-    final state = ref.read(modifyNameProvider);
-    _firstNameCtrl = TextEditingController(text: state.firstName);
-    _lastNameCtrl = TextEditingController(text: state.lastName);
+    _firstNameCtrl = TextEditingController(text: user?.firstName ?? '');
+    _lastNameCtrl = TextEditingController(text: user?.lastName ?? '');
+
+    // Rebuild when text changes so the button enabled state updates
+    _firstNameCtrl.addListener(() => setState(() {}));
+    _lastNameCtrl.addListener(() => setState(() {}));
 
     // Rebuild on focus change so border color updates
     _firstNameFocus.addListener(() => setState(() {}));
@@ -118,7 +119,7 @@ class _ModifyNameScreenState extends ConsumerState<ModifyNameScreen> {
                           hint: 'Jon',
                           scale: scale,
                           isFocused: _firstNameFocus.hasFocus,
-                          onChanged: notifier.setFirstName,
+                          onChanged: (_) {},
                         ),
 
                         const SizedBox(height: 20),
@@ -132,7 +133,7 @@ class _ModifyNameScreenState extends ConsumerState<ModifyNameScreen> {
                           hint: 'Doe',
                           scale: scale,
                           isFocused: _lastNameFocus.hasFocus,
-                          onChanged: notifier.setLastName,
+                          onChanged: (_) {},
                         ),
 
                         // ── Error message ──
@@ -180,9 +181,13 @@ class _ModifyNameScreenState extends ConsumerState<ModifyNameScreen> {
                 padding: EdgeInsets.symmetric(horizontal: size.width * 0.058),
                 child: _SaveChangesButton(
                   state: state,
+                  enabled: _firstNameCtrl.text.trim().isNotEmpty,
                   scale: scale,
                   size: size,
-                  onTap: () => notifier.saveChanges(),
+                  onTap: () => notifier.saveChanges(
+                    firstName: _firstNameCtrl.text,
+                    lastName: _lastNameCtrl.text,
+                  ),
                 ),
               ),
             ),
@@ -373,12 +378,14 @@ class _NameInputField extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 class _SaveChangesButton extends StatelessWidget {
   final ModifyNameState state;
+  final bool enabled;
   final double scale;
   final Size size;
   final VoidCallback onTap;
 
   const _SaveChangesButton({
     required this.state,
+    required this.enabled,
     required this.scale,
     required this.size,
     required this.onTap,
@@ -386,15 +393,15 @@ class _SaveChangesButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final enabled = state.canSave && !state.isSaving;
+    final isBtnEnabled = enabled && !state.isSaving;
 
     return SizedBox(
       width: double.infinity,
       height: (size.height * 0.062).clamp(48.0, 58.0),
       child: ElevatedButton(
-        onPressed: enabled ? onTap : null,
+        onPressed: isBtnEnabled ? onTap : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: enabled
+          backgroundColor: isBtnEnabled
               ? AppColors.royalPurple
               : AppColors.faintPink,
           disabledBackgroundColor: AppColors.faintPink,
@@ -417,7 +424,7 @@ class _SaveChangesButton extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontSize: 16 * scale.clamp(0.85, 1.3),
                   fontWeight: FontWeight.w600,
-                  color: enabled
+                  color: isBtnEnabled
                       ? AppColors.pureWhite
                       : AppColors.lightRoyalPurple,
                 ),

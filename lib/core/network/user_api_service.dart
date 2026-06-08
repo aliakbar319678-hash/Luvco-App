@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import '../../models/auth/user_model.dart';
+import 'auth_api_service.dart';
 import 'api_client.dart';
 
 /// Service class containing all backend user profile endpoints.
@@ -12,23 +13,7 @@ class UserApiService {
 
   /// Helper to extract server-provided error messages or throw generic ones.
   String handleError(dynamic error) {
-    if (error is DioException) {
-      final data = error.response?.data;
-      if (data is Map<String, dynamic> && data['message'] != null) {
-        return data['message'] as String;
-      }
-      switch (error.type) {
-        case DioExceptionType.connectionTimeout:
-        case DioExceptionType.sendTimeout:
-        case DioExceptionType.receiveTimeout:
-          return 'Connection timed out. Please try again.';
-        case DioExceptionType.connectionError:
-          return 'No internet connection detected.';
-        default:
-          return 'An unexpected network error occurred.';
-      }
-    }
-    return error.toString();
+    return AuthApiService.instance.handleError(error);
   }
 
   /// GET /users/me
