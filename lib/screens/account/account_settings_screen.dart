@@ -12,6 +12,8 @@ import 'change_email_screen.dart';
 import 'help_support_screen.dart';
 import 'modify_name_screen.dart';
 import 'modify_password_screen.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/network/auth_api_service.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // Account Settings Screen — frame 1.6.0 → 1.6.23
@@ -488,6 +490,9 @@ class _AccountMenuList extends StatelessWidget {
       Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
+    } else if (label == 'Log Out') {
+      AuthApiService.instance.logout();
+      context.go('/login');
     }
   }
 }

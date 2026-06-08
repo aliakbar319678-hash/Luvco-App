@@ -24,13 +24,13 @@ void main() {
   //
   // OPTION B (Wi-Fi Mode - ACTIVE ✅): No USB cable needed!
   //   Phone & PC must be on the same Wi-Fi network.
-  //   Your PC's Wi-Fi IP: 192.168.1.25  (run `ipconfig` if it changes)
+  //   Your PC's Wi-Fi IP: 192.168.1.35  (run `ipconfig` if it changes)
   //
   // OPTION C: Android Emulator only:
   //   Use: http://10.0.2.2:3000/api/v1
   // ─────────────────────────────────────────────────────────────────────────
   ApiClient.instance.setBaseUrl(
-    'http://192.168.1.25:3000/api/v1', // ← Wi-Fi: PC IP on local network
+    'http://192.168.1.35:3000/api/v1', // ← Wi-Fi: PC IP on local network
   );
 
   runApp(const ProviderScope(child: LuvcoApp()));
