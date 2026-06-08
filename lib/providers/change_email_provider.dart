@@ -111,11 +111,12 @@ class VerifyEmailNotifier extends StateNotifier<VerifyEmailState> {
   Future<void> verifyCode(String code, String email) async {
     state = state.copyWith(status: VerifyEmailStatus.loading, clearError: true);
     try {
-      final updatedUser = await UserApiService.instance.confirmEmailChange(
+      await UserApiService.instance.confirmEmailChange(
         email: email.trim(),
         code: code.trim(),
       );
-      _ref.read(userProfileProvider.notifier).updateProfile(updatedUser);
+      // Fetch full profile from backend to sync clean state and keep all fields
+      await _ref.read(userProfileProvider.notifier).loadProfile();
       state = state.copyWith(status: VerifyEmailStatus.success);
     } catch (e) {
       state = state.copyWith(

@@ -135,6 +135,32 @@ class _ModifyNameScreenState extends ConsumerState<ModifyNameScreen> {
                           onChanged: notifier.setLastName,
                         ),
 
+                        // ── Error message ──
+                        if (state.errorMessage != null) ...[
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded,
+                                color: AppColors.errorRed,
+                                size: 14 * scale.clamp(0.85, 1.2),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  state.errorMessage!,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12 * scale.clamp(0.85, 1.2),
+                                    color: AppColors.errorRed,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+
                         const SizedBox(height: 120),
                       ],
                     ),
