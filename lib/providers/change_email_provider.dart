@@ -21,7 +21,8 @@ class ChangeEmailState {
   });
 
   // Continue enabled only when both fields are filled
-  bool get canContinue => email.trim().isNotEmpty;
+  bool get canContinue =>
+      email.trim().isNotEmpty && password.trim().isNotEmpty;
 
   ChangeEmailState copyWith({
     String? email,
@@ -68,7 +69,7 @@ class ChangeEmailNotifier extends StateNotifier<ChangeEmailState> {
 }
 
 final changeEmailProvider =
-    StateNotifierProvider.autoDispose<ChangeEmailNotifier, ChangeEmailState>(
+    StateNotifierProvider<ChangeEmailNotifier, ChangeEmailState>(
   (_) => ChangeEmailNotifier(),
 );
 
