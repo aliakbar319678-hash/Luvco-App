@@ -123,36 +123,10 @@ class _SearchRecipeScreenState extends ConsumerState<SearchRecipeScreen> {
   }
 
   RecipeDetailModel _recipeToDetail(RecipeModel r) => RecipeDetailModel(
-    id: r.id,
-    title: r.title,
-    description: r.description,
-    imageUrl: r.imageUrl,
-    servings: r.servings,
-    timeMinutes: r.timeOfPreparation,
-    dietTypes: r.dietTags,
-    freeOfIngredients: r.freeOfIngredients,
-    ingredients:
-        '• 4 cups (500g) all-purpose flour\n• 1 ½ teaspoons salt\n• 1 tablespoon sugar',
-    instructions:
-        '1. Make the Dough:\nIn a large bowl, mix the flour, salt, sugar, and yeast.',
-    products: const [
-      RecipeProduct(
-        id: 'p1',
-        name: 'Name of the Product',
-        otherData: 'Other data from the product.',
-        sustainabilityLevel: 'Unsustainable',
-        safetyLevel: 'Avoid',
-        imageAsset: 'assets/images/product_image.png',
-      ),
-      RecipeProduct(
-        id: 'p2',
-        name: 'Name of the Product',
-        otherData: 'Other data from the product.',
-        sustainabilityLevel: 'Moderate Impact',
-        safetyLevel: 'Safe',
-        imageAsset: 'assets/images/product_image.png',
-      ),
-    ],
+    core: r,
+    ingredientsList: const [],
+    instructionsList: const [],
+    products: const [],
     isOwner: false,
   );
 
@@ -518,27 +492,19 @@ class _RecipeCard extends ConsumerWidget {
               child: SizedBox(
                 width: 80 * scale,
                 height: 80 * scale,
-                child: recipe.imageUrl != null
-                    ? Image.asset(
-                        recipe.imageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: AppColors.softGrey,
-                          child: Icon(
-                            Icons.image,
-                            color: AppColors.clearGrey,
-                            size: 32 * scale,
-                          ),
-                        ),
-                      )
-                    : Container(
-                        color: AppColors.softGrey,
-                        child: Icon(
-                          Icons.image,
-                          color: AppColors.clearGrey,
-                          size: 32 * scale,
-                        ),
-                      ),
+                child: recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty
+                    ? (recipe.imageUrl!.startsWith('http')
+                        ? Image.network(
+                            recipe.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
+                          )
+                        : Image.asset(
+                            recipe.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
+                          ))
+                    : Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
               ),
             ),
             SizedBox(width: 10 * scale),

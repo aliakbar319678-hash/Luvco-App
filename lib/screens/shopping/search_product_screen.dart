@@ -9,6 +9,7 @@ import '../../core/theme/app_colors.dart';
 import '../../models/shopping_list_model.dart';
 import '../../providers/shopping_list_provider.dart';
 import '../../providers/shopping_list_detail_provider.dart';
+import '../../providers/search_product_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import 'product_detail_sheet.dart';
 
@@ -35,6 +36,7 @@ class _SearchProductScreenState extends ConsumerState<SearchProductScreen> {
     setState(() {
       _isSearching = _searchController.text.isNotEmpty;
     });
+    ref.read(searchProductProvider.notifier).search(_searchController.text);
   }
 
   @override
@@ -256,50 +258,26 @@ class _SearchResults extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final mockResults = [
-      _ProductResultData(
-        item: const ShoppingListItem(
-          id: 's1',
-          name: 'Name of the Product',
-          description: 'Other data from the product.',
-          thumbnailAsset: 'assets/images/product_image.png',
+    final searchState = ref.watch(searchProductProvider);
+    final results = searchState.results.map((product) {
+      final isSustainable = product.isSustainable;
+      return _ProductResultData(
+        item: ShoppingListItem(
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          thumbnailAsset: product.thumbnailAsset,
+          isChecked: false,
+          barcode: product.id,
         ),
-        badge1Label: 'Unsustainable',
-        badge1Color: const Color(0xFFE53935),
-        badge1Icon: Icons.eco_outlined,
-        badge2Label: 'Avoid',
-        badge2Color: const Color(0xFFFFB300),
-        badge2Icon: Icons.flag_outlined,
-      ),
-      _ProductResultData(
-        item: const ShoppingListItem(
-          id: 's2',
-          name: 'Name of the Product',
-          description: 'Other data from the product.',
-          thumbnailAsset: 'assets/images/product_image.png',
-        ),
-        badge1Label: 'Moderate Impact',
-        badge1Color: const Color(0xFFFFB300),
+        badge1Label: isSustainable ? 'Eco-Friendly' : 'Unsustainable',
+        badge1Color: isSustainable ? const Color(0xFF43A047) : const Color(0xFFE53935),
         badge1Icon: Icons.eco_outlined,
         badge2Label: 'Safe',
         badge2Color: const Color(0xFF43A047),
         badge2Icon: Icons.flag_outlined,
-      ),
-      _ProductResultData(
-        item: const ShoppingListItem(
-          id: 's3',
-          name: 'Name of the Product',
-          description: 'Other data from the product.',
-          thumbnailAsset: 'assets/images/product_image.png',
-        ),
-        badge1Label: 'Eco-Friendly',
-        badge1Color: const Color(0xFF43A047),
-        badge1Icon: Icons.eco_outlined,
-        badge2Label: 'Safe',
-        badge2Color: const Color(0xFF43A047),
-        badge2Icon: Icons.flag_outlined,
-      ),
-    ];
+      );
+    }).toList();
 
     return Column(
       children: [
@@ -334,19 +312,25 @@ class _SearchResults extends ConsumerWidget {
           ),
         ),
         Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            physics: const BouncingScrollPhysics(),
-            itemCount: mockResults.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 16),
-            itemBuilder: (context, index) {
-              return _ProductSearchCard(
-                data: mockResults[index],
-                scale: scale,
-                listId: listId,
-              );
-            },
-          ),
+          child: results.isEmpty && searchState.query.isNotEmpty
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.royalPurple,
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: results.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
+                    return _ProductSearchCard(
+                      data: results[index],
+                      scale: scale,
+                      listId: listId,
+                    );
+                  },
+                ),
         ),
       ],
     );
@@ -634,13 +618,21 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
                             ? ClipRRect(
                                 borderRadius:
                                     BorderRadius.circular(10 * widget.scale),
-                                child: Image.asset(
-                                  widget.data.item.thumbnailAsset!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Icon(
-                                      Icons.image,
-                                      color: AppColors.neutralGrey),
-                                ),
+                                child: widget.data.item.thumbnailAsset!.startsWith('http')
+                                    ? Image.network(
+                                        widget.data.item.thumbnailAsset!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => const Icon(
+                                            Icons.image,
+                                            color: AppColors.neutralGrey),
+                                      )
+                                    : Image.asset(
+                                        widget.data.item.thumbnailAsset!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => const Icon(
+                                            Icons.image,
+                                            color: AppColors.neutralGrey),
+                                      ),
                               )
                             : const Icon(Icons.image,
                                 color: AppColors.neutralGrey),

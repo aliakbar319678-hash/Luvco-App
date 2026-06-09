@@ -7,9 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../models/recipe_model.dart';
 import '../../models/new_recipe_model.dart';
-import '../../providers/recipe_provider.dart';
 import '../../providers/new_recipe_provider.dart';
 import '../../widgets/auth_header.dart';
 import '../../widgets/bottom_nav_bar.dart';
@@ -556,28 +554,40 @@ class _Step3WidgetState extends ConsumerState<_Step3Widget> {
                     // ── Create Recipe Button ──
                     LuvcoButton(
                       label: 'Create Recipe',
-                      onTap: () {
-                        // Persist the recipe
-                        final recipeData = ref.read(newRecipeProvider);
-                        final newRecipe = RecipeModel(
-                          id: DateTime.now().millisecondsSinceEpoch.toString(),
-                          title: recipeData.recipeName,
-                          description: recipeData.description,
-                          imageUrl: recipeData.coverImagePath,
-                          dietTags: recipeData.selectedDietTypes,
+                      onTap: () async {
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) => const Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.royalPurple,
+                            ),
+                          ),
                         );
-                        ref.read(myRecipesProvider.notifier).addRecipe(newRecipe);
 
-                        // Show success
-                        ref.read(recipeCreatedSuccessProvider.notifier).state =
-                            true;
-                        Future.delayed(const Duration(seconds: 2), () {
-                          if (!mounted) return;
-                          ref.read(recipeCreatedSuccessProvider.notifier).state = false;
-                          ref.read(newRecipeStepProvider.notifier).state = 1;
-                          ref.read(newRecipeProvider.notifier).reset();
-                          if (context.mounted) context.pop();
-                        });
+                        try {
+                          await ref.read(newRecipeProvider.notifier).submitRecipe();
+                          if (context.mounted) {
+                            Navigator.of(context).pop(); // Pop loading dialog
+                          }
+
+                          // Show success
+                          ref.read(recipeCreatedSuccessProvider.notifier).state = true;
+                          Future.delayed(const Duration(seconds: 2), () {
+                            if (!mounted) return;
+                            ref.read(recipeCreatedSuccessProvider.notifier).state = false;
+                            ref.read(newRecipeStepProvider.notifier).state = 1;
+                            ref.read(newRecipeProvider.notifier).reset();
+                            if (context.mounted) context.pop();
+                          });
+                        } catch (e) {
+                          if (context.mounted) {
+                            Navigator.of(context).pop(); // Pop loading dialog
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error: $e')),
+                            );
+                          }
+                        }
                       },
                     ),
 

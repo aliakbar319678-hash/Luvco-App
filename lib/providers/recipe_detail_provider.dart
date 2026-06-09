@@ -1,5 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/recipe_detail_model.dart';
+import '../models/recipe_model.dart';
+import '../core/network/recipe_api_service.dart';
+import 'user_profile_provider.dart';
+import 'recipe_provider.dart';
 
 // ── Active tab: 0=Ingredients 1=Instructions 2=Products ───────────
 final recipeDetailTabProvider = StateProvider.autoDispose<int>((_) => 0);
@@ -19,7 +23,22 @@ final editRecipeTabProvider = StateProvider.autoDispose<int>((_) => 0);
 
 // ── Recipe Detail State Notifier ──────────────────────────────────
 class RecipeDetailNotifier extends StateNotifier<RecipeDetailModel> {
-  RecipeDetailNotifier(super.initial);
+  final Ref _ref;
+
+  RecipeDetailNotifier(this._ref, RecipeDetailModel initial) : super(initial) {
+    fetchDetails();
+  }
+
+  String get _currentUserId => _ref.read(userProfileProvider).value?.id ?? '';
+
+  Future<void> fetchDetails() async {
+    try {
+      final loaded = await RecipeApiService.instance.getRecipe(state.id, _currentUserId);
+      state = loaded;
+    } catch (e) {
+      // Fallback: keep initial/current state
+    }
+  }
 
   void updateDetails({
     String? title,
@@ -31,93 +50,133 @@ class RecipeDetailNotifier extends StateNotifier<RecipeDetailModel> {
     String? imageUrl,
   }) {
     state = state.copyWith(
-      title: title,
-      description: description,
-      servings: servings,
-      timeMinutes: timeMinutes,
-      dietTypes: dietTypes,
-      freeOfIngredients: freeOfIngredients,
-      imageUrl: imageUrl,
+      core: state.core.copyWith(
+        title: title ?? state.title,
+        description: description ?? state.description,
+        servings: servings ?? state.servings,
+        timeOfPreparation: timeMinutes ?? state.timeMinutes,
+        dietTags: dietTypes ?? state.dietTypes,
+        freeOfIngredients: freeOfIngredients ?? state.freeOfIngredients,
+        imageUrl: imageUrl ?? state.imageUrl,
+      ),
     );
   }
 
-  void updatePreparation({String? ingredients, String? instructions}) {
-    state = state.copyWith(
-      ingredients: ingredients,
-      instructions: instructions,
+  Future<void> toggleBookmark() async {
+    final detail = state;
+    final currentlySaved = detail.isSaved;
+
+    state = detail.copyWith(
+      core: detail.core.copyWith(isSaved: !currentlySaved),
     );
+
+    try {
+      if (currentlySaved) {
+        await RecipeApiService.instance.unsaveRecipe(detail.id);
+      } else {
+        await RecipeApiService.instance.saveRecipe(detail.id);
+      }
+      _ref.read(savedRecipesProvider.notifier).loadRecipes();
+    } catch (e) {
+      // Revert on failure
+      state = detail.copyWith(
+        core: detail.core.copyWith(isSaved: currentlySaved),
+      );
+    }
   }
 
-  void addProduct(RecipeProduct product) {
-    state = state.copyWith(products: [...state.products, product]);
+  Future<void> addIngredient(String description) async {
+    final nextPosition = state.ingredientsList.length + 1;
+    try {
+      final newIng = await RecipeApiService.instance.addIngredient(state.id, description, nextPosition);
+      state = state.copyWith(
+        ingredientsList: [...state.ingredientsList, newIng],
+      );
+    } catch (e) {
+      // Handle error
+    }
   }
 
-  void removeProduct(String id) {
-    state = state.copyWith(
-      products: state.products.where((p) => p.id != id).toList(),
-    );
+  Future<void> removeIngredient(String ingredientId) async {
+    try {
+      await RecipeApiService.instance.removeIngredient(state.id, ingredientId);
+      state = state.copyWith(
+        ingredientsList: state.ingredientsList.where((i) => i.id != ingredientId).toList(),
+      );
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  Future<void> addInstructionStep(String text) async {
+    final nextStepNumber = state.instructionsList.length + 1;
+    try {
+      final newStep = await RecipeApiService.instance.addInstructionStep(state.id, text, nextStepNumber);
+      state = state.copyWith(
+        instructionsList: [...state.instructionsList, newStep],
+      );
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  Future<void> removeInstructionStep(String stepId) async {
+    try {
+      await RecipeApiService.instance.removeInstructionStep(state.id, stepId);
+      state = state.copyWith(
+        instructionsList: state.instructionsList.where((i) => i.id != stepId).toList(),
+      );
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  Future<void> addProduct(Map<String, dynamic> productData) async {
+    final nextPosition = state.products.length + 1;
+    final fullData = {
+      ...productData,
+      'position': nextPosition,
+    };
+    try {
+      final newProd = await RecipeApiService.instance.addLinkedProduct(state.id, fullData);
+      state = state.copyWith(
+        products: [...state.products, newProd],
+      );
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  Future<void> removeProduct(String productId) async {
+    try {
+      await RecipeApiService.instance.removeLinkedProduct(state.id, productId);
+      state = state.copyWith(
+        products: state.products.where((p) => p.id != productId).toList(),
+      );
+    } catch (e) {
+      // Handle error
+    }
   }
 }
 
 // Family provider so each recipe gets its own notifier
 final recipeDetailProvider = StateNotifierProvider.autoDispose
     .family<RecipeDetailNotifier, RecipeDetailModel, RecipeDetailModel>(
-      (_, initial) => RecipeDetailNotifier(initial),
+      (ref, initial) => RecipeDetailNotifier(ref, initial),
     );
 
 // ── Demo recipe for testing ────────────────────────────────────────
 const demoRecipeDetail = RecipeDetailModel(
-  id: 'demo_1',
-  title: 'Recipe Title',
-  description: 'Short description of the recipe.',
-  imageUrl: 'assets/images/rice_image.png',
-  servings: 2,
-  timeMinutes: 30,
-  dietTypes: ['Label', 'Label', 'Label', 'Label'],
-  freeOfIngredients: ['Label', 'Label', 'Label', 'Label'],
-  ingredients: '''• 4 cups (500g) all-purpose flour
-- 1 ½ teaspoons salt
-- 1 tablespoon sugar
-- 2 ¼ teaspoons (1 packet) instant yeast
-- 1 ¼ cups (300ml) warm water
-- 1 tablespoon vegetable oil''',
-  instructions: '''1. Make the Dough:
-In a large bowl, mix the flour, salt, sugar, and instant yeast.
-Gradually add warm water and oil, mixing until a rough dough forms.
-Knead the dough on a floured surface for about 8–10 minutes until smooth and elastic.
-
-2. Proof the Dough:
-Place the dough in a lightly oiled bowl, cover with a damp cloth, and let rise in a warm place for 1–1.5 hours, or until it doubles in size.
-
-3. Shape the Bagels:
-Punch down the dough and divide it into 8 equal pieces.
-Roll each piece into a ball, then poke a hole in the center with your finger. Stretch the hole to about 1–2 inches wide (it will shrink slightly during baking).
-Place the shaped bagels on a baking sheet.''',
-  products: [
-    RecipeProduct(
-      id: 'prod_1',
-      name: 'Name of the Product',
-      otherData: 'Other data from the product.',
-      sustainabilityLevel: 'Unsustainable',
-      safetyLevel: 'Avoid',
-      imageAsset: 'assets/images/product_image.png',
-    ),
-    RecipeProduct(
-      id: 'prod_2',
-      name: 'Name of the Product',
-      otherData: 'Other data from the product.',
-      sustainabilityLevel: 'Moderate Impact',
-      safetyLevel: 'Safe',
-      imageAsset: 'assets/images/product_image.png',
-    ),
-    RecipeProduct(
-      id: 'prod_3',
-      name: 'Name of the Product',
-      otherData: 'Other data from the product.',
-      sustainabilityLevel: 'Eco-Friendly',
-      safetyLevel: 'Safe',
-      imageAsset: 'assets/images/product_image.png',
-    ),
-  ],
+  core: RecipeModel(
+    id: 'demo_1',
+    title: 'Recipe Title',
+    description: 'Short description of the recipe.',
+    imageUrl: 'assets/images/rice_image.png',
+    servings: 2,
+    timeOfPreparation: 30,
+    dietTags: ['Label', 'Label', 'Label', 'Label'],
+    freeOfIngredients: ['Label', 'Label', 'Label', 'Label'],
+    isSaved: false,
+  ),
   isOwner: true,
 );

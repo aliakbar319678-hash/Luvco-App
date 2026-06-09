@@ -500,19 +500,33 @@ class _SearchResultsList extends StatelessWidget {
                       width: 36 * scale.clamp(0.85, 1.2),
                       height: 36 * scale.clamp(0.85, 1.2),
                       child: product.thumbnailAsset != null
-                          ? Image.asset(
-                              product.thumbnailAsset!,
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) => const Icon(
-                                Icons.fastfood_outlined,
-                                color: AppColors.neutralGrey,
-                              ),
-                            )
+                          ? (product.thumbnailAsset!.startsWith('http')
+                              ? Image.network(
+                                  product.thumbnailAsset!,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.fastfood_outlined,
+                                    color: AppColors.neutralGrey,
+                                  ),
+                                )
+                              : Image.asset(
+                                  product.thumbnailAsset!,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.fastfood_outlined,
+                                    color: AppColors.neutralGrey,
+                                  ),
+                                ))
                           : product.imageAsset != null
-                          ? Image.asset(
-                              product.imageAsset!,
-                              fit: BoxFit.contain,
-                            )
+                          ? (product.imageAsset!.startsWith('http')
+                              ? Image.network(
+                                  product.imageAsset!,
+                                  fit: BoxFit.contain,
+                                )
+                              : Image.asset(
+                                  product.imageAsset!,
+                                  fit: BoxFit.contain,
+                                ))
                           : const Icon(
                               Icons.fastfood_outlined,
                               color: AppColors.neutralGrey,
@@ -698,17 +712,30 @@ class _AddedProductCard extends StatelessWidget {
                 SizedBox(
                   width: 52 * scale.clamp(0.85, 1.2),
                   height: 52 * scale.clamp(0.85, 1.2),
-                  child: Image.asset(
-                    product.imageAsset ??
-                        product.thumbnailAsset ??
-                        '', // Favor large image like in Figma
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Icon(
-                      Icons.image_outlined,
-                      size: 30,
-                      color: AppColors.clearGrey,
-                    ),
-                  ),
+                  child: () {
+                    final path = product.imageAsset ?? product.thumbnailAsset ?? '';
+                    if (path.startsWith('http')) {
+                      return Image.network(
+                        path,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.image_outlined,
+                          size: 30,
+                          color: AppColors.clearGrey,
+                        ),
+                      );
+                    } else {
+                      return Image.asset(
+                        path,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.image_outlined,
+                          size: 30,
+                          color: AppColors.clearGrey,
+                        ),
+                      );
+                    }
+                  }(),
                 ),
                 const SizedBox(width: 14),
                 // Name + description

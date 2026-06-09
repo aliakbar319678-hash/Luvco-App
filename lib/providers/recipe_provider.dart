@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/recipe_model.dart';
+import '../core/network/recipe_api_service.dart';
+import 'user_profile_provider.dart';
 
 // ── Recipe view mode: grid or list ────────────────────────────────
 enum RecipeViewMode { grid, list }
@@ -52,24 +54,20 @@ final recipeFilterProvider =
 
 // ── My Recipes notifier ───────────────────────────────────────────
 class MyRecipesNotifier extends StateNotifier<List<RecipeModel>> {
-  MyRecipesNotifier() : super(_demoMyRecipes);
+  final Ref _ref;
 
-  static const _demoMyRecipes = [
-    RecipeModel(
-      id: '1',
-      title: 'Name of the Recipe',
-      description: 'Other data from the recipe.',
-      imageUrl: 'assets/images/recipe..png',
-      dietTags: ['Gluten Free', 'Label 02', 'Label 03'],
-    ),
-    RecipeModel(
-      id: '2',
-      title: 'Name of the Recipe',
-      description: 'Other data from the recipe.',
-      imageUrl: 'assets/images/recipe..png',
-      dietTags: ['Gluten Free', 'Label 02'],
-    ),
-  ];
+  MyRecipesNotifier(this._ref) : super([]) {
+    loadRecipes();
+  }
+
+  Future<void> loadRecipes() async {
+    try {
+      final list = await RecipeApiService.instance.getRecipes('my-recipes');
+      state = list;
+    } catch (e) {
+      // Failed to load recipes silently or handle error appropriately
+    }
+  }
 
   void addRecipe(RecipeModel recipe) => state = [...state, recipe];
 
@@ -77,49 +75,83 @@ class MyRecipesNotifier extends StateNotifier<List<RecipeModel>> {
     state = state.map((r) => r.id == updated.id ? updated : r).toList();
   }
 
-  void duplicateRecipe(String id) {
-    final original = state.firstWhere((r) => r.id == id);
-    final copy = original.copyWith(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: '${original.title} (Copy)',
-    );
-    state = [...state, copy];
+  Future<void> duplicateRecipe(String id) async {
+    try {
+      final currentUserId = _ref.read(userProfileProvider).value?.id ?? '';
+      final detail = await RecipeApiService.instance.getRecipe(id, currentUserId);
+      final payload = {
+        'title': '${detail.title} (Copy)',
+        'description': detail.description,
+        'coverImageUrl': detail.imageUrl,
+        'servings': detail.servings,
+        'prepTimeMinutes': detail.timeMinutes,
+        'dietTags': detail.dietTypes,
+        'freeOfTags': detail.freeOfIngredients,
+        'isPublic': detail.core.isPublic,
+        'ingredients': detail.ingredientsList.map((i) => {
+          'description': i.description,
+          'position': i.position,
+        }).toList(),
+        'instructions': detail.instructionsList.map((i) => {
+          'stepNumber': i.stepNumber,
+          'text': i.text,
+        }).toList(),
+        'products': detail.products.map((p) => {
+          'barcode': p.barcode,
+          'productName': p.productName,
+          'productImageUrl': p.productImageUrl,
+          'quantity': p.quantity,
+          'unit': p.unit,
+          'position': p.position,
+        }).toList(),
+      };
+      
+      await RecipeApiService.instance.createRecipe(payload);
+      await loadRecipes();
+    } catch (e) {
+      // Handle error
+    }
   }
 
-  void deleteRecipe(String id) =>
+  Future<void> deleteRecipe(String id) async {
+    try {
+      await RecipeApiService.instance.deleteRecipe(id);
       state = state.where((r) => r.id != id).toList();
+    } catch (e) {
+      // Handle error
+    }
+  }
 }
 
 final myRecipesProvider =
     StateNotifierProvider<MyRecipesNotifier, List<RecipeModel>>(
-      (_) => MyRecipesNotifier(),
+      (ref) => MyRecipesNotifier(ref),
     );
 
 // ── Saved Recipes notifier ────────────────────────────────────────
 class SavedRecipesNotifier extends StateNotifier<List<RecipeModel>> {
-  SavedRecipesNotifier() : super(_demoSavedRecipes);
+  SavedRecipesNotifier() : super([]) {
+    loadRecipes();
+  }
 
-  static const _demoSavedRecipes = [
-    RecipeModel(
-      id: 's1',
-      title: 'Name of the Recipe',
-      description: 'Other data from the recipe.',
-      imageUrl: 'assets/images/recipe..png',
-      dietTags: ['Gluten Free', 'Label 02'],
-      isSaved: true,
-    ),
-    RecipeModel(
-      id: 's2',
-      title: 'Name of the Recipe',
-      description: 'Other data from the recipe.',
-      imageUrl: 'assets/images/recipe..png',
-      dietTags: ['Gluten Free'],
-      isSaved: true,
-    ),
-  ];
+  Future<void> loadRecipes() async {
+    try {
+      final list = await RecipeApiService.instance.getRecipes('saved');
+      state = list;
+    } catch (e) {
+      // Handle error
+    }
+  }
 
-  void deleteRecipe(String id) =>
+  Future<void> deleteRecipe(String id) async {
+    try {
+      // Unsave the recipe on the backend
+      await RecipeApiService.instance.unsaveRecipe(id);
       state = state.where((r) => r.id != id).toList();
+    } catch (e) {
+      // Handle error
+    }
+  }
 }
 
 final savedRecipesProvider =

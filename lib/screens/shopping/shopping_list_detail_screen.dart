@@ -602,15 +602,25 @@ class _ProductListItem extends StatelessWidget {
                   height: 56 * scale.clamp(0.85, 1.1),
                   color: AppColors.softGrey,
                   child: item.thumbnailAsset != null
-                      ? Image.asset(
-                          item.thumbnailAsset!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons.image_outlined,
-                            color: AppColors.neutralGrey,
-                            size: 24,
-                          ),
-                        )
+                      ? (item.thumbnailAsset!.startsWith('http')
+                          ? Image.network(
+                              item.thumbnailAsset!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.image_outlined,
+                                color: AppColors.neutralGrey,
+                                size: 24,
+                              ),
+                            )
+                          : Image.asset(
+                              item.thumbnailAsset!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.image_outlined,
+                                color: AppColors.neutralGrey,
+                                size: 24,
+                              ),
+                            ))
                       : const Icon(
                           Icons.image_outlined,
                           color: AppColors.neutralGrey,

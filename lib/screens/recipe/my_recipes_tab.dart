@@ -6,7 +6,6 @@ import '../../core/theme/app_colors.dart';
 import '../../models/recipe_model.dart';
 import '../../models/recipe_detail_model.dart';
 import '../../providers/recipe_provider.dart';
-import '../../providers/recipe_detail_provider.dart';
 import '../../widgets/recipe_card.dart';
 import '../../widgets/recipe_dialogs.dart';
 import 'edit_recipe_screen.dart';
@@ -153,21 +152,12 @@ class MyRecipesTab extends ConsumerWidget {
   }
 
   void _navigateToDetail(BuildContext context, RecipeModel recipe) {
-    // For demo purposes, we convert RecipeModel to RecipeDetailModel
-    // or we could just use demoRecipeDetail for testing as per request
     final detail = RecipeDetailModel(
-      id: recipe.id,
-      title: recipe.title,
-      description: recipe.description,
-      imageUrl: recipe.imageUrl,
-      servings: recipe.servings,
-      timeMinutes: recipe.timeOfPreparation,
-      dietTypes: recipe.dietTags,
-      freeOfIngredients: recipe.freeOfIngredients,
-      ingredients: demoRecipeDetail.ingredients, // placeholder
-      instructions: demoRecipeDetail.instructions, // placeholder
-      products: demoRecipeDetail.products, // placeholder
-      isOwner: true,
+      core: recipe,
+      ingredientsList: const [],
+      instructionsList: const [],
+      products: const [],
+      isOwner: false,
     );
 
     context.push('/recipe-detail', extra: detail);

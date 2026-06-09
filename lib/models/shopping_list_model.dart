@@ -27,4 +27,33 @@ class ShoppingListModel {
     itemCount: itemCount ?? this.itemCount,
     imageUrl: imageUrl ?? this.imageUrl,
   );
+
+  factory ShoppingListModel.fromJson(Map<String, dynamic> json) {
+    int count = 0;
+    if (json['itemCount'] != null) {
+      count = json['itemCount'] as int;
+    } else if (json['items'] != null && json['items'] is List) {
+      count = (json['items'] as List).length;
+    }
+
+    final desc = json['description'] as String? ?? 'Custom shopping list';
+
+    return ShoppingListModel(
+      id: json['id'] as String,
+      title: json['title'] as String? ?? 'Shopping List',
+      description: desc,
+      itemCount: count,
+      imageUrl: json['imageUrl'] as String? ?? 'assets/images/bread_pic.png',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'itemCount': itemCount,
+      'imageUrl': imageUrl,
+    };
+  }
 }

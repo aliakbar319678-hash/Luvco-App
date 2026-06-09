@@ -49,9 +49,11 @@ class RecipeGridCard extends StatelessWidget {
                   ),
                   child: AspectRatio(
                     aspectRatio: 1.1,
-                    child: recipe.imageUrl != null
-                        ? Image.asset(recipe.imageUrl!, fit: BoxFit.cover)
-                        : Container(color: AppColors.clearGrey),
+                    child: recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty
+                        ? (recipe.imageUrl!.startsWith('http')
+                            ? Image.network(recipe.imageUrl!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover))
+                            : Image.asset(recipe.imageUrl!, fit: BoxFit.cover))
+                        : Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
                   ),
                 ),
                 Positioned(
@@ -165,9 +167,11 @@ class RecipeListCard extends StatelessWidget {
               child: SizedBox(
                 width: 80 * scale.clamp(0.85, 1.2),
                 height: 80 * scale.clamp(0.85, 1.2),
-                child: recipe.imageUrl != null
-                    ? Image.asset(recipe.imageUrl!, fit: BoxFit.cover)
-                    : Container(color: AppColors.clearGrey),
+                child: recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty
+                    ? (recipe.imageUrl!.startsWith('http')
+                        ? Image.network(recipe.imageUrl!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover))
+                        : Image.asset(recipe.imageUrl!, fit: BoxFit.cover))
+                    : Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
               ),
             ),
             const SizedBox(width: 12),

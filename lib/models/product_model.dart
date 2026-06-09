@@ -54,6 +54,45 @@ class ProductModel {
     isSaved: isSaved ?? this.isSaved,
   );
 
+  factory ProductModel.fromJson(Map<String, dynamic> json) {
+    final barcode = json['barcode'] as String? ?? json['id'] as String? ?? '';
+    final name = json['name'] as String? ?? 'Unknown Product';
+    final brand = json['brand'] as String? ?? 'Generic Brand';
+    final imageUrl = json['imageUrl'] as String? ?? '';
+    final sustainabilityLabel = json['sustainabilityLabel'] as String? ?? '';
+    
+    // isSustainable: true if Eco-Friendly or Sustainable
+    final isSustainable = sustainabilityLabel.toLowerCase() == 'eco-friendly' ||
+                          sustainabilityLabel.toLowerCase() == 'sustainable';
+
+    final labelsList = json['labels'] != null ? List<String>.from(json['labels']) : <String>[];
+    final allergensList = json['allergens'] != null ? List<String>.from(json['allergens']) : <String>[];
+    
+    final ingredientsList = <String>[];
+    if (json['ingredients'] != null && json['ingredients'] is List) {
+      for (final ing in json['ingredients']) {
+        if (ing is Map && ing['text'] != null) {
+          ingredientsList.add(ing['text'] as String);
+        } else if (ing is String) {
+          ingredientsList.add(ing);
+        }
+      }
+    }
+
+    return ProductModel(
+      id: barcode,
+      name: name,
+      description: brand,
+      imageAsset: imageUrl.isNotEmpty ? imageUrl : null,
+      thumbnailAsset: imageUrl.isNotEmpty ? imageUrl : null,
+      isSustainable: isSustainable,
+      labels: labelsList,
+      allergens: allergensList,
+      ingredients: ingredientsList,
+      isSaved: json['isFavorited'] as bool? ?? false,
+    );
+  }
+
   /// Fallback demo product used when route extras are missing
   static ProductModel demo() => const ProductModel(
     id: 'demo_001',

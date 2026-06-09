@@ -251,16 +251,27 @@ class _ProductImageSectionState extends State<_ProductImageSection> {
             padding: const EdgeInsets.only(top: 40, bottom: 20, left: 20, right: 20),
             child: Center(
               child: widget.item.thumbnailAsset != null
-                  ? Image.asset(
-                      widget.item.thumbnailAsset!,
-                      height: 180 * widget.scale.clamp(0.85, 1.2),
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => const Icon(
-                        Icons.image_outlined,
-                        size: 80,
-                        color: AppColors.neutralGrey,
-                      ),
-                    )
+                  ? (widget.item.thumbnailAsset!.startsWith('http')
+                      ? Image.network(
+                          widget.item.thumbnailAsset!,
+                          height: 180 * widget.scale.clamp(0.85, 1.2),
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.image_outlined,
+                            size: 80,
+                            color: AppColors.neutralGrey,
+                          ),
+                        )
+                      : Image.asset(
+                          widget.item.thumbnailAsset!,
+                          height: 180 * widget.scale.clamp(0.85, 1.2),
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.image_outlined,
+                            size: 80,
+                            color: AppColors.neutralGrey,
+                          ),
+                        ))
                   : const Icon(
                       Icons.image_outlined,
                       size: 80,

@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/product_model.dart';
+import '../core/network/list_api_service.dart';
+import '../core/network/product_api_service.dart';
+import 'shopping_list_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // State class — holds everything for the New Shopping List screen
@@ -11,7 +14,7 @@ class NewShoppingListState {
   final List<ProductModel> searchResults;
   final List<ProductModel> addedProducts;
   final bool isSearching; // search bar is active / has text
-  final bool isCreating; // loading state while creati g list
+  final bool isCreating; // loading state while creating list
   final bool listCreated; // success overlay visible
 
   const NewShoppingListState({
@@ -49,52 +52,12 @@ class NewShoppingListState {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Demo product catalogue — replace with real API call
-// ─────────────────────────────────────────────────────────────────
-const _demoCatalogue = [
-  ProductModel(
-    id: 'p1',
-    name: 'Food Item 01',
-    description: 'Other data from the product.',
-    imageAsset: 'assets/images/product_image.png',
-    thumbnailAsset: 'assets/images/nutila.png',
-    imageSvgAsset: 'assets/images/nutila.svg',
-    isSustainable: false,
-    labels: ['Label', 'Label', 'Label', 'Label'],
-    allergens: ['Label', 'Label', 'Label', 'Label'],
-    ingredients: ['Ingredient Name'],
-  ),
-  ProductModel(
-    id: 'p2',
-    name: 'Food Item 02',
-    description: 'Other data from the product.',
-    imageAsset: 'assets/images/product_image.png',
-    thumbnailAsset: 'assets/images/nutila.png',
-    imageSvgAsset: 'assets/images/nutila.svg',
-    isSustainable: true,
-    labels: ['Label', 'Label', 'Label', 'Label'],
-    allergens: ['Label', 'Label', 'Label', 'Label'],
-    ingredients: ['Ingredient Name'],
-  ),
-  ProductModel(
-    id: 'p3',
-    name: 'Food Item 03',
-    description: 'Other data from the product.',
-    imageAsset: 'assets/images/product_image.png',
-    thumbnailAsset: 'assets/images/nutila.png',
-    imageSvgAsset: 'assets/images/nutila.svg',
-    isSustainable: false,
-    labels: ['Label', 'Label', 'Label', 'Label'],
-    allergens: ['Label', 'Label', 'Label', 'Label'],
-    ingredients: ['Ingredient Name'],
-  ),
-];
-
-// ─────────────────────────────────────────────────────────────────
 // Notifier
 // ─────────────────────────────────────────────────────────────────
 class NewShoppingListNotifier extends StateNotifier<NewShoppingListState> {
-  NewShoppingListNotifier() : super(const NewShoppingListState());
+  final Ref _ref;
+
+  NewShoppingListNotifier(this._ref) : super(const NewShoppingListState());
 
   // ── Field updates ─────────────────────────────────────────────
   void setListName(String value) => state = state.copyWith(listName: value);
@@ -103,7 +66,7 @@ class NewShoppingListNotifier extends StateNotifier<NewShoppingListState> {
       state = state.copyWith(description: value);
 
   // ── Search ────────────────────────────────────────────────────
-  void onSearchChanged(String query) {
+  Future<void> onSearchChanged(String query) async {
     if (query.trim().isEmpty) {
       state = state.copyWith(
         searchQuery: '',
@@ -112,16 +75,15 @@ class NewShoppingListNotifier extends StateNotifier<NewShoppingListState> {
       );
       return;
     }
-    // Filter demo catalogue — replace with API call
-    final results = _demoCatalogue
-        .where((p) => p.name.toLowerCase().contains(query.toLowerCase()))
-        .toList();
-    // If nothing matches, still show all demo items (like real search UX)
-    state = state.copyWith(
-      searchQuery: query,
-      searchResults: results.isEmpty ? _demoCatalogue : results,
-      isSearching: true,
-    );
+    
+    state = state.copyWith(searchQuery: query, isSearching: true);
+    
+    try {
+      final results = await ProductApiService.instance.searchProducts(query);
+      state = state.copyWith(searchResults: results);
+    } catch (e) {
+      // Fail silently or keep current results
+    }
   }
 
   void clearSearch() {
@@ -152,9 +114,30 @@ class NewShoppingListNotifier extends StateNotifier<NewShoppingListState> {
   Future<void> createList() async {
     if (!state.canCreate) return;
     state = state.copyWith(isCreating: true);
-    // Simulate API call
-    await Future.delayed(const Duration(milliseconds: 800));
-    state = state.copyWith(isCreating: false, listCreated: true);
+    
+    try {
+      // 1. Create shopping list on the backend
+      final createdList = await ListApiService.instance.createList(state.listName);
+      
+      // 2. Add each product sequentially
+      for (final product in state.addedProducts) {
+        await ListApiService.instance.addItem(
+          createdList.id,
+          barcode: product.id,
+          productName: product.name,
+          productImageUrl: product.imageAsset ?? product.thumbnailAsset,
+          quantity: 1,
+        );
+      }
+      
+      // 3. Refresh list on main lists screen
+      await _ref.read(shoppingListProvider.notifier).loadLists();
+      
+      state = state.copyWith(isCreating: false, listCreated: true);
+    } catch (e) {
+      state = state.copyWith(isCreating: false);
+      // Fail silently or handle error appropriately
+    }
   }
 
   void dismissSuccess() => state = state.copyWith(listCreated: false);
@@ -167,4 +150,4 @@ final newShoppingListProvider =
     StateNotifierProvider.autoDispose<
       NewShoppingListNotifier,
       NewShoppingListState
-    >((_) => NewShoppingListNotifier());
+    >((ref) => NewShoppingListNotifier(ref));

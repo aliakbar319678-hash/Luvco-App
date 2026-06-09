@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/shopping_list_model.dart';
+import '../core/network/list_api_service.dart';
 
 // ── View mode toggle: grid or list ──────────────────────────────
 enum ShoppingListViewMode { grid, list }
@@ -17,32 +18,19 @@ final profileTabProvider = StateProvider<ProfileTab>(
 
 // ── Shopping lists state ─────────────────────────────────────────
 class ShoppingListNotifier extends StateNotifier<List<ShoppingListModel>> {
-  ShoppingListNotifier() : super(_demoLists);
+  ShoppingListNotifier() : super([]) {
+    loadLists();
+  }
 
-  // Demo data — replace with real API calls
-  static final _demoLists = [
-    const ShoppingListModel(
-      id: '1',
-      title: 'List Title',
-      description: 'Short description of the shopping list.',
-      itemCount: 2,
-      imageUrl: 'assets/images/bread_pic.png',
-    ),
-    const ShoppingListModel(
-      id: '2',
-      title: 'List Title',
-      description: 'Short description of the shopping list.',
-      itemCount: 2,
-      imageUrl: 'assets/images/bread_pic.png',
-    ),
-    const ShoppingListModel(
-      id: '3',
-      title: 'List Title',
-      description: 'Short description of the shopping list.',
-      itemCount: 2,
-      imageUrl: 'assets/images/bread_pic.png',
-    ),
-  ];
+  // ── Load lists from backend ──────────────────────────────────
+  Future<void> loadLists() async {
+    try {
+      final lists = await ListApiService.instance.getLists();
+      state = lists;
+    } catch (e) {
+      // Failed silently or logged
+    }
+  }
 
   // ── Add new list ─────────────────────────────────────────────
   void addList(ShoppingListModel list) {
@@ -60,21 +48,24 @@ class ShoppingListNotifier extends StateNotifier<List<ShoppingListModel>> {
   }
 
   // ── Duplicate list ───────────────────────────────────────────
-  void duplicateList(String id) {
-    final original = state.firstWhere((l) => l.id == id);
-    final duplicate = ShoppingListModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: '${original.title} (Copy)',
-      description: original.description,
-      itemCount: original.itemCount,
-      imageUrl: original.imageUrl,
-    );
-    state = [...state, duplicate];
+  Future<void> duplicateList(String id) async {
+    try {
+      final newList = await ListApiService.instance.duplicateList(id);
+      state = [...state, newList];
+      await loadLists();
+    } catch (e) {
+      // Handle error
+    }
   }
 
   // ── Delete list ──────────────────────────────────────────────
-  void deleteList(String id) {
-    state = state.where((l) => l.id != id).toList();
+  Future<void> deleteList(String id) async {
+    try {
+      await ListApiService.instance.deleteList(id);
+      state = state.where((l) => l.id != id).toList();
+    } catch (e) {
+      // Handle error
+    }
   }
 }
 
