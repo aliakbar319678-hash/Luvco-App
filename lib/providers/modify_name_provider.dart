@@ -58,6 +58,6 @@ class ModifyNameNotifier extends StateNotifier<ModifyNameState> {
 }
 
 final modifyNameProvider =
-    StateNotifierProvider<ModifyNameNotifier, ModifyNameState>((ref) {
+    StateNotifierProvider.autoDispose<ModifyNameNotifier, ModifyNameState>((ref) {
   return ModifyNameNotifier(ref);
 });

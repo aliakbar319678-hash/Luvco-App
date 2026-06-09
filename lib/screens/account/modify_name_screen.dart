@@ -181,7 +181,7 @@ class _ModifyNameScreenState extends ConsumerState<ModifyNameScreen> {
                 padding: EdgeInsets.symmetric(horizontal: size.width * 0.058),
                 child: _SaveChangesButton(
                   state: state,
-                  enabled: _firstNameCtrl.text.trim().isNotEmpty,
+                  enabled: _firstNameCtrl.text.trim().isNotEmpty && _lastNameCtrl.text.trim().isNotEmpty,
                   scale: scale,
                   size: size,
                   onTap: () => notifier.saveChanges(

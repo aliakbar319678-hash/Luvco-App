@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/recipe_model.dart';
 import '../core/network/recipe_api_service.dart';
@@ -65,7 +66,7 @@ class MyRecipesNotifier extends StateNotifier<List<RecipeModel>> {
       final list = await RecipeApiService.instance.getRecipes('my-recipes');
       state = list;
     } catch (e) {
-      // Failed to load recipes silently or handle error appropriately
+      debugPrint("MyRecipesNotifier.loadRecipes Error: $e");
     }
   }
 
@@ -139,7 +140,7 @@ class SavedRecipesNotifier extends StateNotifier<List<RecipeModel>> {
       final list = await RecipeApiService.instance.getRecipes('saved');
       state = list;
     } catch (e) {
-      // Handle error
+      debugPrint("SavedRecipesNotifier.loadRecipes Error: $e");
     }
   }
 
