@@ -38,9 +38,9 @@ class SearchProductNotifier extends StateNotifier<SearchProductState> {
 
     try {
       final products = await ProductApiService.instance.searchProducts(query);
-      state = state.copyWith(results: products);
+      state = state.copyWith(results: products, isSearching: false);
     } catch (e) {
-      // Fail silently
+      state = state.copyWith(isSearching: false);
     }
   }
 

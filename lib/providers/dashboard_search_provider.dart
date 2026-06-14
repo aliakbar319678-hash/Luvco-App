@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/product_model.dart';
+import 'favorites_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // Filter state
@@ -150,20 +151,33 @@ final _catalogue = [
 // Notifier
 // ─────────────────────────────────────────────────────────────────
 class DashboardSearchNotifier extends StateNotifier<DashboardSearchState> {
-  DashboardSearchNotifier() : super(const DashboardSearchState());
+  final Ref _ref;
+
+  DashboardSearchNotifier(this._ref) : super(const DashboardSearchState());
 
   void onSearchChanged(String query) {
     if (query.trim().isEmpty) {
       state = state.copyWith(query: '', isSearching: false, results: []);
       return;
     }
+    
+    final favorites = _ref.read(favoritesProvider).items;
     final results = _catalogue
         .where((r) => r.product.name.toLowerCase().contains(query.toLowerCase()))
+        .map((r) {
+          final isFav = favorites.any((i) => i.barcode == r.product.id);
+          return DashboardSearchResult(
+            product: r.product,
+            badges: r.badges,
+            isFavorite: isFav,
+          );
+        })
         .toList();
+        
     state = state.copyWith(
       query: query,
       isSearching: true,
-      results: results.isEmpty ? _catalogue : results,
+      results: results,
     );
   }
 
@@ -171,18 +185,37 @@ class DashboardSearchNotifier extends StateNotifier<DashboardSearchState> {
     state = state.copyWith(query: '', isSearching: false, results: []);
   }
 
-  void toggleFavorite(String productId) {
-    final updated = state.results.map((r) {
-      if (r.product.id == productId) {
-        return DashboardSearchResult(
-          product: r.product,
-          badges: r.badges,
-          isFavorite: !r.isFavorite,
+  Future<void> toggleFavorite(String productId) async {
+    final favorites = _ref.read(favoritesProvider).items;
+    final isFav = favorites.any((i) => i.barcode == productId);
+    
+    final result = state.results.firstWhere((r) => r.product.id == productId);
+
+    try {
+      if (isFav) {
+        await _ref.read(favoritesProvider.notifier).removeItem(productId);
+      } else {
+        await _ref.read(favoritesProvider.notifier).addFavorite(
+          barcode: productId,
+          productName: result.product.name,
+          productImageUrl: result.product.thumbnailAsset,
         );
       }
-      return r;
-    }).toList();
-    state = state.copyWith(results: updated);
+      
+      final updated = state.results.map((r) {
+        if (r.product.id == productId) {
+          return DashboardSearchResult(
+            product: r.product,
+            badges: r.badges,
+            isFavorite: !isFav,
+          );
+        }
+        return r;
+      }).toList();
+      state = state.copyWith(results: updated);
+    } catch (_) {
+      // Ignore error
+    }
   }
 
   void updateFilter(DashboardSearchFilter filter) {
@@ -194,5 +227,5 @@ class DashboardSearchNotifier extends StateNotifier<DashboardSearchState> {
 
 final dashboardSearchProvider = StateNotifierProvider.autoDispose<
     DashboardSearchNotifier, DashboardSearchState>(
-  (_) => DashboardSearchNotifier(),
+  (ref) => DashboardSearchNotifier(ref),
 );

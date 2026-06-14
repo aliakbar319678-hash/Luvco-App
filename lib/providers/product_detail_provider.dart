@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/product_model.dart';
+import 'favorites_provider.dart';
 
 // ─────────────────────────────────────────────────
 // More Actions popup state
@@ -60,11 +61,36 @@ class ProductDetailState {
 // Notifier
 // ─────────────────────────────────────────────────
 class ProductDetailNotifier extends StateNotifier<ProductDetailState> {
-  ProductDetailNotifier(ProductModel product)
-    : super(ProductDetailState(product: product));
+  final Ref _ref;
 
-  void toggleFavorite() =>
-      state = state.copyWith(isFavorite: !state.isFavorite);
+  ProductDetailNotifier(ProductModel product, this._ref)
+    : super(ProductDetailState(
+        product: product,
+        isFavorite: _ref.read(favoritesProvider).items.any((i) => i.barcode == product.id),
+      ));
+
+  Future<void> toggleFavorite() async {
+    final barcode = state.product.id;
+    final isFav = state.isFavorite;
+    
+    // Optimistic UI state toggle
+    state = state.copyWith(isFavorite: !isFav);
+
+    try {
+      if (isFav) {
+        await _ref.read(favoritesProvider.notifier).removeItem(barcode);
+      } else {
+        await _ref.read(favoritesProvider.notifier).addFavorite(
+          barcode: barcode,
+          productName: state.product.name,
+          productImageUrl: state.product.thumbnailAsset,
+        );
+      }
+    } catch (e) {
+      // Rollback on failure
+      state = state.copyWith(isFavorite: isFav);
+    }
+  }
 
   void showMoreActions() =>
       state = state.copyWith(popup: ProductDetailPopup.moreActions);
@@ -101,7 +127,7 @@ class ProductDetailNotifier extends StateNotifier<ProductDetailState> {
 // Family provider — one notifier per product
 final productDetailProvider = StateNotifierProvider.autoDispose
     .family<ProductDetailNotifier, ProductDetailState, ProductModel>(
-      (_, product) => ProductDetailNotifier(product),
+      (ref, product) => ProductDetailNotifier(product, ref),
     );
 
 // ─────────────────────────────────────────────────

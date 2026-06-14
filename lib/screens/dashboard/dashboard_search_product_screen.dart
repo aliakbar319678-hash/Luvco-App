@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../providers/dashboard_search_provider.dart';
+import '../../providers/favorites_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
 
 // ─────────────────────────────────────────────────────────────────
@@ -785,9 +786,9 @@ class _MenuRow extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Product Detail Bottom Sheet (2.0.3)
+// Product Detail Bottom Sheet (2.0.4)
 // ─────────────────────────────────────────────────────────────────
-class _ProductDetailSheet extends StatefulWidget {
+class _ProductDetailSheet extends ConsumerStatefulWidget {
   final DashboardSearchResult result;
   final double scale;
   final List<String> shoppingLists;
@@ -801,12 +802,10 @@ class _ProductDetailSheet extends StatefulWidget {
   });
 
   @override
-  State<_ProductDetailSheet> createState() => _ProductDetailSheetState();
+  ConsumerState<_ProductDetailSheet> createState() => _ProductDetailSheetState();
 }
 
-class _ProductDetailSheetState extends State<_ProductDetailSheet> {
-  bool _isFav = false;
-
+class _ProductDetailSheetState extends ConsumerState<_ProductDetailSheet> {
   Color _ecoColor(String label) => Color(ecoColorFor(label));
 
   void _showAddToList() {
@@ -837,6 +836,7 @@ class _ProductDetailSheetState extends State<_ProductDetailSheet> {
     final eco = widget.result.badges.ecoLabel;
     final safe = widget.result.badges.safetyLabel;
     final product = widget.result.product;
+    final isFav = ref.watch(favoritesProvider).items.any((i) => i.barcode == product.id);
 
     return DraggableScrollableSheet(
       initialChildSize: 0.88,
@@ -980,14 +980,25 @@ class _ProductDetailSheetState extends State<_ProductDetailSheet> {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () => setState(() => _isFav = !_isFav),
+                        onTap: () async {
+                          final notifier = ref.read(favoritesProvider.notifier);
+                          if (isFav) {
+                            await notifier.removeItem(product.id);
+                          } else {
+                            await notifier.addFavorite(
+                              barcode: product.id,
+                              productName: product.name,
+                              productImageUrl: product.thumbnailAsset,
+                            );
+                          }
+                        },
                         child: Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: Icon(
-                            _isFav
+                            isFav
                                 ? Icons.favorite_rounded
                                 : Icons.favorite_border_rounded,
-                            color: _isFav
+                            color: isFav
                                 ? AppColors.vibrantPink
                                 : AppColors.neutralGrey,
                             size: 26 * s,

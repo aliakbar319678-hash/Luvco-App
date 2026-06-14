@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
+import '../../models/content_model.dart';
 import '../../providers/help_support_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
 
@@ -12,52 +13,6 @@ import '../../widgets/bottom_nav_bar.dart';
 // ─────────────────────────────────────────────────────────────────
 class HelpSupportScreen extends ConsumerWidget {
   const HelpSupportScreen({super.key});
-
-  // ── Demo content ──────────────────────────────────────────────
-  static const _policyTitle = '1. Duis maximus enim ut massa bibendum dignissim.';
-  static const _policyBody =
-      'In malesuada convallis leo. Maecenas ut malesuada risus, '
-      'ut fermentum erat. Ut porta neque in mauris auctor pretium. '
-      'Duis lacinia eros non velit blandit, at venenatis quam varius. '
-      'Praesent sit amet arcu ac ipsum vestibulum ornare. Proin in '
-      'eleifend massa. Duis tempor urna rhoncus orci vestibulum rutrum. '
-      'Nullam rhoncus, lectus eu rhoncus auctor, nisi ipsum luctus nisl, '
-      'nec mollis libero justo id nibh.\n\n'
-      'Aenean non tincidunt ligula. Sed consequat sodales dui, id commodo '
-      'lectus. Nam enim ipsum, ultrices vel bibendum vel, pretium in augue. '
-      'Fusce imperdiet est rutrum ante consectetur ullamcorper. Fusce '
-      'imperdiet aliquet nunc, vel facilisis odio ornare a. Donec est tellus, '
-      'bibendum ut mollis a, molestie ut magna.\n\n'
-      'Suspendisse at efficitur diam. Vivamus sit amet suscipit lacus, ac '
-      'consectetur arcu. In venenatis augue diam, quis convallis lacus iaculis at.';
-
-  static const _termsTitle = '1. Duis maximus enim ut massa bibendum dignissim.';
-  static const _termsBody =
-      'In malesuada convallis leo. Maecenas ut malesuada risus, '
-      'ut fermentum erat. Ut porta neque in mauris auctor pretium. '
-      'Duis lacinia eros non velit blandit, at venenatis quam varius. '
-      'Praesent sit amet arcu ac ipsum vestibulum ornare. Proin in '
-      'eleifend massa. Duis tempor urna rhoncus orci vestibulum rutrum. '
-      'Nullam rhoncus, lectus eu rhoncus auctor, nisi ipsum luctus nisl, '
-      'nec mollis libero justo id nibh.\n\n'
-      'Aenean non tincidunt ligula. Sed consequat sodales dui, id commodo '
-      'lectus. Nam enim ipsum, ultrices vel bibendum vel, pretium in augue. '
-      'Fusce imperdiet est rutrum ante consectetur ullamcorper.';
-
-  static const _faqItems = [
-    _FaqItem(
-      question: '1. How do you...?',
-      answer:
-          'In malesuada convallis leo. Maecenas ut malesuada risus, ut '
-          'fermentum erat. Ut porta neque in mauris auctor pretium.',
-    ),
-    _FaqItem(
-      question: '2. How do you...?',
-      answer:
-          'Praesent sit amet arcu ac ipsum vestibulum ornare. Proin in '
-          'eleifend massa. Duis tempor urna rhoncus orci vestibulum rutrum.',
-    ),
-  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -80,71 +35,117 @@ class HelpSupportScreen extends ConsumerWidget {
 
             // ── Scrollable body ──────────────────────────────────
             Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.symmetric(
-                  horizontal: size.width * 0.058,
-                  vertical: 20,
-                ),
-                child: Column(
-                  children: [
-                    // ── Privacy Policy ──────────────────────────
-                    _SectionCard(
-                      icon: Icons.shield_outlined,
-                      title: 'Privacy Policy',
-                      isExpanded:
-                          state.expandedSection == HelpSection.privacyPolicy,
-                      onToggle: () =>
-                          notifier.toggleSection(HelpSection.privacyPolicy),
-                      expandedContent: _PolicyContent(
-                        title: _policyTitle,
-                        body: _policyBody,
-                        scale: scale,
+              child: state.isLoading && state.faqs.isEmpty
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.vibrantPink),
                       ),
-                      scale: scale,
-                    ),
+                    )
+                  : state.errorMessage != null && state.faqs.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.cloud_off_rounded,
+                                  size: 48,
+                                  color: AppColors.vibrantPink,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  state.errorMessage!,
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14 * scale.clamp(0.85, 1.2),
+                                    color: AppColors.darkGrey,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: () => notifier.loadContent(),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.vibrantPink,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Retry',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: size.width * 0.058,
+                            vertical: 20,
+                          ),
+                          child: Column(
+                            children: [
+                              // ── Privacy Policy ──────────────────────────
+                              _SectionCard(
+                                icon: Icons.shield_outlined,
+                                title: 'Privacy Policy',
+                                isExpanded:
+                                    state.expandedSection == HelpSection.privacyPolicy,
+                                onToggle: () =>
+                                    notifier.toggleSection(HelpSection.privacyPolicy),
+                                expandedContent: _PolicyContent(
+                                  doc: state.privacyDoc,
+                                  scale: scale,
+                                ),
+                                scale: scale,
+                              ),
 
-                    const SizedBox(height: 12),
+                              const SizedBox(height: 12),
 
-                    // ── Terms & Conditions ──────────────────────
-                    _SectionCard(
-                      icon: Icons.description_outlined,
-                      title: 'Terms & Conditions',
-                      isExpanded:
-                          state.expandedSection ==
-                          HelpSection.termsAndConditions,
-                      onToggle: () => notifier.toggleSection(
-                        HelpSection.termsAndConditions,
-                      ),
-                      expandedContent: _PolicyContent(
-                        title: _termsTitle,
-                        body: _termsBody,
-                        scale: scale,
-                      ),
-                      scale: scale,
-                    ),
+                              // ── Terms & Conditions ──────────────────────
+                              _SectionCard(
+                                icon: Icons.description_outlined,
+                                title: 'Terms & Conditions',
+                                isExpanded:
+                                    state.expandedSection ==
+                                    HelpSection.termsAndConditions,
+                                onToggle: () => notifier.toggleSection(
+                                  HelpSection.termsAndConditions,
+                                ),
+                                expandedContent: _PolicyContent(
+                                  doc: state.termsDoc,
+                                  scale: scale,
+                                ),
+                                scale: scale,
+                              ),
 
-                    const SizedBox(height: 12),
+                              const SizedBox(height: 12),
 
-                    // ── FAQ's ───────────────────────────────────
-                    _SectionCard(
-                      icon: Icons.chat_outlined,
-                      title: "FAQ's",
-                      isExpanded: state.expandedSection == HelpSection.faqs,
-                      onToggle: () => notifier.toggleSection(HelpSection.faqs),
-                      expandedContent: _FaqContent(
-                        items: _faqItems,
-                        expandedIndex: state.expandedFaqIndex,
-                        onToggleFaq: notifier.toggleFaq,
-                        scale: scale,
-                      ),
-                      scale: scale,
-                    ),
+                              // ── FAQ's ───────────────────────────────────
+                              _SectionCard(
+                                icon: Icons.chat_outlined,
+                                title: "FAQ's",
+                                isExpanded: state.expandedSection == HelpSection.faqs,
+                                onToggle: () => notifier.toggleSection(HelpSection.faqs),
+                                expandedContent: _FaqContent(
+                                  items: state.faqs,
+                                  expandedIndex: state.expandedFaqIndex,
+                                  onToggleFaq: notifier.toggleFaq,
+                                  scale: scale,
+                                ),
+                                scale: scale,
+                              ),
 
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
+                              const SizedBox(height: 24),
+                            ],
+                          ),
+                        ),
             ),
 
             const LuvcoBottomNavBar(),
@@ -344,42 +345,76 @@ class _SectionCard extends StatelessWidget {
 // Matches frames 1.6.20 & 1.6.21
 // ─────────────────────────────────────────────────────────────────
 class _PolicyContent extends StatelessWidget {
-  final String title;
-  final String body;
+  final ContentDoc? doc;
   final double scale;
 
   const _PolicyContent({
-    required this.title,
-    required this.body,
+    required this.doc,
     required this.scale,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (doc == null) {
+      return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Center(
+          child: Text(
+            'No content available.',
+            style: GoogleFonts.inter(
+              fontSize: 13 * scale.clamp(0.85, 1.2),
+              color: AppColors.neutralGrey,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
-      child: RichText(
-        text: TextSpan(
-          style: GoogleFonts.inter(
-            fontSize: 13 * scale.clamp(0.85, 1.2),
-            height: 1.6,
-          ),
-          children: [
-            TextSpan(
-              text: '$title\n\n',
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                color: AppColors.black,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (doc!.effectiveDate.isNotEmpty) ...[
+            Text(
+              'Effective Date: ${doc!.effectiveDate}',
+              style: GoogleFonts.inter(
+                fontSize: 12 * scale.clamp(0.85, 1.2),
+                fontWeight: FontWeight.w600,
+                color: AppColors.neutralGrey,
               ),
             ),
-            TextSpan(
-              text: body,
-              style: const TextStyle(
-                color: AppColors.darkGrey,
-              ),
-            ),
+            const SizedBox(height: 12),
           ],
-        ),
+          ...doc!.sections.map((section) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: RichText(
+                text: TextSpan(
+                  style: GoogleFonts.inter(
+                    fontSize: 13 * scale.clamp(0.85, 1.2),
+                    height: 1.6,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: '${section.heading}\n',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.black,
+                      ),
+                    ),
+                    TextSpan(
+                      text: section.content,
+                      style: const TextStyle(
+                        color: AppColors.darkGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
@@ -392,7 +427,7 @@ class _PolicyContent extends StatelessWidget {
 // Answer visible under expanded item
 // ─────────────────────────────────────────────────────────────────
 class _FaqContent extends StatelessWidget {
-  final List<_FaqItem> items;
+  final List<FaqItem> items;
   final int? expandedIndex;
   final ValueChanged<int> onToggleFaq;
   final double scale;
@@ -406,6 +441,21 @@ class _FaqContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Center(
+          child: Text(
+            'No FAQs available.',
+            style: GoogleFonts.inter(
+              fontSize: 13 * scale.clamp(0.85, 1.2),
+              color: AppColors.neutralGrey,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
@@ -509,14 +559,4 @@ class _FaqContent extends StatelessWidget {
       ),
     );
   }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// FAQ data model
-// ─────────────────────────────────────────────────────────────────
-class _FaqItem {
-  final String question;
-  final String answer;
-
-  const _FaqItem({required this.question, required this.answer});
 }

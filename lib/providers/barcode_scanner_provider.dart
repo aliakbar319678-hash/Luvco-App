@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/product_model.dart';
+import 'favorites_provider.dart';
 
 // ─────────────────────────────────────────────────
 // Scanner UI states
@@ -80,7 +81,9 @@ const _demoScannedProduct = ProductModel(
 // Notifier
 // ─────────────────────────────────────────────────
 class BarcodeScannerNotifier extends StateNotifier<BarcodeScannerState> {
-  BarcodeScannerNotifier() : super(const BarcodeScannerState());
+  final Ref _ref;
+
+  BarcodeScannerNotifier(this._ref) : super(const BarcodeScannerState());
 
   void allowCamera() =>
       state = state.copyWith(scanState: BarcodeScanState.scanning);
@@ -97,9 +100,13 @@ class BarcodeScannerNotifier extends StateNotifier<BarcodeScannerState> {
       state = state.copyWith(scanState: BarcodeScanState.notFound);
       return;
     }
+
+    final isFav = _ref.read(favoritesProvider).items.any((i) => i.barcode == barcode);
+
     state = state.copyWith(
       scanState: BarcodeScanState.cardOpen,
       scannedProduct: _demoScannedProduct,
+      isFavorite: isFav,
     );
   }
 
@@ -120,8 +127,31 @@ class BarcodeScannerNotifier extends StateNotifier<BarcodeScannerState> {
     clearProduct: true,
   );
 
-  void toggleFavorite() =>
-      state = state.copyWith(isFavorite: !state.isFavorite);
+  Future<void> toggleFavorite() async {
+    final product = state.scannedProduct;
+    if (product == null) return;
+
+    final barcode = product.id;
+    final isFav = state.isFavorite;
+
+    // Optimistic UI state toggle
+    state = state.copyWith(isFavorite: !isFav);
+
+    try {
+      if (isFav) {
+        await _ref.read(favoritesProvider.notifier).removeItem(barcode);
+      } else {
+        await _ref.read(favoritesProvider.notifier).addFavorite(
+          barcode: barcode,
+          productName: product.name,
+          productImageUrl: product.thumbnailAsset,
+        );
+      }
+    } catch (e) {
+      // Rollback on failure
+      state = state.copyWith(isFavorite: isFav);
+    }
+  }
 
   void openAddToList() =>
       state = state.copyWith(scanState: BarcodeScanState.addToList);
@@ -164,4 +194,4 @@ final barcodeScannerProvider =
     StateNotifierProvider.autoDispose<
       BarcodeScannerNotifier,
       BarcodeScannerState
-    >((_) => BarcodeScannerNotifier());
+    >((ref) => BarcodeScannerNotifier(ref));

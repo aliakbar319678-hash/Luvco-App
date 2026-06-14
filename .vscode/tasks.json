@@ -1,0 +1,39 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "adb-reverse",
+      "type": "shell",
+      "command": "adb reverse tcp:3000 tcp:3000",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "run-backend",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/../Luvco-App-backend/luvco-backend"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "pattern": {
+          "regexp": "^.*$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*$",
+          "endsPattern": "Server is running on port|connected to database"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    }
+  ]
+}

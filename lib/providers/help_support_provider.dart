@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/network/content_api_service.dart';
+import '../models/content_model.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // Which top-level section is expanded: null = all collapsed
@@ -8,14 +10,33 @@ enum HelpSection { privacyPolicy, termsAndConditions, faqs }
 class HelpSupportState {
   final HelpSection? expandedSection; // null = all collapsed
   final int? expandedFaqIndex; // which FAQ item is open
+  final List<FaqItem> faqs;
+  final ContentDoc? privacyDoc;
+  final ContentDoc? termsDoc;
+  final bool isLoading;
+  final String? errorMessage;
 
-  const HelpSupportState({this.expandedSection, this.expandedFaqIndex});
+  const HelpSupportState({
+    this.expandedSection,
+    this.expandedFaqIndex,
+    this.faqs = const [],
+    this.privacyDoc,
+    this.termsDoc,
+    this.isLoading = false,
+    this.errorMessage,
+  });
 
   HelpSupportState copyWith({
     HelpSection? expandedSection,
     bool clearSection = false,
     int? expandedFaqIndex,
     bool clearFaq = false,
+    List<FaqItem>? faqs,
+    ContentDoc? privacyDoc,
+    ContentDoc? termsDoc,
+    bool? isLoading,
+    String? errorMessage,
+    bool clearError = false,
   }) => HelpSupportState(
     expandedSection: clearSection
         ? null
@@ -23,22 +44,51 @@ class HelpSupportState {
     expandedFaqIndex: clearFaq
         ? null 
         : (expandedFaqIndex ?? this.expandedFaqIndex),
+    faqs: faqs ?? this.faqs,
+    privacyDoc: privacyDoc ?? this.privacyDoc,
+    termsDoc: termsDoc ?? this.termsDoc,
+    isLoading: isLoading ?? this.isLoading,
+    errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
   );
 }
 
 class HelpSupportNotifier extends StateNotifier<HelpSupportState> {
-  HelpSupportNotifier() : super(const HelpSupportState());
+  HelpSupportNotifier() : super(const HelpSupportState()) {
+    loadContent();
+  }
+
+  /// Fetches FAQs, Privacy Policy, and Terms of Service from backend content API.
+  Future<void> loadContent() async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final faqs = await ContentApiService.instance.getFAQs();
+      final privacyDoc = await ContentApiService.instance.getPrivacyPolicy();
+      final termsDoc = await ContentApiService.instance.getTermsOfService();
+
+      state = state.copyWith(
+        faqs: faqs,
+        privacyDoc: privacyDoc,
+        termsDoc: termsDoc,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
+  }
 
   // Tap a top-level section — toggle open/closed
   void toggleSection(HelpSection section) {
     if (state.expandedSection == section) {
       // Already open — close it
-      state = const HelpSupportState();
+      state = state.copyWith(clearSection: true);
     } else {
       // Open new section, reset FAQ index
-      state = HelpSupportState(
+      state = state.copyWith(
         expandedSection: section,
-        expandedFaqIndex: null,
+        clearFaq: true,
       );
     }
   }
@@ -57,3 +107,4 @@ final helpSupportProvider =
     StateNotifierProvider.autoDispose<HelpSupportNotifier, HelpSupportState>(
       (_) => HelpSupportNotifier(),
     );
+

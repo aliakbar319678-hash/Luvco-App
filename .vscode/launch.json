@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Luvco App",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "adb-reverse"
+    },
+    {
+      "name": "Launch Backend",
+      "request": "launch",
+      "type": "node",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "${workspaceFolder}/../Luvco-App-backend/luvco-backend",
+      "console": "integratedTerminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Run App + Backend",
+      "configurations": ["Launch Backend", "Luvco App"],
+      "stopAll": true
+    }
+  ]
+}
