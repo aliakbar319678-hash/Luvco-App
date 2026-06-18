@@ -29,6 +29,7 @@ class NewShoppingListScreen extends ConsumerWidget {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.pureWhite,
         body: Stack(
           children: [
@@ -139,7 +140,17 @@ class NewShoppingListScreen extends ConsumerWidget {
                         else
                           _EmptyProductState(scale: scale, size: size),
 
-                        const SizedBox(height: 120),
+                        const SizedBox(height: 40),
+
+                        // ── "Create Shopping List" button at the bottom of the scroll view ──
+                        _CreateListButton(
+                          state: state,
+                          scale: scale,
+                          size: size,
+                          onTap: () => _handleCreateList(context, ref, notifier),
+                        ),
+
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
@@ -150,19 +161,6 @@ class NewShoppingListScreen extends ConsumerWidget {
               ],
             ),
 
-            // ── "Create Shopping List" sticky button ────────────
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 106 * scale, // sits just above bottom nav
-              child: _CreateListButton(
-                state: state,
-                scale: scale,
-                size: size,
-                onTap: () => _handleCreateList(context, ref, notifier),
-              ),
-            ),
-
             // ── List created success overlay ──────────────────
             if (state.listCreated)
               Positioned.fill(
@@ -170,8 +168,10 @@ class NewShoppingListScreen extends ConsumerWidget {
                   scale: scale,
                   size: size,
                   onDone: () {
-                    notifier.dismissSuccess();
-                    Navigator.of(context).pop();
+                    if (context.mounted) {
+                      notifier.dismissSuccess();
+                      Navigator.of(context).pop();
+                    }
                   },
                 ),
               ),
@@ -864,43 +864,40 @@ class _CreateListButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final enabled = state.canCreate && !state.isCreating;
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: size.width * 0.058),
-      child: SizedBox(
-        width: double.infinity,
-        height: (size.height * 0.062).clamp(48.0, 58.0),
-        child: ElevatedButton(
-          onPressed: enabled ? onTap : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: enabled
-                ? AppColors.royalPurple
-                : AppColors.faintPink,
-            disabledBackgroundColor: AppColors.faintPink,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(50),
-            ),
+    return SizedBox(
+      width: double.infinity,
+      height: (size.height * 0.062).clamp(48.0, 58.0),
+      child: ElevatedButton(
+        onPressed: enabled ? onTap : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: enabled
+              ? AppColors.royalPurple
+              : AppColors.faintPink,
+          disabledBackgroundColor: AppColors.faintPink,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(50),
           ),
-          child: state.isCreating
-              ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2.5,
-                  ),
-                )
-              : Text(
-                  'Create Shopping List',
-                  style: GoogleFonts.inter(
-                    fontSize: 16 * scale.clamp(0.85, 1.3),
-                    fontWeight: FontWeight.w600,
-                    color: enabled
-                        ? AppColors.pureWhite
-                        : AppColors.lightRoyalPurple,
-                  ),
-                ),
         ),
+        child: state.isCreating
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : Text(
+                'Create Shopping List',
+                style: GoogleFonts.inter(
+                  fontSize: 16 * scale.clamp(0.85, 1.3),
+                  fontWeight: FontWeight.w600,
+                  color: enabled
+                      ? AppColors.pureWhite
+                      : AppColors.lightRoyalPurple,
+                ),
+              ),
       ),
     );
   }
@@ -923,7 +920,9 @@ class _ListCreatedOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Auto-navigate after 2 seconds
-    Future.delayed(const Duration(seconds: 2), onDone);
+    Future.delayed(const Duration(seconds: 2), () {
+      if (context.mounted) onDone();
+    });
 
     return GestureDetector(
       onTap: onDone,

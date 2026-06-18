@@ -80,7 +80,9 @@ class NewShoppingListNotifier extends StateNotifier<NewShoppingListState> {
     
     try {
       final results = await ProductApiService.instance.searchProducts(query);
-      state = state.copyWith(searchResults: results);
+      if (mounted) {
+        state = state.copyWith(searchResults: results);
+      }
     } catch (e) {
       // Fail silently or keep current results
     }
@@ -131,11 +133,17 @@ class NewShoppingListNotifier extends StateNotifier<NewShoppingListState> {
       }
       
       // 3. Refresh list on main lists screen
-      await _ref.read(shoppingListProvider.notifier).loadLists();
+      if (mounted) {
+        await _ref.read(shoppingListProvider.notifier).loadLists();
+      }
       
-      state = state.copyWith(isCreating: false, listCreated: true);
+      if (mounted) {
+        state = state.copyWith(isCreating: false, listCreated: true);
+      }
     } catch (e) {
-      state = state.copyWith(isCreating: false);
+      if (mounted) {
+        state = state.copyWith(isCreating: false);
+      }
       // Fail silently or handle error appropriately
     }
   }

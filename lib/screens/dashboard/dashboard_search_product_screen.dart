@@ -58,6 +58,7 @@ class _DashboardSearchProductScreenState
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.pageBackground,
         body: Column(
           children: [

@@ -154,13 +154,25 @@ class SignupScreen extends ConsumerWidget {
                         ref.read(signupPasswordProvider.notifier).state = v;
                         clearIfError();
                         // Start typing detection
-                        ref.read(signupPasswordTypingProvider.notifier).state = true;
+                        ref.read(signupPasswordTypingProvider.notifier).state =
+                            true;
                         // Cancel previous timer if any
-                        ref.read(signupPasswordTypingTimerProvider.notifier).state?.cancel();
+                        ref
+                            .read(signupPasswordTypingTimerProvider.notifier)
+                            .state
+                            ?.cancel();
                         // Start new debounce timer (800ms)
-                        ref.read(signupPasswordTypingTimerProvider.notifier).state = Timer(const Duration(milliseconds: 800), () {
-                          ref.read(signupPasswordTypingProvider.notifier).state = false;
-                        });
+                        ref
+                            .read(signupPasswordTypingTimerProvider.notifier)
+                            .state = Timer(
+                          const Duration(milliseconds: 800),
+                          () {
+                            ref
+                                    .read(signupPasswordTypingProvider.notifier)
+                                    .state =
+                                false;
+                          },
+                        );
                       },
                       suffixIcon: GestureDetector(
                         onTap: () =>
@@ -176,7 +188,9 @@ class SignupScreen extends ConsumerWidget {
                               : Icons.visibility_outlined,
                           color: passwordHasError
                               ? AppColors.errorRed
-                              : (ref.watch(signupPasswordTypingProvider) ? Colors.black : AppColors.neutralGrey),
+                              : (ref.watch(signupPasswordTypingProvider)
+                                    ? Colors.black
+                                    : AppColors.neutralGrey),
                           size: 20,
                         ),
                       ),
@@ -277,11 +291,7 @@ class _PasswordHintRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          Icons.info_outline_rounded,
-          size: 14,
-          color: color,
-        ),
+        Icon(Icons.info_outline_rounded, size: 14, color: color),
         const SizedBox(width: 5),
         Expanded(
           child: Text(

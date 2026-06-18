@@ -26,5 +26,5 @@ class UserProfileNotifier extends StateNotifier<AsyncValue<UserModel>> {
 
 final userProfileProvider =
     StateNotifierProvider<UserProfileNotifier, AsyncValue<UserModel>>((ref) {
-  return UserProfileNotifier();
-});
+      return UserProfileNotifier();
+    });

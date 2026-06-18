@@ -80,7 +80,7 @@ class MyRecipesNotifier extends StateNotifier<List<RecipeModel>> {
       final currentUserId = _ref.read(userProfileProvider).value?.id ?? '';
       final detail = await RecipeApiService.instance.getRecipe(id, currentUserId);
       final payload = {
-        'title': '${detail.title} (Copy)',
+        'title': detail.title,
         'description': detail.description,
         'coverImageUrl': detail.imageUrl,
         'servings': detail.servings,

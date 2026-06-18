@@ -88,7 +88,9 @@ class ProductDetailNotifier extends StateNotifier<ProductDetailState> {
       }
     } catch (e) {
       // Rollback on failure
-      state = state.copyWith(isFavorite: isFav);
+      if (mounted) {
+        state = state.copyWith(isFavorite: isFav);
+      }
     }
   }
 

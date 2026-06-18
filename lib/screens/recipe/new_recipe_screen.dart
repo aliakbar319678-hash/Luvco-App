@@ -33,6 +33,7 @@ class NewRecipeScreen extends ConsumerWidget {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.pageBackground,
         body: AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),

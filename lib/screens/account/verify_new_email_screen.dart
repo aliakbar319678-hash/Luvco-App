@@ -76,6 +76,7 @@ class _VerifyNewEmailScreenState extends ConsumerState<VerifyNewEmailScreen> {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.pageBackground,
         body: Stack(
           children: [
@@ -222,11 +223,13 @@ class _VerifyNewEmailScreenState extends ConsumerState<VerifyNewEmailScreen> {
                 scale: scale,
                 size: size,
                 onDismiss: () {
-                  ref.read(verifyEmailProvider.notifier).reset();
-                  // Pop both screens → back to account settings
-                  Navigator.of(context)
-                    ..pop()
-                    ..pop();
+                  if (context.mounted) {
+                    ref.read(verifyEmailProvider.notifier).reset();
+                    // Pop both screens → back to account settings
+                    Navigator.of(context)
+                      ..pop()
+                      ..pop();
+                  }
                 },
               ),
           ],
@@ -519,7 +522,9 @@ class _EmailChangedOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Future.delayed(const Duration(seconds: 2), onDismiss);
+    Future.delayed(const Duration(seconds: 2), () {
+      if (context.mounted) onDismiss();
+    });
 
     return Positioned.fill(
       child: GestureDetector(

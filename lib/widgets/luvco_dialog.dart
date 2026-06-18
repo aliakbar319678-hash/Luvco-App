@@ -202,57 +202,65 @@ class LuvcoDeleteConfirmDialog extends StatelessWidget {
       backgroundColor: AppColors.pureWhite,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       insetPadding: EdgeInsets.symmetric(horizontal: size.width * 0.08),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Question
-            Text(
-              'Do you want to delete "$listName"?',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 16 * scale.clamp(0.85, 1.2),
-                fontWeight: FontWeight.w700,
-                color: AppColors.black,
-                height: 1.35,
-              ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Question
+                Text(
+                  'Do you want to delete "$listName"?',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 16 * scale.clamp(0.85, 1.2),
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.black,
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Lorem ipsum dolor sit amet,\nconsectetur adipiscing elit.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 13 * scale.clamp(0.85, 1.2),
+                    color: AppColors.darkGrey,
+                    height: 1.45,
+                  ),
+                ),
+              ],
             ),
+          ),
 
-            const SizedBox(height: 10),
+          // Horizontal Divider
+          const Divider(height: 1, thickness: 1, color: AppColors.clearGrey),
 
-            Text(
-              'Lorem ipsum dolor sit amet,\nconsectetur adipiscing elit.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 13 * scale.clamp(0.85, 1.2),
-                color: AppColors.darkGrey,
-                height: 1.45,
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Cancel / Delete row
-            Row(
+          // Cancel / Delete row
+          IntrinsicHeight(
+            child: Row(
               children: [
                 Expanded(
                   child: GestureDetector(
                     onTap: () => Navigator.of(context).pop(),
                     behavior: HitTestBehavior.opaque,
-                    child: Center(
+                    child: Container(
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       child: Text(
                         'Cancel',
                         style: GoogleFonts.inter(
                           fontSize: 15 * scale.clamp(0.85, 1.2),
                           fontWeight: FontWeight.w600,
-                          color: AppColors.vibrantPink,
+                          color: const Color(0xFF007AFF), // Figma blue text
                         ),
                       ),
                     ),
                   ),
                 ),
-                Container(width: 1, height: 22, color: AppColors.clearGrey),
+                const VerticalDivider(width: 1, thickness: 1, color: AppColors.clearGrey),
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
@@ -260,13 +268,15 @@ class LuvcoDeleteConfirmDialog extends StatelessWidget {
                       onDelete();
                     },
                     behavior: HitTestBehavior.opaque,
-                    child: Center(
+                    child: Container(
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       child: Text(
                         'Delete',
                         style: GoogleFonts.inter(
                           fontSize: 15 * scale.clamp(0.85, 1.2),
                           fontWeight: FontWeight.w600,
-                          color: AppColors.vibrantPink,
+                          color: AppColors.vibrantPink, // Figma red/pink text
                         ),
                       ),
                     ),
@@ -274,8 +284,8 @@ class LuvcoDeleteConfirmDialog extends StatelessWidget {
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -62,6 +62,7 @@ class _ModifyPasswordScreenState extends ConsumerState<ModifyPasswordScreen> {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.pageBackground,
         body: Stack(
           children: [
@@ -230,8 +231,10 @@ class _ModifyPasswordScreenState extends ConsumerState<ModifyPasswordScreen> {
                 scale: scale,
                 size: size,
                 onDismiss: () {
-                  notifier.dismissSuccess();
-                  Navigator.of(context).pop();
+                  if (context.mounted) {
+                    notifier.dismissSuccess();
+                    Navigator.of(context).pop();
+                  }
                 },
               ),
           ],
@@ -563,7 +566,9 @@ class _PasswordChangedOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Future.delayed(const Duration(seconds: 2), onDismiss);
+    Future.delayed(const Duration(seconds: 2), () {
+      if (context.mounted) onDismiss();
+    });
 
     return Positioned.fill(
       child: GestureDetector(

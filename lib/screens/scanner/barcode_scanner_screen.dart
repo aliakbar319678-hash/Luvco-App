@@ -41,6 +41,7 @@ class BarcodeScannerScreen extends ConsumerWidget {
               child: _CameraFeed(
                 blurred:
                     state.scanState == BarcodeScanState.cameraPermission ||
+                    state.scanState == BarcodeScanState.loading ||
                     state.scanState == BarcodeScanState.cardOpen ||
                     state.scanState == BarcodeScanState.addToList ||
                     state.scanState == BarcodeScanState.addToRecipe,
@@ -96,6 +97,14 @@ class BarcodeScannerScreen extends ConsumerWidget {
                 padding: padding,
               ),
 
+            // ── 2.2.x Loading overlay ──
+            if (state.scanState == BarcodeScanState.loading)
+              _LoadingLayer(
+                scale: scale,
+                size: size,
+                padding: padding,
+              ),
+
             // ── 2.2.2 Not found card ──
             if (state.scanState == BarcodeScanState.notFound)
               _NotFoundLayer(
@@ -106,11 +115,12 @@ class BarcodeScannerScreen extends ConsumerWidget {
               ),
 
             // ── 2.2.3 Product card ──
-            if (state.scanState == BarcodeScanState.cardOpen ||
-                state.scanState == BarcodeScanState.addToList ||
-                state.scanState == BarcodeScanState.addToRecipe)
+            if (state.scannedProduct != null &&
+                (state.scanState == BarcodeScanState.cardOpen ||
+                    state.scanState == BarcodeScanState.addToList ||
+                    state.scanState == BarcodeScanState.addToRecipe))
               _ProductCardLayer(
-                product: state.scannedProduct ?? _demoScannedProduct,
+                product: state.scannedProduct!,
                 isFavorite: state.isFavorite,
                 scale: scale,
                 size: size,
@@ -121,8 +131,7 @@ class BarcodeScannerScreen extends ConsumerWidget {
                 onAddToRecipe: notifier.openAddToRecipe,
                 onSeeMore: () {
                   // ── Capture product BEFORE closeCard() resets state ──
-                  final product =
-                      state.scannedProduct ?? _demoScannedProduct;
+                  final product = state.scannedProduct!;
                   context.push('/product-detail', extra: product);
                   notifier.closeCard();
                 },
@@ -672,6 +681,81 @@ class _NotFoundLayer extends StatelessWidget {
                   ),
                 ),
               ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 2.2.x — Loading overlay (shown while fetching product from API)
+// ═══════════════════════════════════════════════════════════════
+class _LoadingLayer extends StatelessWidget {
+  final double scale;
+  final Size size;
+  final EdgeInsets padding;
+
+  const _LoadingLayer({
+    required this.scale,
+    required this.size,
+    required this.padding,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // Dark scrim
+        Positioned.fill(
+          child: Container(color: Colors.black.withValues(alpha: 0.55)),
+        ),
+
+        // Centre spinner card
+        Center(
+          child: Container(
+            width: 140 * scale,
+            padding: EdgeInsets.symmetric(
+              horizontal: 24 * scale,
+              vertical: 28 * scale,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20 * scale),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.14),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 40 * scale,
+                  height: 40 * scale,
+                  child: const CircularProgressIndicator(
+                    strokeWidth: 3,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color(0xFFE91E8C),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16 * scale),
+                Text(
+                  'Fetching\nProduct...',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 13 * scale,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF1A1A2E),
+                    height: 1.5,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -1401,16 +1485,3 @@ class _ListCheckboxDialog extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────
-// Demo product fallback
-// ─────────────────────────────────────────────────
-const _demoScannedProduct = ProductModel(
-  id: 'scan_001',
-  name: 'Name of the Product',
-  description: 'Other data from the product.',
-  imageAsset: 'assets/images/nutila.png',
-  thumbnailAsset: 'assets/images/nutila.png',
-  isSustainable: false,
-  labels: ['Label', 'Label', 'Label', 'Label'],
-  allergens: ['Label', 'Label', 'Label', 'Label'],
-  ingredients: ['Ingredient Name', 'Ingredient Name'],
-);

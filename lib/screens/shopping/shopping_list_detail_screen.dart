@@ -104,11 +104,15 @@ class _DetailTopBar extends StatelessWidget {
     showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (_) => const LuvcoDuplicateSuccessOverlay(),
+      builder: (dialogContext) {
+        Future.delayed(const Duration(seconds: 2), () {
+          if (dialogContext.mounted) {
+            Navigator.of(dialogContext).pop();
+          }
+        });
+        return const LuvcoDuplicateSuccessOverlay();
+      },
     );
-    Future.delayed(const Duration(seconds: 2), () {
-      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-    });
   }
 
   void _showDeleteDialog(BuildContext context) {

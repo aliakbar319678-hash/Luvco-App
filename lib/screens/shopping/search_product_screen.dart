@@ -54,6 +54,7 @@ class _SearchProductScreenState extends ConsumerState<SearchProductScreen> {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.pageBackground,
         body: Column(
           children: [
@@ -385,39 +386,43 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
     showDialog(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.3),
-      builder: (_) => Dialog(
-        backgroundColor: AppColors.pureWhite,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF43A047), width: 3),
+      builder: (dialogContext) {
+        Future.delayed(const Duration(seconds: 2), () {
+          if (dialogContext.mounted) {
+            Navigator.of(dialogContext).pop();
+          }
+        });
+        return Dialog(
+          backgroundColor: AppColors.pureWhite,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFF43A047), width: 3),
+                  ),
+                  child: const Icon(Icons.check_rounded, color: Color(0xFF43A047), size: 40),
                 ),
-                child: const Icon(Icons.check_rounded, color: Color(0xFF43A047), size: 40),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Product added to the list!',
-                style: GoogleFonts.inter(
-                  fontSize: 16 * widget.scale,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.black,
+                const SizedBox(height: 16),
+                Text(
+                  'Product added to the list!',
+                  style: GoogleFonts.inter(
+                    fontSize: 16 * widget.scale,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.black,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) Navigator.of(context).pop();
-    });
   }
 
   void _showConflictDialog() {

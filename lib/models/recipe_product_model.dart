@@ -37,7 +37,8 @@ class RecipeProductModel {
     if (backendSust != null) {
       if (backendSust.toLowerCase().contains('unsustainable')) {
         sustainability = 'Unsustainable';
-      } else if (backendSust.toLowerCase().contains('eco-friendly') || backendSust.toLowerCase().contains('low')) {
+      } else if (backendSust.toLowerCase().contains('eco-friendly') ||
+          backendSust.toLowerCase().contains('low')) {
         sustainability = 'Eco-Friendly';
       }
     }
@@ -46,7 +47,8 @@ class RecipeProductModel {
     String safety = 'Safe';
     final backendSafety = details?['safetyLevel'] as String?;
     if (backendSafety != null) {
-      if (backendSafety.toLowerCase().contains('avoid') || backendSafety.toLowerCase().contains('high')) {
+      if (backendSafety.toLowerCase().contains('avoid') ||
+          backendSafety.toLowerCase().contains('high')) {
         safety = 'Avoid';
       }
     }

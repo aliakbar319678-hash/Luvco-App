@@ -66,6 +66,7 @@ class _ModifyNameScreenState extends ConsumerState<ModifyNameScreen> {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.pageBackground,
         body: Stack(
           children: [
@@ -198,8 +199,10 @@ class _ModifyNameScreenState extends ConsumerState<ModifyNameScreen> {
                 scale: scale,
                 size: size,
                 onDismiss: () {
-                  notifier.dismissSuccess();
-                  Navigator.of(context).pop();
+                  if (context.mounted) {
+                    notifier.dismissSuccess();
+                    Navigator.of(context).pop();
+                  }
                 },
               ),
           ],
@@ -454,7 +457,9 @@ class _NameChangedOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Auto-dismiss after 2 seconds
-    Future.delayed(const Duration(seconds: 2), onDismiss);
+    Future.delayed(const Duration(seconds: 2), () {
+      if (context.mounted) onDismiss();
+    });
 
     return Positioned.fill(
       child: GestureDetector(

@@ -13,7 +13,8 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
@@ -89,7 +90,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       builder: (context, ref, child) {
                         final email = ref.watch(forgotEmailProvider);
                         final isDisabled = email.isEmpty || state.isSuccess;
-                        
+
                         return LuvcoButton(
                           label: 'Reset Password',
                           isLoading: state.isLoading,

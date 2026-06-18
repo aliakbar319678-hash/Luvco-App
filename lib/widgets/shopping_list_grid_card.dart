@@ -59,7 +59,7 @@ class _ShoppingListGridCardState extends State<ShoppingListGridCard> {
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                 child: Container(
                   width: double.infinity,
-                  height: size.width * 0.27,
+                  height: size.width * 0.25,
                   color: AppColors.softGrey,
                   child: widget.list.imageUrl != null
                       ? (widget.list.imageUrl!.startsWith('http')
@@ -114,29 +114,33 @@ class _ShoppingListGridCardState extends State<ShoppingListGridCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    '${widget.list.itemCount} items',
-                    style: GoogleFonts.inter(
-                      fontSize: 10 * scale.clamp(0.85, 1.2),
-                      color: AppColors.royalPurple,
-                      fontWeight: FontWeight.w600,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        widget.list.title,
+                        style: GoogleFonts.inter(
+                          fontSize: 13 * scale.clamp(0.85, 1.2),
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.vibrantPink,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${widget.list.itemCount} items',
+                      style: GoogleFonts.inter(
+                        fontSize: 10 * scale.clamp(0.85, 1.2),
+                        color: AppColors.royalPurple,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  widget.list.title,
-                  style: GoogleFonts.inter(
-                    fontSize: 13 * scale.clamp(0.85, 1.2),
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.vibrantPink,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 4),
                 Text(
                   widget.list.description,
                   style: GoogleFonts.inter(

@@ -22,12 +22,9 @@ class MyRecipesTab extends ConsumerWidget {
     final viewMode = ref.watch(recipeViewModeProvider);
     final filterState = ref.watch(recipeFilterProvider);
 
-    var myFiltered = myRecipes;
+    final myFiltered = myRecipes;
     var savedFiltered = savedRecipes;
     if (filterState.dietFilters.isNotEmpty) {
-      myFiltered = myRecipes.where((r) {
-        return filterState.dietFilters.any((f) => r.dietTags.contains(f));
-      }).toList();
       savedFiltered = savedRecipes.where((r) {
         return filterState.dietFilters.any((f) => r.dietTags.contains(f));
       }).toList();
@@ -49,13 +46,6 @@ class MyRecipesTab extends ConsumerWidget {
             onFilterTap: () => _showFilterSheet(context, ref, filterState),
           ),
 
-          const SizedBox(height: 12),
-          _FilterRow(
-            scale: scale,
-            filterState: filterState,
-            onFilterIconTap: () => _showFilterSheet(context, ref, filterState),
-            onTagToggle: (tag) => ref.read(recipeFilterProvider.notifier).toggleDietFilter(tag),
-          ),
           const SizedBox(height: 16),
 
           if (myFiltered.isEmpty)
@@ -323,7 +313,7 @@ class _RecipeGridView extends StatelessWidget {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.64,
+        childAspectRatio: 0.60,
       ),
       itemCount: recipes.length,
       itemBuilder: (context, index) {
@@ -358,13 +348,15 @@ class _RecipeGridView extends StatelessWidget {
   void _showDuplicateSuccess(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) => const RecipeDuplicateSuccessOverlay(),
+      builder: (dialogContext) {
+        Future.delayed(const Duration(seconds: 2), () {
+          if (dialogContext.mounted) {
+            Navigator.of(dialogContext).pop();
+          }
+        });
+        return const RecipeDuplicateSuccessOverlay();
+      },
     );
-    Future.delayed(const Duration(seconds: 2), () {
-      if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-      }
-    });
   }
 
   void _showDeleteDialog(BuildContext context, RecipeModel recipe) {
@@ -426,13 +418,15 @@ class _RecipeListViewSection extends StatelessWidget {
           }
           showDialog(
             context: context,
-            builder: (_) => const RecipeDuplicateSuccessOverlay(),
+            builder: (dialogContext) {
+              Future.delayed(const Duration(seconds: 2), () {
+                if (dialogContext.mounted) {
+                  Navigator.of(dialogContext).pop();
+                }
+              });
+              return const RecipeDuplicateSuccessOverlay();
+            },
           );
-          Future.delayed(const Duration(seconds: 2), () {
-            if (context.mounted) {
-              Navigator.of(context, rootNavigator: true).pop();
-            }
-          });
         },
         onDelete: () => showDialog(
           context: context,

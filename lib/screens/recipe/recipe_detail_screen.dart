@@ -301,7 +301,9 @@ class _RecipeMetaSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 375 * scale,
-      height: 157 * scale,
+      constraints: BoxConstraints(
+        minHeight: 157 * scale,
+      ),
       decoration: BoxDecoration(
         color: AppColors.pureWhite,
         borderRadius: BorderRadius.vertical(
@@ -318,6 +320,7 @@ class _RecipeMetaSection extends StatelessWidget {
       padding: EdgeInsets.all(24 * scale),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           // ── Title + Bookmark Row ────────────────────────────────
           Row(
@@ -379,7 +382,7 @@ class _RecipeMetaSection extends StatelessWidget {
             ],
           ),
 
-          const Spacer(), // Gap of 24px or flexible space
+          SizedBox(height: 24 * scale), // Gap of 24px or flexible space
 
           // ── Servings + Time row (Centered) ───────────────────────
           Row(

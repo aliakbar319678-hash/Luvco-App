@@ -106,13 +106,17 @@ class RecipeGridCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 4,
-                    runSpacing: 4,
-                    children: recipe.dietTags
-                        .take(3)
-                        .map((tag) => _DietTag(label: tag, scale: scale))
-                        .toList(),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      children: recipe.dietTags
+                          .map((tag) => Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                child: _DietTag(label: tag, scale: scale),
+                              ))
+                          .toList(),
+                    ),
                   ),
                 ],
               ),
@@ -202,13 +206,17 @@ class RecipeListCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 4,
-                    runSpacing: 4,
-                    children: recipe.dietTags
-                        .take(3)
-                        .map((tag) => _DietTag(label: tag, scale: scale))
-                        .toList(),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      children: recipe.dietTags
+                          .map((tag) => Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                child: _DietTag(label: tag, scale: scale),
+                              ))
+                          .toList(),
+                    ),
                   ),
                 ],
               ),

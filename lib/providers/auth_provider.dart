@@ -33,20 +33,18 @@ class LoginNotifier extends StateNotifier<LoginState> {
     try {
       final req = LoginRequest(email: model.email, password: model.password);
       final res = await AuthApiService.instance.login(req);
-      
+
       if (res.success) {
         state = state.copyWith(status: LoginStatus.success);
       } else {
         state = LoginState(
           status: LoginStatus.error,
-          errorMessage: res.message ?? "We don't recognize the email or password",
+          errorMessage:
+              res.message ?? "We don't recognize the email or password",
         );
       }
     } catch (e) {
-      state = LoginState(
-        status: LoginStatus.error,
-        errorMessage: e.toString(),
-      );
+      state = LoginState(status: LoginStatus.error, errorMessage: e.toString());
     }
   }
 

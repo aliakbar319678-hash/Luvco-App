@@ -34,7 +34,9 @@ class RecipeDetailNotifier extends StateNotifier<RecipeDetailModel> {
   Future<void> fetchDetails() async {
     try {
       final loaded = await RecipeApiService.instance.getRecipe(state.id, _currentUserId);
-      state = loaded;
+      if (mounted) {
+        state = loaded;
+      }
     } catch (e) {
       // Fallback: keep initial/current state
     }
@@ -76,12 +78,16 @@ class RecipeDetailNotifier extends StateNotifier<RecipeDetailModel> {
       } else {
         await RecipeApiService.instance.saveRecipe(detail.id);
       }
-      _ref.read(savedRecipesProvider.notifier).loadRecipes();
+      if (mounted) {
+        _ref.read(savedRecipesProvider.notifier).loadRecipes();
+      }
     } catch (e) {
       // Revert on failure
-      state = detail.copyWith(
-        core: detail.core.copyWith(isSaved: currentlySaved),
-      );
+      if (mounted) {
+        state = detail.copyWith(
+          core: detail.core.copyWith(isSaved: currentlySaved),
+        );
+      }
     }
   }
 
@@ -89,9 +95,11 @@ class RecipeDetailNotifier extends StateNotifier<RecipeDetailModel> {
     final nextPosition = state.ingredientsList.length + 1;
     try {
       final newIng = await RecipeApiService.instance.addIngredient(state.id, description, nextPosition);
-      state = state.copyWith(
-        ingredientsList: [...state.ingredientsList, newIng],
-      );
+      if (mounted) {
+        state = state.copyWith(
+          ingredientsList: [...state.ingredientsList, newIng],
+        );
+      }
     } catch (e) {
       // Handle error
     }
@@ -100,9 +108,11 @@ class RecipeDetailNotifier extends StateNotifier<RecipeDetailModel> {
   Future<void> removeIngredient(String ingredientId) async {
     try {
       await RecipeApiService.instance.removeIngredient(state.id, ingredientId);
-      state = state.copyWith(
-        ingredientsList: state.ingredientsList.where((i) => i.id != ingredientId).toList(),
-      );
+      if (mounted) {
+        state = state.copyWith(
+          ingredientsList: state.ingredientsList.where((i) => i.id != ingredientId).toList(),
+        );
+      }
     } catch (e) {
       // Handle error
     }
@@ -112,9 +122,11 @@ class RecipeDetailNotifier extends StateNotifier<RecipeDetailModel> {
     final nextStepNumber = state.instructionsList.length + 1;
     try {
       final newStep = await RecipeApiService.instance.addInstructionStep(state.id, text, nextStepNumber);
-      state = state.copyWith(
-        instructionsList: [...state.instructionsList, newStep],
-      );
+      if (mounted) {
+        state = state.copyWith(
+          instructionsList: [...state.instructionsList, newStep],
+        );
+      }
     } catch (e) {
       // Handle error
     }
@@ -123,9 +135,11 @@ class RecipeDetailNotifier extends StateNotifier<RecipeDetailModel> {
   Future<void> removeInstructionStep(String stepId) async {
     try {
       await RecipeApiService.instance.removeInstructionStep(state.id, stepId);
-      state = state.copyWith(
-        instructionsList: state.instructionsList.where((i) => i.id != stepId).toList(),
-      );
+      if (mounted) {
+        state = state.copyWith(
+          instructionsList: state.instructionsList.where((i) => i.id != stepId).toList(),
+        );
+      }
     } catch (e) {
       // Handle error
     }
@@ -139,9 +153,11 @@ class RecipeDetailNotifier extends StateNotifier<RecipeDetailModel> {
     };
     try {
       final newProd = await RecipeApiService.instance.addLinkedProduct(state.id, fullData);
-      state = state.copyWith(
-        products: [...state.products, newProd],
-      );
+      if (mounted) {
+        state = state.copyWith(
+          products: [...state.products, newProd],
+        );
+      }
     } catch (e) {
       // Handle error
     }
@@ -150,9 +166,11 @@ class RecipeDetailNotifier extends StateNotifier<RecipeDetailModel> {
   Future<void> removeProduct(String productId) async {
     try {
       await RecipeApiService.instance.removeLinkedProduct(state.id, productId);
-      state = state.copyWith(
-        products: state.products.where((p) => p.id != productId).toList(),
-      );
+      if (mounted) {
+        state = state.copyWith(
+          products: state.products.where((p) => p.id != productId).toList(),
+        );
+      }
     } catch (e) {
       // Handle error
     }

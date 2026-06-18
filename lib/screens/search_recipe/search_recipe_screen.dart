@@ -52,6 +52,7 @@ class _SearchRecipeScreenState extends ConsumerState<SearchRecipeScreen> {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.pageBackground,
         body: Stack(
           children: [

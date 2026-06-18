@@ -258,12 +258,12 @@ class _ProfileInfo extends ConsumerWidget {
       children: [
         // Avatar circle
         Container(
-          width: 90 * scale,
-          height: 90 * scale,
+          width: 80 * scale,
+          height: 80 * scale,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: AppColors.clearGrey,
-            border: Border.all(color: AppColors.pureWhite, width: 4),
+            border: Border.all(color: AppColors.pureWhite, width: 3),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.12),
@@ -294,13 +294,13 @@ class _ProfileInfo extends ConsumerWidget {
           ),
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
 
         Text(
           displayName,
           style: GoogleFonts.inter(
-            fontSize: 18 * scale.clamp(0.85, 1.2),
-            fontWeight: FontWeight.w800,
+            fontSize: 16 * scale.clamp(0.85, 1.2),
+            fontWeight: FontWeight.w700,
             color: AppColors.black,
           ),
         ),
@@ -327,13 +327,14 @@ class _ProfileTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: size.width * 0.058),
+    return Center(
       child: Container(
-        height: 48,
+        width: 347 * scale,
+        height: 40 * scale,
+        padding: EdgeInsets.all(3 * scale),
         decoration: BoxDecoration(
           color: const Color(0xFFF1EEF9), // Light lilac background
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20 * scale),
         ),
         child: Row(
           children: [
@@ -395,7 +396,7 @@ class _TabItem extends StatelessWidget {
           height: double.infinity,
           decoration: BoxDecoration(
             color: isActive ? AppColors.royalPurple : Colors.transparent,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(21 * scale),
           ),
           child: Center(
             child: Text(
@@ -403,7 +404,7 @@ class _TabItem extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 11 * scale.clamp(0.85, 1.1),
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                color: isActive ? AppColors.pureWhite : AppColors.darkGrey,
+                color: isActive ? AppColors.pureWhite : AppColors.black,
               ),
               textAlign: TextAlign.center,
             ),
@@ -422,7 +423,7 @@ class _TabDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 1,
-      height: 16,
+      height: 14,
       color: isVisible ? AppColors.clearGrey : Colors.transparent,
     );
   }
@@ -509,7 +510,7 @@ class _ShoppingListsTab extends ConsumerWidget {
             ],
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 10),
 
           // ── Empty state ──
           if (lists.isEmpty)
@@ -600,11 +601,12 @@ class _GridView extends ConsumerWidget {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 14,
-        childAspectRatio: 0.70,
+        childAspectRatio: 0.84,
       ),
       itemCount: lists.length,
       itemBuilder: (context, index) {
@@ -659,13 +661,15 @@ class _GridView extends ConsumerWidget {
     ref.read(shoppingListProvider.notifier).duplicateList(id);
     showDialog(
       context: context,
-      builder: (_) => const LuvcoDuplicateSuccessOverlay(),
+      builder: (dialogContext) {
+        Future.delayed(const Duration(seconds: 2), () {
+          if (dialogContext.mounted) {
+            Navigator.of(dialogContext).pop();
+          }
+        });
+        return const LuvcoDuplicateSuccessOverlay();
+      },
     );
-    Future.delayed(const Duration(seconds: 2), () {
-      if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-      }
-    });
   }
 
   void _showDeleteDialog(
@@ -732,13 +736,15 @@ class _ListView extends ConsumerWidget {
       ref.read(shoppingListProvider.notifier).duplicateList(list.id);
       showDialog(
         context: context,
-        builder: (_) => const LuvcoDuplicateSuccessOverlay(),
+        builder: (dialogContext) {
+          Future.delayed(const Duration(seconds: 2), () {
+            if (dialogContext.mounted) {
+              Navigator.of(dialogContext).pop();
+            }
+          });
+          return const LuvcoDuplicateSuccessOverlay();
+        },
       );
-      Future.delayed(const Duration(seconds: 2), () {
-        if (context.mounted) {
-          Navigator.of(context, rootNavigator: true).pop();
-        }
-      });
     } else if (action == 'delete') {
       showDialog(
         context: context,

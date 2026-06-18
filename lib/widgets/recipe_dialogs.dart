@@ -139,82 +139,88 @@ class RecipeDeleteConfirmDialog extends StatelessWidget {
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       insetPadding: EdgeInsets.symmetric(horizontal: 32 * scale),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Do you want to delete\n"$recipeName"?',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 16 * scale.clamp(0.85, 1.2),
-                fontWeight: FontWeight.w700,
-                color: AppColors.black,
-                height: 1.3,
-              ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Do you want to delete\n"$recipeName"?',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 16 * scale.clamp(0.85, 1.2),
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.black,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 12 * scale.clamp(0.85, 1.2),
+                    color: AppColors.neutralGrey,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 12 * scale.clamp(0.85, 1.2),
-                color: AppColors.neutralGrey,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
+          ),
+
+          // Horizontal Divider
+          const Divider(height: 1, thickness: 1, color: AppColors.clearGrey),
+
+          // Cancel / Delete row
+          IntrinsicHeight(
+            child: Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.clearGrey),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: Text(
-                      'Cancel',
-                      style: GoogleFonts.inter(
-                        fontSize: 14 * scale.clamp(0.85, 1.2),
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.darkGrey,
+                  child: GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.inter(
+                          fontSize: 14 * scale.clamp(0.85, 1.2),
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF007AFF), // Figma blue text
+                        ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const VerticalDivider(width: 1, thickness: 1, color: AppColors.clearGrey),
                 Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
+                  child: GestureDetector(
+                    onTap: () {
                       Navigator.of(context).pop();
                       onDelete();
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.errorRed,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      'Delete',
-                      style: GoogleFonts.inter(
-                        fontSize: 14 * scale.clamp(0.85, 1.2),
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Text(
+                        'Delete',
+                        style: GoogleFonts.inter(
+                          fontSize: 14 * scale.clamp(0.85, 1.2),
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.vibrantPink, // Figma red/pink text
+                        ),
                       ),
                     ),
                   ),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

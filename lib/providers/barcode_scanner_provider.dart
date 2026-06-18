@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/product_model.dart';
+import '../core/network/product_api_service.dart';
 import 'favorites_provider.dart';
 
 // ─────────────────────────────────────────────────
@@ -8,11 +9,12 @@ import 'favorites_provider.dart';
 // ─────────────────────────────────────────────────
 enum BarcodeScanState {
   cameraPermission, // 2.2.0 — asking camera access
-  scanning, // 2.2.1 — live camera with scan frame
-  notFound, // 2.2.2 — product not found card
-  cardOpen, // 2.2.3 — product card open
-  addToList, // 2.2.4 — add to shopping list dialog
-  addToRecipe, // 2.2.5 — add to recipe dialog
+  scanning,         // 2.2.1 — live camera with scan frame
+  loading,          // 2.2.x — fetching product from API
+  notFound,         // 2.2.2 — product not found card
+  cardOpen,         // 2.2.3 — product card open
+  addToList,        // 2.2.4 — add to shopping list dialog
+  addToRecipe,      // 2.2.5 — add to recipe dialog
 }
 
 // ─────────────────────────────────────────────────
@@ -26,6 +28,7 @@ class BarcodeScannerState {
   final List<String> selectedLists;
   final List<String> recipes;
   final List<String> selectedRecipes;
+  final String? lastScannedBarcode; // track to avoid duplicate fetches
 
   const BarcodeScannerState({
     this.scanState = BarcodeScanState.cameraPermission,
@@ -40,6 +43,7 @@ class BarcodeScannerState {
     this.selectedLists = const [],
     this.recipes = const ['Recipe 01', 'Recipe 02', 'Recipe 03'],
     this.selectedRecipes = const [],
+    this.lastScannedBarcode,
   });
 
   BarcodeScannerState copyWith({
@@ -51,31 +55,23 @@ class BarcodeScannerState {
     List<String>? selectedLists,
     List<String>? recipes,
     List<String>? selectedRecipes,
-  }) => BarcodeScannerState(
-    scanState: scanState ?? this.scanState,
-    scannedProduct: clearProduct ? null : scannedProduct ?? this.scannedProduct,
-    isFavorite: isFavorite ?? this.isFavorite,
-    shoppingLists: shoppingLists ?? this.shoppingLists,
-    selectedLists: selectedLists ?? this.selectedLists,
-    recipes: recipes ?? this.recipes,
-    selectedRecipes: selectedRecipes ?? this.selectedRecipes,
-  );
+    String? lastScannedBarcode,
+    bool clearLastBarcode = false,
+  }) =>
+      BarcodeScannerState(
+        scanState: scanState ?? this.scanState,
+        scannedProduct:
+            clearProduct ? null : scannedProduct ?? this.scannedProduct,
+        isFavorite: isFavorite ?? this.isFavorite,
+        shoppingLists: shoppingLists ?? this.shoppingLists,
+        selectedLists: selectedLists ?? this.selectedLists,
+        recipes: recipes ?? this.recipes,
+        selectedRecipes: selectedRecipes ?? this.selectedRecipes,
+        lastScannedBarcode: clearLastBarcode
+            ? null
+            : lastScannedBarcode ?? this.lastScannedBarcode,
+      );
 }
-
-// ─────────────────────────────────────────────────
-// Demo product
-// ─────────────────────────────────────────────────
-const _demoScannedProduct = ProductModel(
-  id: 'scan_001',
-  name: 'Name of the Product',
-  description: 'Other data from the product.',
-  imageAsset: 'assets/images/nutila.png',
-  thumbnailAsset: 'assets/images/nutila.png',
-  isSustainable: false,
-  labels: ['Label', 'Label', 'Label', 'Label'],
-  allergens: ['Label', 'Label', 'Label', 'Label'],
-  ingredients: ['Ingredient Name', 'Ingredient Name', 'Ingredient Name'],
-);
 
 // ─────────────────────────────────────────────────
 // Notifier
@@ -90,8 +86,9 @@ class BarcodeScannerNotifier extends StateNotifier<BarcodeScannerState> {
 
   void denyCamera() {}
 
-  void onBarcodeScanned(String? barcode) {
-    // Print the scanned barcode to the console as requested
+  /// Called every time the mobile_scanner detects a barcode.
+  /// Debounced: if same barcode is already loading/shown, skip.
+  Future<void> onBarcodeScanned(String? barcode) async {
     debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     debugPrint('🔍 BARCODE SCANNED: $barcode');
     debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -101,31 +98,68 @@ class BarcodeScannerNotifier extends StateNotifier<BarcodeScannerState> {
       return;
     }
 
-    final isFav = _ref.read(favoritesProvider).items.any((i) => i.barcode == barcode);
+    // Debounce: skip if same barcode is already being processed or shown
+    if (barcode == state.lastScannedBarcode &&
+        (state.scanState == BarcodeScanState.loading ||
+            state.scanState == BarcodeScanState.cardOpen)) {
+      return;
+    }
 
+    // Show loading state
     state = state.copyWith(
-      scanState: BarcodeScanState.cardOpen,
-      scannedProduct: _demoScannedProduct,
-      isFavorite: isFav,
+      scanState: BarcodeScanState.loading,
+      lastScannedBarcode: barcode,
+      clearProduct: true,
     );
+
+    try {
+      debugPrint('📡 Calling API: GET /products/$barcode');
+      final product =
+          await ProductApiService.instance.lookupProduct(barcode);
+
+      if (!mounted) return;
+
+      final isFav = _ref
+          .read(favoritesProvider)
+          .items
+          .any((i) => i.barcode == barcode);
+
+      state = state.copyWith(
+        scanState: BarcodeScanState.cardOpen,
+        scannedProduct: product,
+        isFavorite: isFav,
+      );
+
+      debugPrint('✅ Product loaded: ${product.name}');
+    } catch (e) {
+      if (!mounted) return;
+      debugPrint('❌ Product lookup failed: $e');
+      state = state.copyWith(
+        scanState: BarcodeScanState.notFound,
+        clearProduct: true,
+        clearLastBarcode: true,
+      );
+    }
   }
 
-  /// Simulates a successful scan → goes to cardOpen
-  void simulateScan() => onBarcodeScanned('1234567890');
+  /// Simulates a successful scan (for dev/testing)
+  void simulateScan() => onBarcodeScanned('8000500140001');
 
   /// Simulates a failed scan → goes to notFound (frame 2.2.2)
   void simulateNotFound() =>
       state = state.copyWith(scanState: BarcodeScanState.notFound);
 
   void retryScanning() => state = state.copyWith(
-    scanState: BarcodeScanState.scanning,
-    clearProduct: true,
-  );
+        scanState: BarcodeScanState.scanning,
+        clearProduct: true,
+        clearLastBarcode: true,
+      );
 
   void closeCard() => state = state.copyWith(
-    scanState: BarcodeScanState.scanning,
-    clearProduct: true,
-  );
+        scanState: BarcodeScanState.scanning,
+        clearProduct: true,
+        clearLastBarcode: true,
+      );
 
   Future<void> toggleFavorite() async {
     final product = state.scannedProduct;
@@ -142,10 +176,10 @@ class BarcodeScannerNotifier extends StateNotifier<BarcodeScannerState> {
         await _ref.read(favoritesProvider.notifier).removeItem(barcode);
       } else {
         await _ref.read(favoritesProvider.notifier).addFavorite(
-          barcode: barcode,
-          productName: product.name,
-          productImageUrl: product.thumbnailAsset,
-        );
+              barcode: barcode,
+              productName: product.name,
+              productImageUrl: product.thumbnailAsset,
+            );
       }
     } catch (e) {
       // Rollback on failure
@@ -175,14 +209,14 @@ class BarcodeScannerNotifier extends StateNotifier<BarcodeScannerState> {
   }
 
   void saveOnList() => state = state.copyWith(
-    scanState: BarcodeScanState.cardOpen,
-    selectedLists: [],
-  );
+        scanState: BarcodeScanState.cardOpen,
+        selectedLists: [],
+      );
 
   void saveOnRecipe() => state = state.copyWith(
-    scanState: BarcodeScanState.cardOpen,
-    selectedRecipes: [],
-  );
+        scanState: BarcodeScanState.cardOpen,
+        selectedRecipes: [],
+      );
 
   void reset() => state = const BarcodeScannerState();
 }

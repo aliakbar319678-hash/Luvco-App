@@ -934,8 +934,9 @@ class _ProfileChangedOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Auto-dismiss
-    Future.delayed(const Duration(seconds: 2), onDismiss);
+    Future.delayed(const Duration(seconds: 2), () {
+      if (context.mounted) onDismiss();
+    });
 
     return Positioned.fill(
       child: GestureDetector(

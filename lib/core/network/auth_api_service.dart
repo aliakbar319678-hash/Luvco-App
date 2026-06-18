@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../models/auth/auth_response.dart';
 import '../../models/auth/login_request.dart';
@@ -15,21 +16,24 @@ class AuthApiService {
   /// Helper to extract server-provided error messages or throw generic ones.
   String handleError(dynamic error) {
     if (error is DioException) {
-      final data = error.response?.data;
-      if (data is Map<String, dynamic>) {
+      dynamic data = error.response?.data;
+      if (data is String && data.trim().isNotEmpty) {
+        try {
+          data = jsonDecode(data);
+        } catch (_) {}
+      }
+      if (data is Map) {
         if (data['message'] != null) {
-          return data['message'] as String;
+          return data['message'].toString();
         }
-        if (data['error'] != null && data['error'] is Map<String, dynamic>) {
-          final errorObj = data['error'] as Map<String, dynamic>;
-          if (errorObj['details'] != null && errorObj['details'] is Map<String, dynamic>) {
-            final details = errorObj['details'] as Map<String, dynamic>;
-            if (details.isNotEmpty) {
-              return details.values.join('\n');
-            }
+        if (data['error'] != null && data['error'] is Map) {
+          final errorObj = data['error'] as Map;
+          final details = errorObj['details'];
+          if (details != null && details is Map && details.isNotEmpty) {
+            return details.values.join('\n');
           }
           if (errorObj['message'] != null) {
-            return errorObj['message'] as String;
+            return errorObj['message'].toString();
           }
         }
       }

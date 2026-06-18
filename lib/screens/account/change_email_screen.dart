@@ -61,6 +61,7 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
       value: SystemUiOverlayStyle.dark
           .copyWith(statusBarColor: Colors.transparent),
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.pageBackground,
         body: Column(
           children: [
