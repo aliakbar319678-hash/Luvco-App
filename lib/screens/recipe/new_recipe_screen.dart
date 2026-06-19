@@ -1135,62 +1135,64 @@ class _AddedIngredientRow extends StatelessWidget {
           // Background Tabs
           SizedBox(
             height: 44,
-            child: Stack(
+            child: Row(
               children: [
-                // Green tab (full width, right aligned text)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.only(top: 8, right: 30),
-                  alignment: Alignment.topRight,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF4CAF50),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(14),
-                      topRight: Radius.circular(14),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.flag_outlined, size: 14, color: Colors.white),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Safe',
-                        style: GoogleFonts.inter(
-                          fontSize: 12 * scale.clamp(0.85, 1.2),
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                // Red tab (Unsustainable)
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.only(top: 8),
+                    alignment: Alignment.topCenter,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFED3232),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(14),
+                        topRight: Radius.circular(14),
                       ),
-                    ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.eco_outlined, size: 14, color: Colors.white),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Unsustainable',
+                          style: GoogleFonts.inter(
+                            fontSize: 12 * scale.clamp(0.85, 1.2),
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                // Red tab (partial width, overlapping)
-                Container(
-                  width: MediaQuery.sizeOf(context).width * 0.52,
-                  padding: const EdgeInsets.only(top: 8),
-                  alignment: Alignment.topCenter,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFED3232),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(14),
-                      topRight: Radius.circular(14),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.eco_outlined, size: 14, color: Colors.white),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Unsustainable',
-                        style: GoogleFonts.inter(
-                          fontSize: 12 * scale.clamp(0.85, 1.2),
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                // Green tab (Safe)
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.only(top: 8),
+                    alignment: Alignment.topCenter,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF4CAF50),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(14),
+                        topRight: Radius.circular(14),
                       ),
-                    ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.flag_outlined, size: 14, color: Colors.white),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Safe',
+                          style: GoogleFonts.inter(
+                            fontSize: 12 * scale.clamp(0.85, 1.2),
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -1387,7 +1389,10 @@ class _ProductDetailOverlay extends StatelessWidget {
                                   padding: EdgeInsets.only(top: 14 * scale.clamp(0.85, 1.2)),
                                   decoration: const BoxDecoration(
                                     color: Color(0xFFED3232),
-                                    borderRadius: BorderRadius.only(topLeft: Radius.circular(28)),
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(28),
+                                      topRight: Radius.circular(16),
+                                    ),
                                   ),
                                   alignment: Alignment.topCenter,
                                   child: Row(
@@ -1413,7 +1418,10 @@ class _ProductDetailOverlay extends StatelessWidget {
                                   padding: EdgeInsets.only(top: 14 * scale.clamp(0.85, 1.2)),
                                   decoration: const BoxDecoration(
                                     color: Color(0xFF4CAF50),
-                                    borderRadius: BorderRadius.only(topRight: Radius.circular(28)),
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(16),
+                                      topRight: Radius.circular(28),
+                                    ),
                                   ),
                                   alignment: Alignment.topCenter,
                                   child: Row(

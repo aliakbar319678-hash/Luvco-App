@@ -88,7 +88,7 @@ class RecipeGridCard extends StatelessWidget {
                   Text(
                     recipe.title,
                     style: GoogleFonts.inter(
-                      fontSize: 12 * scale.clamp(0.85, 1.2),
+                      fontSize: 15 * scale.clamp(0.85, 1.2),
                       fontWeight: FontWeight.w700,
                       color: AppColors.vibrantPink,
                     ),
@@ -99,7 +99,7 @@ class RecipeGridCard extends StatelessWidget {
                   Text(
                     recipe.description,
                     style: GoogleFonts.inter(
-                      fontSize: 10 * scale.clamp(0.85, 1.2),
+                      fontSize: 12 * scale.clamp(0.85, 1.2),
                       color: AppColors.darkGrey,
                     ),
                     maxLines: 2,
@@ -188,7 +188,7 @@ class RecipeListCard extends StatelessWidget {
                   Text(
                     recipe.title,
                     style: GoogleFonts.inter(
-                      fontSize: 13 * scale.clamp(0.85, 1.2),
+                      fontSize: 16 * scale.clamp(0.85, 1.2),
                       fontWeight: FontWeight.w700,
                       color: AppColors.vibrantPink,
                     ),
@@ -199,7 +199,7 @@ class RecipeListCard extends StatelessWidget {
                   Text(
                     recipe.description,
                     style: GoogleFonts.inter(
-                      fontSize: 11 * scale.clamp(0.85, 1.2),
+                      fontSize: 13 * scale.clamp(0.85, 1.2),
                       color: AppColors.darkGrey,
                     ),
                     maxLines: 2,

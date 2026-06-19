@@ -30,9 +30,7 @@ void main() {
   //   Use: http://10.0.2.2:3000/api/v1
   // ─────────────────────────────────────────────────────────────────────────
   ApiClient.instance.setBaseUrl(
-    'http://127.0.0.1:3000/api/v1', // ← USB ADB Reverse Mode
-    // To use Wi-Fi Mode instead, uncomment the line below and comment the one above:
-    // 'http://192.168.6.111:3000/api/v1',
+    'http://192.168.1.29:3000/api/v1',
   );
 
   runApp(const ProviderScope(child: LuvcoApp()));

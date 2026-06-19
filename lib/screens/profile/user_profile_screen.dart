@@ -258,8 +258,8 @@ class _ProfileInfo extends ConsumerWidget {
       children: [
         // Avatar circle
         Container(
-          width: 80 * scale,
-          height: 80 * scale,
+          width: 102 * scale,
+          height: 102 * scale,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: AppColors.clearGrey,
@@ -298,10 +298,12 @@ class _ProfileInfo extends ConsumerWidget {
 
         Text(
           displayName,
-          style: GoogleFonts.inter(
-            fontSize: 16 * scale.clamp(0.85, 1.2),
+          style: GoogleFonts.nunito(
+            fontSize: 20 * scale.clamp(0.85, 1.2),
             fontWeight: FontWeight.w700,
             color: AppColors.black,
+            height: 1.0,
+            letterSpacing: 0,
           ),
         ),
       ],
@@ -480,7 +482,7 @@ class _ShoppingListsTab extends ConsumerWidget {
                   'assets/icons/layout-grid.svg',
                   colorFilter: ColorFilter.mode(
                     viewMode == ShoppingListViewMode.grid
-                        ? AppColors.royalPurple
+                        ? AppColors.black
                         : AppColors.neutralGrey.withValues(alpha: 0.5),
                     BlendMode.srcIn,
                   ),
@@ -499,7 +501,7 @@ class _ShoppingListsTab extends ConsumerWidget {
                   'assets/icons/list-details.svg',
                   colorFilter: ColorFilter.mode(
                     viewMode == ShoppingListViewMode.list
-                        ? AppColors.royalPurple
+                        ? AppColors.black
                         : AppColors.neutralGrey.withValues(alpha: 0.5),
                     BlendMode.srcIn,
                   ),

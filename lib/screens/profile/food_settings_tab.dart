@@ -202,7 +202,7 @@ class _SettingsListItem extends StatelessWidget {
             // Star icon — filled when selected, outlined otherwise (matches Figma screenshot 2)
             Icon(
               isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
-              color: isSelected ? AppColors.royalPurple : AppColors.darkGrey,
+              color: isSelected ? AppColors.black : AppColors.darkGrey,
               size: 22,
             ),
             const SizedBox(width: 14),
@@ -213,7 +213,7 @@ class _SettingsListItem extends StatelessWidget {
                   fontSize: 14 * scale.clamp(0.85, 1.2),
                   fontWeight:
                       isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected ? AppColors.royalPurple : AppColors.darkGrey,
+                  color: isSelected ? AppColors.black : AppColors.darkGrey,
                 ),
               ),
             ),

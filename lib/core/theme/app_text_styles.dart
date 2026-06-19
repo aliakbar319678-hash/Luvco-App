@@ -68,6 +68,7 @@ class AppTextStyles {
       fontSize: 13 * s,
       fontWeight: FontWeight.w400,
       color: AppColors.darkGrey,
+      decoration: TextDecoration.underline,
     );
   }
 }

@@ -55,31 +55,47 @@ class _FavoritesTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.paddingOf(context).top;
+    final barHeight = 121 * scale;
     return Container(
+      height: barHeight,
       decoration: BoxDecoration(
         color: AppColors.pureWhite,
         borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(24),
-          bottomRight: Radius.circular(24),
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
         ),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
       ),
-      padding: EdgeInsets.only(top: top + 8, bottom: 14, left: 16, right: 16),
+      padding: EdgeInsets.only(top: top, left: 20 * scale, right: 20 * scale),
       child: Row(
         children: [
           GestureDetector(
             onTap: () => context.pop(),
             behavior: HitTestBehavior.opaque,
-            child: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.vibrantPink, size: 20 * scale.clamp(0.85, 1.2)),
+            child: Icon(
+              Icons.chevron_left_rounded,
+              color: AppColors.vibrantPink,
+              size: 28 * scale.clamp(0.85, 1.2),
+            ),
           ),
           Expanded(
             child: Text(
               'Favorites',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(fontSize: 20 * scale.clamp(0.85, 1.2), fontWeight: FontWeight.w700, color: AppColors.vibrantPink),
+              style: GoogleFonts.inter(
+                fontSize: 20 * scale.clamp(0.85, 1.2),
+                fontWeight: FontWeight.w700,
+                color: AppColors.vibrantPink,
+              ),
             ),
           ),
-          SizedBox(width: 20 * scale),
+          SizedBox(width: 28 * scale),
         ],
       ),
     );
@@ -101,9 +117,9 @@ class _EmptyState extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
-                'assets/images/Empty-Cart-1--Streamline-Milano.png',
-                width: 180 * scale.clamp(0.8, 1.2),
-                height: 160 * scale.clamp(0.8, 1.2),
+                'assets/images/empty_favorites_illustration.jpg',
+                width: 218 * scale,
+                height: 261 * scale,
                 fit: BoxFit.contain,
                 errorBuilder: (_, __, ___) => Icon(Icons.favorite_border_rounded, size: 80 * scale, color: AppColors.neutralGrey),
               ),
@@ -164,7 +180,7 @@ class _SubHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.pureWhite,
+      color: Colors.transparent,
       padding: EdgeInsets.fromLTRB(20 * scale, 16, 20 * scale, 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,18 +195,17 @@ class _SubHeader extends StatelessWidget {
               ],
             ),
           ),
-          if (itemCount > 0)
-            GestureDetector(
-              onTap: () => _showFilterSheet(context),
-              behavior: HitTestBehavior.opaque,
-              child: Row(
-                children: [
-                  Icon(Icons.tune_rounded, size: 18 * scale, color: AppColors.darkGrey),
-                  const SizedBox(width: 4),
-                  Text('Filter', style: GoogleFonts.inter(fontSize: 13 * scale, fontWeight: FontWeight.w500, color: AppColors.darkGrey)),
-                ],
-              ),
+          GestureDetector(
+            onTap: () => _showFilterSheet(context),
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                Icon(Icons.tune_rounded, size: 18 * scale, color: AppColors.darkGrey),
+                const SizedBox(width: 4),
+                Text('Filter', style: GoogleFonts.inter(fontSize: 13 * scale, fontWeight: FontWeight.w500, color: AppColors.darkGrey)),
+              ],
             ),
+          ),
         ],
       ),
     );
@@ -651,8 +666,14 @@ class _AddProductsButton extends StatelessWidget {
       width: double.infinity,
       height: 52 * scale.clamp(0.85, 1.2),
       child: ElevatedButton.icon(
-        onPressed: () => context.go('/profile'),
-        style: ElevatedButton.styleFrom(backgroundColor: AppColors.royalPurple, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))),
+        onPressed: () => context.push('/dashboard-search'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.royalPurple,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
         icon: Icon(Icons.add, color: AppColors.pureWhite, size: 20 * scale.clamp(0.85, 1.2)),
         label: Text('Add Products', style: GoogleFonts.inter(fontSize: 15 * scale.clamp(0.85, 1.2), fontWeight: FontWeight.w600, color: AppColors.pureWhite)),
       ),

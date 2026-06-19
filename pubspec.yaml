@@ -99,6 +99,8 @@ flutter:
   - assets/icons/search_icon.png
   - assets/images/search_image.png
   - assets/images/rice_image.png
+  - assets/images/empty_cart_illustration.png
+  - assets/images/empty_favorites_illustration.jpg
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

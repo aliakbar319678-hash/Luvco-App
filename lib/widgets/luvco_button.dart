@@ -17,6 +17,7 @@ class LuvcoButton extends StatefulWidget {
   final bool isDisabled;
   final Color? disabledBackgroundColor;
   final Color? disabledTextColor;
+  final Widget? trailingIcon;
 
   const LuvcoButton({
     super.key,
@@ -27,6 +28,7 @@ class LuvcoButton extends StatefulWidget {
     this.isDisabled = false,
     this.disabledBackgroundColor,
     this.disabledTextColor,
+    this.trailingIcon,
   });
 
   @override
@@ -98,12 +100,14 @@ class _LuvcoButtonState extends State<LuvcoButton>
                   disabledTextColor: widget.disabledTextColor,
                   height: height,
                   scale: s,
+                  trailingIcon: widget.trailingIcon,
                 )
               : _OutlinedButton(
                   label: widget.label,
                   isDisabled: widget.isDisabled,
                   height: height,
                   scale: s,
+                  trailingIcon: widget.trailingIcon,
                 ),
         ),
       ),
@@ -120,6 +124,7 @@ class _FilledButton extends StatelessWidget {
   final Color? disabledTextColor;
   final double height;
   final double scale;
+  final Widget? trailingIcon;
 
   const _FilledButton({
     required this.label,
@@ -129,6 +134,7 @@ class _FilledButton extends StatelessWidget {
     required this.scale,
     this.disabledBackgroundColor,
     this.disabledTextColor,
+    this.trailingIcon,
   });
 
   @override
@@ -157,15 +163,24 @@ class _FilledButton extends StatelessWidget {
                   strokeWidth: 2.5,
                 ),
               )
-            : Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 16 * scale,
-                  fontWeight: FontWeight.w600,
-                  color: isDisabled
-                      ? (disabledTextColor ?? AppColors.lightRoyalPurple)
-                      : AppColors.pureWhite,
-                ),
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    label,
+                    style: GoogleFonts.inter(
+                      fontSize: 16 * scale,
+                      fontWeight: FontWeight.w600,
+                      color: isDisabled
+                          ? (disabledTextColor ?? AppColors.lightRoyalPurple)
+                          : AppColors.pureWhite,
+                    ),
+                  ),
+                  if (trailingIcon != null) ...[
+                    const SizedBox(width: 8),
+                    trailingIcon!,
+                  ],
+                ],
               ),
       ),
     );
@@ -178,12 +193,14 @@ class _OutlinedButton extends StatelessWidget {
   final bool isDisabled;
   final double height;
   final double scale;
+  final Widget? trailingIcon;
 
   const _OutlinedButton({
     required this.label,
     required this.isDisabled,
     required this.height,
     required this.scale,
+    this.trailingIcon,
   });
 
   @override
@@ -205,18 +222,28 @@ class _OutlinedButton extends StatelessWidget {
             borderRadius: BorderRadius.all(Radius.circular(50)),
           ),
         ),
-        child: Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 16 * scale,
-            fontWeight: FontWeight.w600,
-            color: isDisabled
-                ? AppColors.royalPurple.withValues(alpha: 0.40)
-                : AppColors.royalPurple,
-          ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 16 * scale,
+                fontWeight: FontWeight.w600,
+                color: isDisabled
+                    ? AppColors.royalPurple.withValues(alpha: 0.40)
+                    : AppColors.royalPurple,
+              ),
+            ),
+            if (trailingIcon != null) ...[
+              const SizedBox(width: 8),
+              trailingIcon!,
+            ],
+          ],
         ),
       ),
     );
   }
 }
+
 

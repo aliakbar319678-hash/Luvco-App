@@ -95,39 +95,43 @@ class ProductDetailScreen extends ConsumerWidget {
 
                         SizedBox(height: 24 * scale),
 
-                        // ── Labels and Certifications ──
-                        _SectionTitle(
-                          title: 'Labels and Certifications',
-                          scale: scale,
-                        ),
-                        SizedBox(height: 12 * scale),
-                        _HexagonLabelRow(
-                          labels: state.product.labels,
-                          scale: scale,
-                        ),
+                        // ── Labels and Certifications (hidden if empty) ──
+                        if (state.product.labels.isNotEmpty) ...[
+                          _SectionTitle(
+                            title: 'Labels and Certifications',
+                            scale: scale,
+                          ),
+                          SizedBox(height: 12 * scale),
+                          _HexagonLabelRow(
+                            labels: state.product.labels,
+                            scale: scale,
+                          ),
+                          SizedBox(height: 24 * scale),
+                        ],
 
-                        SizedBox(height: 24 * scale),
+                        // ── Possible allergens (hidden if empty) ──
+                        if (state.product.allergens.isNotEmpty) ...[
+                          _SectionTitle(
+                            title: 'Possible allergens',
+                            scale: scale,
+                          ),
+                          SizedBox(height: 12 * scale),
+                          _HexagonLabelRow(
+                            labels: state.product.allergens,
+                            scale: scale,
+                          ),
+                          SizedBox(height: 24 * scale),
+                        ],
 
-                        // ── Possible allergens ──
-                        _SectionTitle(
-                          title: 'Possible allergens',
-                          scale: scale,
-                        ),
-                        SizedBox(height: 12 * scale),
-                        _HexagonLabelRow(
-                          labels: state.product.allergens,
-                          scale: scale,
-                        ),
-
-                        SizedBox(height: 24 * scale),
-
-                        // ── Ingredients list ──
-                        _SectionTitle(title: 'Ingredients list', scale: scale),
-                        SizedBox(height: 8 * scale),
-                        _IngredientsList(
-                          ingredients: state.product.ingredients,
-                          scale: scale,
-                        ),
+                        // ── Ingredients list (hidden if empty) ──
+                        if (state.product.ingredients.isNotEmpty) ...[
+                          _SectionTitle(title: 'Ingredients list', scale: scale),
+                          SizedBox(height: 8 * scale),
+                          _IngredientsList(
+                            ingredients: state.product.ingredients,
+                            scale: scale,
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -305,7 +309,13 @@ class _ProductImageCard extends StatelessWidget {
                 // Left: Unsustainable / Sustainable
                 Expanded(
                   child: Container(
-                    color: sustainColor,
+                    decoration: BoxDecoration(
+                      color: sustainColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(20 * scale),
+                        topRight: Radius.circular(16 * scale),
+                      ),
+                    ),
                     padding: EdgeInsets.symmetric(
                       vertical: 10 * scale,
                       horizontal: 4 * scale,
@@ -334,7 +344,13 @@ class _ProductImageCard extends StatelessWidget {
                 // Right: Safe
                 Expanded(
                   child: Container(
-                    color: safeColor,
+                    decoration: BoxDecoration(
+                      color: safeColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16 * scale),
+                        topRight: Radius.circular(20 * scale),
+                      ),
+                    ),
                     padding: EdgeInsets.symmetric(
                       vertical: 10 * scale,
                       horizontal: 4 * scale,
@@ -375,17 +391,40 @@ class _ProductImageCard extends StatelessWidget {
                 ),
                 color: AppColors.pureWhite,
                 child: Center(
-                  child: product.imageAsset != null
-                      ? Image.asset(
-                          product.imageAsset!,
-                          height: 180 * scale,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => Icon(
-                            Icons.image_outlined,
-                            size: 80 * scale,
-                            color: AppColors.neutralGrey,
-                          ),
-                        )
+                  child: product.imageAsset != null && product.imageAsset!.isNotEmpty
+                      ? (product.imageAsset!.startsWith('http')
+                          ? Image.network(
+                              product.imageAsset!,
+                              height: 180 * scale,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => Icon(
+                                Icons.image_outlined,
+                                size: 80 * scale,
+                                color: AppColors.neutralGrey,
+                              ),
+                              loadingBuilder: (ctx, child, prog) {
+                                if (prog == null) return child;
+                                return SizedBox(
+                                  height: 180 * scale,
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.royalPurple,
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                          : Image.asset(
+                              product.imageAsset!,
+                              height: 180 * scale,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => Icon(
+                                Icons.image_outlined,
+                                size: 80 * scale,
+                                color: AppColors.neutralGrey,
+                              ),
+                            ))
                       : Icon(
                           Icons.image_outlined,
                           size: 80 * scale,
@@ -449,50 +488,80 @@ class _HexagonLabelRow extends StatelessWidget {
   final double scale;
   const _HexagonLabelRow({required this.labels, required this.scale});
 
+  /// Strip language prefix (e.g. "en:", "fr:") and clean up the text.
+  static String _cleanLabel(String raw) {
+    String cleaned = raw.replaceAll(RegExp(r'^[a-z]{2}:'), '');
+    cleaned = cleaned.replaceAll(RegExp(r'[-_]'), ' ').trim();
+    if (cleaned.isEmpty) return raw;
+    return cleaned
+        .split(' ')
+        .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w)
+        .join(' ');
+  }
+
+  /// Keep only English (no prefix or "en:" prefix) labels.
+  static List<String> _filterEnglish(List<String> all) {
+    final englishOnly = all
+        .where((l) => !RegExp(r'^[a-z]{2}:').hasMatch(l) || l.startsWith('en:'))
+        .toList();
+    return englishOnly.isNotEmpty ? englishOnly : all;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final items = labels.isEmpty
-        ? const ['Label', 'Label', 'Label', 'Label']
-        : labels;
+    if (labels.isEmpty) return const SizedBox.shrink();
+    final items = _filterEnglish(labels);
     // No horizontal padding here — outer padding (16*scale) aligns with _SectionTitle
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16 * scale),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: items.take(4).map((label) { // Take 4 to prevent overflow
-          return Column(
-            children: [
-              Container(
-                width: 58 * scale,
-                height: 58 * scale,
-                decoration: BoxDecoration(
-                  color: AppColors.pureWhite,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.clearGrey,
-                    width: 1.2,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          children: items.map((label) {
+            return Padding(
+              padding: EdgeInsets.only(right: 14 * scale),
+              child: Column(
+                children: [
+                  Container(
+                    width: 58 * scale,
+                    height: 58 * scale,
+                    decoration: BoxDecoration(
+                      color: AppColors.pureWhite,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.clearGrey,
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.hexagon_outlined,
+                        color: AppColors.black,
+                        size: 26 * scale,
+                      ),
+                    ),
                   ),
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.hexagon_outlined,
-                    color: AppColors.black,
-                    size: 26 * scale,
+                  SizedBox(height: 6 * scale),
+                  SizedBox(
+                    width: 68 * scale,
+                    child: Text(
+                      _cleanLabel(label),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 10 * scale,
+                        color: AppColors.black,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-              SizedBox(height: 6 * scale),
-              Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 11 * scale,
-                  color: AppColors.black,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -516,15 +585,10 @@ class _IngredientsListState extends State<_IngredientsList> {
   @override
   Widget build(BuildContext context) {
     final items = widget.ingredients.isEmpty
-        ? const [
-            'Ingredient Name',
-            'Ingredient Name',
-            'Ingredient Name',
-            'Ingredient Name',
-            'Ingredient Name',
-            'Ingredient Name',
-          ]
+        ? const <String>[]
         : widget.ingredients;
+
+    if (items.isEmpty) return const SizedBox.shrink();
 
     final visible = _showAll ? items : items.take(6).toList();
 

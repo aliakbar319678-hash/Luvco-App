@@ -626,158 +626,173 @@ class _AddedProductCard extends StatelessWidget {
           ),
         ],
       ),
-      clipBehavior: Clip.antiAlias, // Clips the tabs and card nicely
-      child: Column(
-        children: [
-          // ── Sustainability Header Tabs ──
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 36 * scale.clamp(0.85, 1.2),
-                  decoration: const BoxDecoration(
-                    color: AppColors.errorRed,
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(12), // Inner notch
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          children: [
+            // 1. Red/Green background tabs - Background Layer
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 66 * scale.clamp(0.85, 1.2),
+                    decoration: const BoxDecoration(
+                      color: AppColors.errorRed,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(12),
+                      ),
+                    ),
+                    alignment: Alignment.topCenter,
+                    padding: EdgeInsets.only(top: 9 * scale.clamp(0.85, 1.2)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/icons/tabler-icon-leaf.png',
+                          width: 14 * scale.clamp(0.85, 1.2),
+                          height: 14 * scale.clamp(0.85, 1.2),
+                          color: Colors.white,
+                          errorBuilder: (_, __, ___) => Icon(
+                            Icons.recycling_outlined,
+                            color: Colors.white,
+                            size: 14 * scale.clamp(0.85, 1.2),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Unsustainable',
+                          style: GoogleFonts.inter(
+                            fontSize: 11 * scale.clamp(0.85, 1.2),
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  alignment: Alignment.center,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/icons/tabler-icon-leaf.png',
-                        width: 14 * scale.clamp(0.85, 1.2),
-                        height: 14 * scale.clamp(0.85, 1.2),
-                        color: Colors.white,
-                        errorBuilder: (_, __, ___) => Icon(
-                          Icons.recycling_outlined,
+                ),
+                Expanded(
+                  child: Container(
+                    height: 66 * scale.clamp(0.85, 1.2),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF43A047),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(16),
+                      ),
+                    ),
+                    alignment: Alignment.topCenter,
+                    padding: EdgeInsets.only(top: 9 * scale.clamp(0.85, 1.2)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.flag_outlined,
                           color: Colors.white,
                           size: 14 * scale.clamp(0.85, 1.2),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Unsustainable',
-                        style: GoogleFonts.inter(
-                          fontSize: 11 * scale.clamp(0.85, 1.2),
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                        const SizedBox(width: 6),
+                        Text(
+                          'Safe',
+                          style: GoogleFonts.inter(
+                            fontSize: 11 * scale.clamp(0.85, 1.2),
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Container(
-                  height: 36 * scale.clamp(0.85, 1.2),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF43A047),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(12), // Inner notch
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.flag_outlined,
-                        color: Colors.white,
-                        size: 14 * scale.clamp(0.85, 1.2),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Safe',
-                        style: GoogleFonts.inter(
-                          fontSize: 11 * scale.clamp(0.85, 1.2),
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          // ── Product Image and Details ──
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                // Product image
-                SizedBox(
-                  width: 52 * scale.clamp(0.85, 1.2),
-                  height: 52 * scale.clamp(0.85, 1.2),
-                  child: () {
-                    final path = product.imageAsset ?? product.thumbnailAsset ?? '';
-                    if (path.startsWith('http')) {
-                      return Image.network(
-                        path,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Icon(
-                          Icons.image_outlined,
-                          size: 30,
-                          color: AppColors.clearGrey,
-                        ),
-                      );
-                    } else {
-                      return Image.asset(
-                        path,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Icon(
-                          Icons.image_outlined,
-                          size: 30,
-                          color: AppColors.clearGrey,
-                        ),
-                      );
-                    }
-                  }(),
-                ),
-                const SizedBox(width: 14),
-                // Name + description
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        product.name,
-                        style: GoogleFonts.inter(
-                          fontSize: 13 * scale.clamp(0.85, 1.2),
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        product.description,
-                        style: GoogleFonts.inter(
-                          fontSize: 11 * scale.clamp(0.85, 1.2),
-                          color: AppColors.darkGrey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Delete button
-                GestureDetector(
-                  onTap: onRemove,
-                  child: const Padding(
-                    padding: EdgeInsets.all(4),
-                    child: Icon(
-                      Icons.delete_outline_rounded,
-                      color: AppColors.black, // Dark color to match Figma
-                      size: 22,
+                      ],
                     ),
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+
+            // 2. White image card overlapping the background tabs - Foreground Layer (Overlapping)
+            Container(
+              margin: EdgeInsets.only(top: 32 * scale.clamp(0.85, 1.2)),
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  // Product image
+                  SizedBox(
+                    width: 52 * scale.clamp(0.85, 1.2),
+                    height: 52 * scale.clamp(0.85, 1.2),
+                    child: () {
+                      final path = product.imageAsset ?? product.thumbnailAsset ?? '';
+                      if (path.startsWith('http')) {
+                        return Image.network(
+                          path,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.image_outlined,
+                            size: 30,
+                            color: AppColors.clearGrey,
+                          ),
+                        );
+                      } else {
+                        return Image.asset(
+                          path,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.image_outlined,
+                            size: 30,
+                            color: AppColors.clearGrey,
+                          ),
+                        );
+                      }
+                    }(),
+                  ),
+                  const SizedBox(width: 14),
+                  // Name + description
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          product.name,
+                          style: GoogleFonts.inter(
+                            fontSize: 13 * scale.clamp(0.85, 1.2),
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          product.description,
+                          style: GoogleFonts.inter(
+                            fontSize: 11 * scale.clamp(0.85, 1.2),
+                            color: AppColors.darkGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Delete button
+                  GestureDetector(
+                    onTap: onRemove,
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.delete_outline_rounded,
+                        color: AppColors.black, // Dark color to match Figma
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

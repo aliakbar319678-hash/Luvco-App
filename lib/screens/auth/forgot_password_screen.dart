@@ -42,7 +42,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         body: Column(
           children: [
             // ── Header: back arrow + "Recover Password" ──
-            const AuthHeader(title: 'Recover Password'),
+            const AuthHeader(
+              title: 'Recover Password',
+              titleColor: AppColors.vibrantPink,
+            ),
 
             // ── Scrollable content ──
             Expanded(

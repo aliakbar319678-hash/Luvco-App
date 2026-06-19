@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../providers/shopping_list_detail_provider.dart';
+import '../../providers/favorites_provider.dart';
 
 class ProductDetailSheet extends ConsumerWidget {
   final ShoppingListItem item;
@@ -104,34 +105,6 @@ class ProductDetailSheet extends ConsumerWidget {
 
                   const SizedBox(height: 28),
 
-                  // ── Labels and Certifications ──
-                  Text(
-                    'Labels and Certifications',
-                    style: GoogleFonts.inter(
-                      fontSize: 15 * scale.clamp(0.85, 1.2),
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _HexagonLabelsList(scale: scale),
-
-                  const SizedBox(height: 24),
-
-                  // ── Possible allergens ──
-                  Text(
-                    'Possible allergens',
-                    style: GoogleFonts.inter(
-                      fontSize: 15 * scale.clamp(0.85, 1.2),
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _HexagonLabelsList(scale: scale),
-
-                  const SizedBox(height: 24),
-
                   // ── Ingredients list ──
                   Text(
                     'Ingredients list',
@@ -142,15 +115,11 @@ class ProductDetailSheet extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
+                  // (Product detail via barcode scanner uses the
+                  // full ProductDetailScreen which shows full data)
                   _IngredientItem(
-                    name: 'Ingredient Name',
-                    info: 'Nutritional Info',
-                    scale: scale,
-                  ),
-                  const Divider(color: AppColors.clearGrey, height: 24),
-                  _IngredientItem(
-                    name: 'Ingredient Name',
-                    info: null,
+                    name: item.description.isNotEmpty ? item.description : 'See product details',
+                    info: item.barcode != null ? 'Barcode: ${item.barcode}' : null,
                     scale: scale,
                   ),
                   if (showAddButton) ...[
@@ -216,21 +185,20 @@ class ProductDetailSheet extends ConsumerWidget {
   }
 }
 
-class _ProductImageSection extends StatefulWidget {
+class _ProductImageSection extends ConsumerStatefulWidget {
   final ShoppingListItem item;
   final double scale;
 
   const _ProductImageSection({required this.item, required this.scale});
 
   @override
-  State<_ProductImageSection> createState() => _ProductImageSectionState();
+  ConsumerState<_ProductImageSection> createState() => _ProductImageSectionState();
 }
 
-class _ProductImageSectionState extends State<_ProductImageSection> {
-  bool _isFavorite = false;
-
+class _ProductImageSectionState extends ConsumerState<_ProductImageSection> {
   @override
   Widget build(BuildContext context) {
+    final isFavorite = ref.watch(favoritesProvider).items.any((i) => i.barcode == (widget.item.barcode ?? widget.item.id));
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -244,59 +212,25 @@ class _ProductImageSectionState extends State<_ProductImageSection> {
           ),
         ],
       ),
-      child: Stack(
-        children: [
-          // ── Main Image ──
-          Padding(
-            padding: const EdgeInsets.only(top: 40, bottom: 20, left: 20, right: 20),
-            child: Center(
-              child: widget.item.thumbnailAsset != null
-                  ? (widget.item.thumbnailAsset!.startsWith('http')
-                      ? Image.network(
-                          widget.item.thumbnailAsset!,
-                          height: 180 * widget.scale.clamp(0.85, 1.2),
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons.image_outlined,
-                            size: 80,
-                            color: AppColors.neutralGrey,
-                          ),
-                        )
-                      : Image.asset(
-                          widget.item.thumbnailAsset!,
-                          height: 180 * widget.scale.clamp(0.85, 1.2),
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons.image_outlined,
-                            size: 80,
-                            color: AppColors.neutralGrey,
-                          ),
-                        ))
-                  : const Icon(
-                      Icons.image_outlined,
-                      size: 80,
-                      color: AppColors.neutralGrey,
-                    ),
-            ),
-          ),
-
-          // ── Top Badges (Unsustainable / Safe) ──
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Row(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            // 1. Red/Green background tabs - Background Layer
+            Row(
               children: [
                 Expanded(
                   child: Container(
-                    height: 36,
+                    height: 90 * widget.scale.clamp(0.85, 1.2),
                     decoration: const BoxDecoration(
                       color: Color(0xFFE53935), // Red
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(20),
-                        bottomRight: Radius.circular(12),
+                        topRight: Radius.circular(16),
                       ),
                     ),
+                    alignment: Alignment.topCenter,
+                    padding: EdgeInsets.only(top: 14 * widget.scale.clamp(0.85, 1.2)),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -316,14 +250,16 @@ class _ProductImageSectionState extends State<_ProductImageSection> {
                 ),
                 Expanded(
                   child: Container(
-                    height: 36,
+                    height: 90 * widget.scale.clamp(0.85, 1.2),
                     decoration: const BoxDecoration(
                       color: Color(0xFF43A047), // Green
                       borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16),
                         topRight: Radius.circular(20),
-                        bottomLeft: Radius.circular(12),
                       ),
                     ),
+                    alignment: Alignment.topCenter,
+                    padding: EdgeInsets.only(top: 14 * widget.scale.clamp(0.85, 1.2)),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -343,74 +279,91 @@ class _ProductImageSectionState extends State<_ProductImageSection> {
                 ),
               ],
             ),
-          ),
 
-          // ── Heart Icon ──
-          Positioned(
-            top: 48,
-            right: 16,
-            child: GestureDetector(
-              onTap: () => setState(() => _isFavorite = !_isFavorite),
-              child: Icon(
-                _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                color: _isFavorite ? AppColors.vibrantPink : AppColors.black,
-                size: 24,
+            // 2. White image card overlapping the background tabs - Foreground Layer (Overlapping)
+            Container(
+              margin: EdgeInsets.only(top: 46 * widget.scale.clamp(0.85, 1.2)),
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              padding: const EdgeInsets.only(top: 20, bottom: 20),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Product image
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20, bottom: 0, left: 20, right: 20),
+                    child: Center(
+                      child: widget.item.thumbnailAsset != null
+                          ? (widget.item.thumbnailAsset!.startsWith('http')
+                              ? Image.network(
+                                  widget.item.thumbnailAsset!,
+                                  height: 180 * widget.scale.clamp(0.85, 1.2),
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.image_outlined,
+                                    size: 80,
+                                    color: AppColors.neutralGrey,
+                                  ),
+                                )
+                              : Image.asset(
+                                  widget.item.thumbnailAsset!,
+                                  height: 180 * widget.scale.clamp(0.85, 1.2),
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.image_outlined,
+                                    size: 80,
+                                    color: AppColors.neutralGrey,
+                                  ),
+                                ))
+                          : const Icon(
+                              Icons.image_outlined,
+                              size: 80,
+                              color: AppColors.neutralGrey,
+                            ),
+                    ),
+                  ),
+                  
+                  // Heart save button
+                  Positioned(
+                    right: 16,
+                    top: 0,
+                    child: GestureDetector(
+                      onTap: () async {
+                        final barcode = widget.item.barcode ?? widget.item.id;
+                        final notifier = ref.read(favoritesProvider.notifier);
+                        if (isFavorite) {
+                          await notifier.removeItem(barcode);
+                        } else {
+                          await notifier.addFavorite(
+                            barcode: barcode,
+                            productName: widget.item.name,
+                            productImageUrl: widget.item.thumbnailAsset,
+                          );
+                        }
+                      },
+                      child: Icon(
+                        isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                        color: isFavorite ? AppColors.vibrantPink : AppColors.black,
+                        size: 26,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _HexagonLabelsList extends StatelessWidget {
-  final double scale;
-
-  const _HexagonLabelsList({required this.scale});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(4, (index) {
-        return Column(
-          children: [
-            Container(
-              width: 50 * scale.clamp(0.85, 1.2),
-              height: 50 * scale.clamp(0.85, 1.2),
-              decoration: BoxDecoration(
-                color: AppColors.pureWhite,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.hexagon_outlined,
-                color: AppColors.black,
-                size: 24 * scale.clamp(0.85, 1.2),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Label',
-              style: GoogleFonts.inter(
-                fontSize: 11 * scale.clamp(0.85, 1.2),
-                color: AppColors.black,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        );
-      }),
-    );
-  }
-}
 
 class _IngredientItem extends StatelessWidget {
   final String name;

@@ -46,7 +46,7 @@ class MyRecipesTab extends ConsumerWidget {
             onFilterTap: () => _showFilterSheet(context, ref, filterState),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           if (myFiltered.isEmpty)
             _EmptyRecipeState(
@@ -66,7 +66,7 @@ class MyRecipesTab extends ConsumerWidget {
               isMyRecipes: true,
             ),
 
-          const SizedBox(height: 28),
+          const SizedBox(height: 20),
 
           // ── Saved Recipes section ───────────────────────────────
           _RecipeSectionHeader(
@@ -80,14 +80,14 @@ class MyRecipesTab extends ConsumerWidget {
             onFilterTap: () => _showFilterSheet(context, ref, filterState),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _FilterRow(
             scale: scale,
             filterState: filterState,
             onFilterIconTap: () => _showFilterSheet(context, ref, filterState),
             onTagToggle: (tag) => ref.read(recipeFilterProvider.notifier).toggleDietFilter(tag),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           if (savedFiltered.isEmpty)
             _EmptyRecipeState(
@@ -307,6 +307,7 @@ class _RecipeGridView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
+      padding: EdgeInsets.zero,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

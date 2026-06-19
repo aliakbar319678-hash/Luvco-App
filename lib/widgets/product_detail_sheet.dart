@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/app_colors.dart';
 import '../models/product_model.dart';
+import '../providers/favorites_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // Product Detail Bottom Sheet
@@ -24,7 +26,7 @@ void showProductDetailSheet(
   );
 }
 
-class _ProductDetailSheet extends StatefulWidget {
+class _ProductDetailSheet extends ConsumerStatefulWidget {
   final ProductModel product;
   final VoidCallback onAddProduct;
 
@@ -34,11 +36,10 @@ class _ProductDetailSheet extends StatefulWidget {
   });
 
   @override
-  State<_ProductDetailSheet> createState() => _ProductDetailSheetState();
+  ConsumerState<_ProductDetailSheet> createState() => _ProductDetailSheetState();
 }
 
-class _ProductDetailSheetState extends State<_ProductDetailSheet> {
-  bool _isSaved = false;
+class _ProductDetailSheetState extends ConsumerState<_ProductDetailSheet> {
   bool _productAdded = false; // drives the success toast overlay
 
   void _handleAddProduct() {
@@ -55,6 +56,7 @@ class _ProductDetailSheetState extends State<_ProductDetailSheet> {
     final size = MediaQuery.sizeOf(context);
     final scale = size.width / 390;
     final product = widget.product;
+    final isSaved = ref.watch(favoritesProvider).items.any((i) => i.barcode == product.id);
 
     return Stack(
       children: [
@@ -162,131 +164,165 @@ class _ProductDetailSheetState extends State<_ProductDetailSheet> {
                                 ),
                               ],
                             ),
-                            clipBehavior: Clip.antiAlias, // Clips the red/green tabs to match the 24px border radius
-                            child: Column(
-                              children: [
-                                // Top tabs (Unsustainable / Safe)
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Container(
-                                        height: 50 * scale.clamp(0.85, 1.2),
-                                        decoration: const BoxDecoration(
-                                          color: AppColors.errorRed,
-                                          borderRadius: BorderRadius.only(
-                                            topRight: Radius.circular(16), // Curving the inner border
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(24),
+                              child: Stack(
+                                children: [
+                                  // Top tabs (Unsustainable / Safe) - Background Layer
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Container(
+                                          height: 90 * scale.clamp(0.85, 1.2),
+                                          decoration: const BoxDecoration(
+                                            color: AppColors.errorRed,
+                                            borderRadius: BorderRadius.only(
+                                              topLeft: Radius.circular(24),
+                                              topRight: Radius.circular(16),
+                                            ),
+                                          ),
+                                          alignment: Alignment.topCenter,
+                                          padding: EdgeInsets.only(top: 14 * scale.clamp(0.85, 1.2)),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Image.asset(
+                                                'assets/icons/tabler-icon-leaf.png',
+                                                width: 18 * scale.clamp(0.85, 1.2),
+                                                height: 18 * scale.clamp(0.85, 1.2),
+                                                color: Colors.white,
+                                                errorBuilder: (_, __, ___) => Icon(
+                                                  Icons.recycling_outlined,
+                                                  color: Colors.white,
+                                                  size: 16 * scale.clamp(0.85, 1.2),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                'Unsustainable',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 11 * scale.clamp(0.85, 1.2),
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                        alignment: Alignment.center,
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Image.asset(
-                                              'assets/icons/tabler-icon-leaf.png',
-                                              width: 18 * scale.clamp(0.85, 1.2),
-                                              height: 18 * scale.clamp(0.85, 1.2),
-                                              color: Colors.white,
-                                              errorBuilder: (_, __, ___) => Icon(
-                                                Icons.recycling_outlined,
+                                      ),
+                                      Expanded(
+                                        child: Container(
+                                          height: 90 * scale.clamp(0.85, 1.2),
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFF43A047),
+                                            borderRadius: BorderRadius.only(
+                                              topLeft: Radius.circular(16),
+                                              topRight: Radius.circular(24),
+                                            ),
+                                          ),
+                                          alignment: Alignment.topCenter,
+                                          padding: EdgeInsets.only(top: 14 * scale.clamp(0.85, 1.2)),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.flag_outlined,
                                                 color: Colors.white,
                                                 size: 16 * scale.clamp(0.85, 1.2),
                                               ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              'Unsustainable',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 11 * scale.clamp(0.85, 1.2),
-                                                fontWeight: FontWeight.w600,
-                                                color: Colors.white,
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                'Safe',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 11 * scale.clamp(0.85, 1.2),
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
+                                                ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Container(
-                                        height: 50 * scale.clamp(0.85, 1.2),
-                                        decoration: const BoxDecoration(
-                                          color: Color(0xFF43A047),
-                                          borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(16), // Curving the inner border
-                                          ),
-                                        ),
-                                        alignment: Alignment.center,
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.flag_outlined,
-                                              color: Colors.white,
-                                              size: 16 * scale.clamp(0.85, 1.2),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              'Safe',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 11 * scale.clamp(0.85, 1.2),
-                                                fontWeight: FontWeight.w600,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                // Bottom Image Section
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.only(top: 20, bottom: 20),
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      // Product image
-                                      if (product.imageAsset != null)
-                                        Image.asset(
-                                          product.imageAsset!,
-                                          height: 180 * scale.clamp(0.85, 1.2),
-                                          fit: BoxFit.contain,
-                                          errorBuilder: (_, __, ___) =>
-                                              const Icon(
-                                                Icons.image_outlined,
-                                                size: 80,
-                                                color: AppColors.clearGrey,
-                                              ),
-                                        )
-                                      else
-                                        const Icon(
-                                          Icons.image_outlined,
-                                          size: 80,
-                                          color: AppColors.clearGrey,
-                                        ),
-                                      
-                                      // Heart save button
-                                      Positioned(
-                                        right: 16,
-                                        top: 0, // Neatly at the top right of the white image section
-                                        child: GestureDetector(
-                                          onTap: () =>
-                                              setState(() => _isSaved = !_isSaved),
-                                          child: Icon(
-                                            _isSaved
-                                                ? Icons.favorite_rounded
-                                                : Icons.favorite_border_rounded,
-                                            color: _isSaved
-                                                ? AppColors.vibrantPink
-                                                : AppColors.black, // Dark outline matching Figma
-                                            size: 26,
+                                            ],
                                           ),
                                         ),
                                       ),
                                     ],
                                   ),
-                                ),
-                              ],
+                                  // Bottom Image Section - Foreground Layer (Overlapping)
+                                  Container(
+                                    margin: EdgeInsets.only(top: 46 * scale.clamp(0.85, 1.2)),
+                                    width: double.infinity,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.only(
+                                        topLeft: Radius.circular(24),
+                                        topRight: Radius.circular(24),
+                                      ),
+                                    ),
+                                    padding: const EdgeInsets.only(top: 20, bottom: 20),
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        // Product image (supports network and assets)
+                                        if (product.imageAsset != null)
+                                          (product.imageAsset!.startsWith('http') || product.imageAsset!.startsWith('https'))
+                                              ? Image.network(
+                                                  product.imageAsset!,
+                                                  height: 180 * scale.clamp(0.85, 1.2),
+                                                  fit: BoxFit.contain,
+                                                  errorBuilder: (_, __, ___) => const Icon(
+                                                    Icons.image_outlined,
+                                                    size: 80,
+                                                    color: AppColors.clearGrey,
+                                                  ),
+                                                )
+                                              : Image.asset(
+                                                  product.imageAsset!,
+                                                  height: 180 * scale.clamp(0.85, 1.2),
+                                                  fit: BoxFit.contain,
+                                                  errorBuilder: (_, __, ___) => const Icon(
+                                                    Icons.image_outlined,
+                                                    size: 80,
+                                                    color: AppColors.clearGrey,
+                                                  ),
+                                                )
+                                        else
+                                          const Icon(
+                                            Icons.image_outlined,
+                                            size: 80,
+                                            color: AppColors.clearGrey,
+                                          ),
+                                        
+                                        // Heart save button
+                                        Positioned(
+                                          right: 16,
+                                          top: 0, // Neatly at the top right of the white image section
+                                          child: GestureDetector(
+                                            onTap: () async {
+                                              final notifier = ref.read(favoritesProvider.notifier);
+                                              if (isSaved) {
+                                                await notifier.removeItem(product.id);
+                                              } else {
+                                                await notifier.addFavorite(
+                                                  barcode: product.id,
+                                                  productName: product.name,
+                                                  productImageUrl: product.thumbnailAsset,
+                                                );
+                                              }
+                                            },
+                                            child: Icon(
+                                              isSaved
+                                                  ? Icons.favorite_rounded
+                                                  : Icons.favorite_border_rounded,
+                                              color: isSaved
+                                                  ? AppColors.vibrantPink
+                                                  : AppColors.black, // Dark outline matching Figma
+                                              size: 26,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),

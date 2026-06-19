@@ -352,33 +352,6 @@ class _RecipeMetaSection extends StatelessWidget {
                   ],
                 ),
               ),
-              // Bookmark Button
-              Consumer(
-                builder: (context, ref, _) {
-                  return GestureDetector(
-                    onTap: () {
-                      ref.read(recipeDetailProvider(recipe).notifier).toggleBookmark();
-                    },
-                    child: Container(
-                      width: 44 * scale,
-                      height: 44 * scale,
-                      decoration: BoxDecoration(
-                        color: AppColors.royalPurple,
-                        borderRadius: BorderRadius.circular(16 * scale),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          recipe.isSaved
-                              ? Icons.bookmark_rounded
-                              : Icons.bookmark_border_rounded,
-                          color: AppColors.pureWhite,
-                          size: 20 * scale,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
             ],
           ),
 
@@ -937,37 +910,28 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ── ONE unified card — matches Figma exactly ─────────────────────
-    // Structure: rounded white card → top row has [Unsustainable tab | Safe tab]
-    //            → below: product image centered with heart icon overlay
     return Container(
       margin: EdgeInsets.only(bottom: 20 * scale),
-      decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
+      child: Stack(
         children: [
-          // ── Top Status Bar — two coloured tabs side by side ────────
-          IntrinsicHeight(
+          // ── Background Tabs ──
+          SizedBox(
+            height: 48 * scale,
+            width: double.infinity,
             child: Row(
               children: [
                 // Sustainability tab (left)
                 Expanded(
                   child: Container(
-                    color: _sustainabilityColor,
-                    padding: EdgeInsets.symmetric(
-                      vertical: 10 * scale,
-                      horizontal: 8 * scale,
+                    decoration: BoxDecoration(
+                      color: _sustainabilityColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16 * scale),
+                        topRight: Radius.circular(16 * scale),
+                      ),
                     ),
+                    padding: EdgeInsets.only(top: 8 * scale),
+                    alignment: Alignment.topCenter,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -992,11 +956,15 @@ class _ProductCard extends StatelessWidget {
                 // Safety tab (right)
                 Expanded(
                   child: Container(
-                    color: _safetyColor,
-                    padding: EdgeInsets.symmetric(
-                      vertical: 10 * scale,
-                      horizontal: 8 * scale,
+                    decoration: BoxDecoration(
+                      color: _safetyColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16 * scale),
+                        topRight: Radius.circular(16 * scale),
+                      ),
                     ),
+                    padding: EdgeInsets.only(top: 8 * scale),
+                    alignment: Alignment.topCenter,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -1022,9 +990,20 @@ class _ProductCard extends StatelessWidget {
             ),
           ),
 
-          // ── Product Info Area ──────────────────────────────────────
+          // ── Product Info Area (White Foreground Card) ──
           Container(
-            color: AppColors.pureWhite,
+            margin: EdgeInsets.only(top: 32 * scale),
+            decoration: BoxDecoration(
+              color: AppColors.pureWhite,
+              borderRadius: BorderRadius.circular(24 * scale),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 15,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
             padding: EdgeInsets.symmetric(
               vertical: 20 * scale,
               horizontal: 16 * scale,

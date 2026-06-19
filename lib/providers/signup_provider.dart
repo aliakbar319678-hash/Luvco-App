@@ -125,17 +125,35 @@ class SignupNotifier extends StateNotifier<SignupState> {
       if (res.success) {
         state = state.copyWith(status: SignupStatus.success);
       } else {
+        final message = res.message ?? 'Signup failed. Please try again.';
+        SignupErrorField errorField = SignupErrorField.email;
+        if (message.toLowerCase().contains('password')) {
+          errorField = SignupErrorField.password;
+        } else if (message.toLowerCase().contains('first name')) {
+          errorField = SignupErrorField.firstName;
+        } else if (message.toLowerCase().contains('last name')) {
+          errorField = SignupErrorField.lastName;
+        }
         state = SignupState(
           status: SignupStatus.error,
-          errorField: SignupErrorField.email,
-          errorMessage: res.message ?? 'Signup failed. Please try again.',
+          errorField: errorField,
+          errorMessage: message,
         );
       }
     } catch (e) {
+      final message = e.toString();
+      SignupErrorField errorField = SignupErrorField.email;
+      if (message.toLowerCase().contains('password')) {
+        errorField = SignupErrorField.password;
+      } else if (message.toLowerCase().contains('first name')) {
+        errorField = SignupErrorField.firstName;
+      } else if (message.toLowerCase().contains('last name')) {
+        errorField = SignupErrorField.lastName;
+      }
       state = SignupState(
         status: SignupStatus.error,
-        errorField: SignupErrorField.email,
-        errorMessage: e.toString(),
+        errorField: errorField,
+        errorMessage: message,
       );
     }
   }

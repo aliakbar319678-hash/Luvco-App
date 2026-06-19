@@ -132,54 +132,74 @@ class _DetailTopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final padding = MediaQuery.paddingOf(context);
-    final scale = size.width / 390;
+    final scale = size.width / 375; // Figma design width
+
+    final totalHeight = 121 * scale;
 
     return Container(
-      color: AppColors.pureWhite,
-      padding: EdgeInsets.only(
-        top: padding.top + 8,
-        bottom: 12,
-        left: 16,
-        right: 16,
+      width: double.infinity,
+      height: totalHeight,
+      decoration: BoxDecoration(
+        color: AppColors.pureWhite,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: Row(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
         children: [
-          // Back button
-          GestureDetector(
-            onTap: () => context.pop(),
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              width: 36,
-              height: 36,
-              alignment: Alignment.center,
-              child: Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: AppColors.vibrantPink,
-                size: 20 * scale.clamp(0.85, 1.2),
-              ),
-            ),
-          ),
-
-          // Title
+          SizedBox(height: padding.top),
           Expanded(
-            child: Text(
-              list.title,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 18 * scale.clamp(0.85, 1.2),
-                fontWeight: FontWeight.w700,
-                color: AppColors.vibrantPink,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            child: Row(
+              children: [
+                // Back button
+                GestureDetector(
+                  onTap: () => context.pop(),
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: AppColors.vibrantPink,
+                      size: 20 * scale.clamp(0.85, 1.2),
+                    ),
+                  ),
+                ),
+
+                // Title
+                Expanded(
+                  child: Text(
+                    list.title,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 18 * scale.clamp(0.85, 1.2),
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.vibrantPink,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+
+                // More (•••) button
+                _MoreMenuButton(
+                  onAction: (action) => _handleMoreAction(context, action),
+                  scale: scale,
+                ),
+              ],
             ),
           ),
-
-          // More (•••) button
-          _MoreMenuButton(
-            onAction: (action) => _handleMoreAction(context, action),
-            scale: scale,
-          ),
+          SizedBox(height: 12 * scale),
         ],
       ),
     );
@@ -351,25 +371,25 @@ class _EmptyBody extends StatelessWidget {
 
     return Column(
       children: [
-        // List title + description card
+        // List title + description card — separate rounded card
         _ListInfoCard(list: list, scale: scale, size: size),
 
+        // Middle: centered empty illustration + text
         Expanded(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Empty cart illustration
-              SizedBox(
+              // Empty cart illustration — transparent background, blends with page
+              Image.asset(
+                'assets/images/empty_cart_illustration.png',
                 width: 180 * scale.clamp(0.8, 1.2),
                 height: 160 * scale.clamp(0.8, 1.2),
-                child: Image.asset(
-                  'assets/images/Empty-Cart-1--Streamline-Milano.png',
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => Icon(
-                    Icons.shopping_cart_outlined,
-                    size: 80 * scale.clamp(0.8, 1.2),
-                    color: AppColors.neutralGrey,
-                  ),
+                fit: BoxFit.contain,
+                color: null, // no tint
+                errorBuilder: (_, __, ___) => Icon(
+                  Icons.shopping_cart_outlined,
+                  size: 80 * scale.clamp(0.8, 1.2),
+                  color: AppColors.neutralGrey,
                 ),
               ),
 
@@ -385,16 +405,19 @@ class _EmptyBody extends StatelessWidget {
                   height: 1.45,
                 ),
               ),
-
-              const SizedBox(height: 32),
-
-              // Add Products button
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: size.width * 0.08),
-                child: _AddProductsButton(scale: scale, size: size, listId: list.id),
-              ),
             ],
           ),
+        ),
+
+        // Add Products button — pinned at the bottom above nav bar
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            size.width * 0.06,
+            8,
+            size.width * 0.06,
+            16,
+          ),
+          child: _AddProductsButton(scale: scale, size: size, listId: list.id),
         ),
       ],
     );
@@ -492,12 +515,11 @@ class _ListInfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: AppColors.pureWhite,
       padding: EdgeInsets.fromLTRB(
-        size.width * 0.05,
-        14,
-        size.width * 0.05,
-        14,
+        size.width * 0.06,
+        24,
+        size.width * 0.06,
+        8,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -505,16 +527,16 @@ class _ListInfoCard extends StatelessWidget {
           Text(
             list.title,
             style: GoogleFonts.inter(
-              fontSize: 20 * scale.clamp(0.85, 1.2),
+              fontSize: 24 * scale.clamp(0.85, 1.2),
               fontWeight: FontWeight.w700,
               color: AppColors.black,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             list.description,
             style: GoogleFonts.inter(
-              fontSize: 13 * scale.clamp(0.85, 1.2),
+              fontSize: 14 * scale.clamp(0.85, 1.2),
               fontWeight: FontWeight.w400,
               color: AppColors.darkGrey,
               height: 1.4,
@@ -702,7 +724,7 @@ class _ProductListItem extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Add Products Button — matches Figma purple pill button
+// Add Products Button — matches Figma (moderate rounded, NOT pill)
 // ─────────────────────────────────────────────────────────────────
 class _AddProductsButton extends StatelessWidget {
   final double scale;
@@ -723,8 +745,9 @@ class _AddProductsButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.royalPurple,
           elevation: 0,
+          // Figma uses moderate rounding — NOT a full pill shape
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(50),
+            borderRadius: BorderRadius.circular(14),
           ),
         ),
         icon: Icon(

@@ -72,6 +72,7 @@ class OnboardingScreen extends ConsumerWidget {
                 // ── Next button ──
                 LuvcoButton(
                   label: 'Next',
+                  trailingIcon: const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
                   onTap: () => context.push('/onboarding/diet'),
                 ),
 

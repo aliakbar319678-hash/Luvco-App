@@ -110,6 +110,7 @@ class DietPreferenceScreen extends ConsumerWidget {
                 // ── Next button ──
                 LuvcoButton(
                   label: 'Next',
+                  trailingIcon: const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
                   isDisabled: !hasSelection,
                   onTap: () => context.push('/onboarding/allergy'),
                 ),

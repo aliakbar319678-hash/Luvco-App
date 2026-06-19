@@ -476,14 +476,15 @@ class _ProductCardState extends ConsumerState<_ProductCard> {
                     // Left badge (eco)
                     Expanded(
                       child: Container(
-                        height: 40 * s,
+                        height: 38 * s,
                         decoration: BoxDecoration(
                           color: _badgeColor(eco),
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(20),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(16 * s),
+                            topRight: Radius.circular(16 * s),
                           ),
                         ),
-                        padding: EdgeInsets.only(top: 8 * s, bottom: 10 * s),
+                        padding: EdgeInsets.only(top: 8 * s, bottom: 12 * s),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -511,14 +512,15 @@ class _ProductCardState extends ConsumerState<_ProductCard> {
                     // Right badge (safety)
                     Expanded(
                       child: Container(
-                        height: 40 * s,
+                        height: 38 * s,
                         decoration: BoxDecoration(
                           color: _badgeColor(safe),
-                          borderRadius: const BorderRadius.only(
-                            topRight: Radius.circular(20),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(16 * s),
+                            topRight: Radius.circular(16 * s),
                           ),
                         ),
-                        padding: EdgeInsets.only(top: 8 * s, bottom: 10 * s),
+                        padding: EdgeInsets.only(top: 8 * s, bottom: 12 * s),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -549,10 +551,10 @@ class _ProductCardState extends ConsumerState<_ProductCard> {
 
               // ── WHITE CARD LAYER ───────────────────────────────────
               Container(
-                margin: EdgeInsets.only(top: 32 * s),
+                margin: EdgeInsets.only(top: 26 * s),
                 decoration: BoxDecoration(
                   color: AppColors.pureWhite,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(20 * s),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.07),
