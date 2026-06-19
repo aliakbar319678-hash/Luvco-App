@@ -46,6 +46,7 @@ class BarcodeScannerScreen extends ConsumerWidget {
                     state.scanState == BarcodeScanState.addToList ||
                     state.scanState == BarcodeScanState.addToRecipe,
                 isScanning: state.scanState == BarcodeScanState.scanning,
+                hasPermission: state.scanState != BarcodeScanState.cameraPermission,
               ),
             ),
 
@@ -212,8 +213,13 @@ class _NavIconButton extends StatelessWidget {
 class _CameraFeed extends ConsumerStatefulWidget {
   final bool blurred;
   final bool isScanning;
+  final bool hasPermission;
 
-  const _CameraFeed({required this.blurred, required this.isScanning});
+  const _CameraFeed({
+    required this.blurred,
+    required this.isScanning,
+    required this.hasPermission,
+  });
 
   @override
   ConsumerState<_CameraFeed> createState() => _CameraFeedState();
@@ -239,6 +245,21 @@ class _CameraFeedState extends ConsumerState<_CameraFeed> {
   @override
   Widget build(BuildContext context) {
     final notifier = ref.read(barcodeScannerProvider.notifier);
+
+    if (!widget.hasPermission) {
+      return Container(
+        color: Colors.black,
+        child: Center(
+          child: Opacity(
+            opacity: 0.2,
+            child: Image.asset(
+              'assets/images/nutila.png',
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+      );
+    }
 
     final Widget bg = Stack(
       children: [
