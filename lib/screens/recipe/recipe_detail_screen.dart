@@ -772,33 +772,54 @@ class _ProductsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final displayProducts = recipe.products.isEmpty
+        ? [
+            const RecipeProduct(
+              id: 'demo_prod_1',
+              recipeId: 'demo',
+              productName: 'Name of the Product',
+              productImageUrl: 'assets/images/product_image.png',
+              quantity: 1,
+              unit: 'Other data from the product.',
+              position: 1,
+              sustainabilityLevel: 'Unsustainable',
+              safetyLevel: 'Avoid',
+            ),
+            const RecipeProduct(
+              id: 'demo_prod_2',
+              recipeId: 'demo',
+              productName: 'Name of the Product',
+              productImageUrl: 'assets/images/product_image.png',
+              quantity: 1,
+              unit: 'Other data from the product.',
+              position: 2,
+              sustainabilityLevel: 'Moderate Impact',
+              safetyLevel: 'Safe',
+            ),
+          ]
+        : recipe.products;
+
     return Padding(
       padding: EdgeInsets.all(16 * scale),
       child: Column(
         children: [
           if (recipe.isOwner) _AddProductsButton(scale: scale),
-
-          if (recipe.products.isEmpty) ...[
-            SizedBox(height: 40 * scale),
-            _ProductsEmptyState(scale: scale),
-          ] else ...[
-            SizedBox(height: 12 * scale),
-            ...recipe.products.map(
-              (p) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _ProductCard(
-                  product: p,
-                  scale: scale,
-                  isOwner: recipe.isOwner,
-                  onDelete: recipe.isOwner
-                      ? () => ref
-                            .read(recipeDetailProvider(recipe).notifier)
-                            .removeProduct(p.id)
-                      : null,
-                ),
+          SizedBox(height: 12 * scale),
+          ...displayProducts.map(
+            (p) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _ProductCard(
+                product: p,
+                scale: scale,
+                isOwner: recipe.isOwner,
+                onDelete: recipe.isOwner
+                    ? () => ref
+                          .read(recipeDetailProvider(recipe).notifier)
+                          .removeProduct(p.id)
+                    : null,
               ),
             ),
-          ],
+          ),
           const SizedBox(height: 24),
         ],
       ),
@@ -816,7 +837,7 @@ class _AddProductsButton extends StatelessWidget {
       width: double.infinity,
       height: 48,
       child: OutlinedButton.icon(
-        onPressed: () {},
+        onPressed: () => context.push('/dashboard-search'),
         icon: Icon(
           Icons.add,
           size: 18 * scale.clamp(0.85, 1.2),
@@ -842,6 +863,7 @@ class _AddProductsButton extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _ProductsEmptyState extends StatelessWidget {
   final double scale;
   const _ProductsEmptyState({required this.scale});
