@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:go_router/go_router.dart';
+
 import '../../core/theme/app_colors.dart';
 import '../../models/recipe_model.dart';
 import '../../models/recipe_detail_model.dart';
@@ -23,10 +25,8 @@ class EditRecipeScreen extends ConsumerStatefulWidget {
 class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _descCtrl;
-  late final TextEditingController _ingredientCtrl;
-  late final TextEditingController _stepCtrl;
-  late final TextEditingController _productNameCtrl;
-  late final TextEditingController _productBarcodeCtrl;
+  late final TextEditingController _ingredientsTextCtrl;
+  late final TextEditingController _instructionsTextCtrl;
 
   late int _timeOfPrep;
   late int _servings;
@@ -35,6 +35,7 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
   String? _coverImagePath;
 
   int _activeTab = 0; // 0=Details 1=Preparation 2=Products
+  bool _prepInitialized = false;
 
   static const _dietOptions = [
     'Vegetarian',
@@ -63,10 +64,8 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
     final r = widget.recipe;
     _nameCtrl = TextEditingController(text: r?.title ?? '');
     _descCtrl = TextEditingController(text: r?.description ?? '');
-    _ingredientCtrl = TextEditingController();
-    _stepCtrl = TextEditingController();
-    _productNameCtrl = TextEditingController();
-    _productBarcodeCtrl = TextEditingController();
+    _ingredientsTextCtrl = TextEditingController();
+    _instructionsTextCtrl = TextEditingController();
 
     _timeOfPrep = r?.timeOfPreparation ?? 60;
     _servings = r?.servings ?? 2;
@@ -79,10 +78,8 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
   void dispose() {
     _nameCtrl.dispose();
     _descCtrl.dispose();
-    _ingredientCtrl.dispose();
-    _stepCtrl.dispose();
-    _productNameCtrl.dispose();
-    _productBarcodeCtrl.dispose();
+    _ingredientsTextCtrl.dispose();
+    _instructionsTextCtrl.dispose();
     super.dispose();
   }
 
@@ -114,10 +111,7 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
 
   void _saveChanges() async {
     final r = widget.recipe;
-    if (r == null) {
-      // Create new is handled via the 3-step wizard NewRecipeScreen.
-      return;
-    }
+    if (r == null) return;
 
     showDialog(
       context: context,
@@ -151,10 +145,7 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
 
       await RecipeApiService.instance.editRecipe(r.id, payload);
 
-      // Refresh My Recipes catalog
       ref.read(myRecipesProvider.notifier).loadRecipes();
-      
-      // Refresh details screen providers
       final detailModel = RecipeDetailModel(core: r);
       ref.read(recipeDetailProvider(detailModel).notifier).fetchDetails();
 
@@ -167,6 +158,71 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
         Navigator.of(context).pop(); // Pop loading dialog
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _savePreparation() async {
+    final r = widget.recipe;
+    if (r == null) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: AppColors.royalPurple),
+      ),
+    );
+
+    try {
+      final detailModel = RecipeDetailModel(core: r);
+      final detail = ref.read(recipeDetailProvider(detailModel));
+
+      // 1. Delete all existing ingredients
+      for (final ing in detail.ingredientsList) {
+        await RecipeApiService.instance.removeIngredient(r.id, ing.id);
+      }
+
+      // 2. Parse and add new ingredients
+      final ingLines = _ingredientsTextCtrl.text.split('\n');
+      int ingPos = 1;
+      for (final line in ingLines) {
+        final trimmed = line.replaceAll(RegExp(r'^[•\-\*\s]+'), '').trim();
+        if (trimmed.isNotEmpty) {
+          await RecipeApiService.instance.addIngredient(r.id, trimmed, ingPos++);
+        }
+      }
+
+      // 3. Delete all existing instructions
+      for (final inst in detail.instructionsList) {
+        await RecipeApiService.instance.removeInstructionStep(r.id, inst.id);
+      }
+
+      // 4. Parse and add new instructions
+      final instLines = _instructionsTextCtrl.text.split('\n');
+      int instPos = 1;
+      for (final line in instLines) {
+        final trimmed = line.replaceAll(RegExp(r'^\d+[\.\s\-]+'), '').trim();
+        if (trimmed.isNotEmpty) {
+          await RecipeApiService.instance.addInstructionStep(r.id, trimmed, instPos++);
+        }
+      }
+
+      // Refresh details
+      ref.read(recipeDetailProvider(detailModel).notifier).fetchDetails();
+
+      if (mounted) {
+        Navigator.of(context).pop(); // Pop loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Preparation updated successfully!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Pop loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error updating preparation: $e')),
         );
       }
     }
@@ -192,21 +248,47 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.pureWhite,
+        backgroundColor: AppColors.pageBackground,
         body: Column(
           children: [
-            // ── Header ──
+            // ── Top Title Bar ──
             _EditRecipeHeader(
               padding: padding,
               scale: scale,
               size: size,
-              activeTab: _activeTab,
-              onTabChanged: (t) => setState(() => _activeTab = t),
             ),
+            const SizedBox(height: 12),
 
-            // ── Tab Body Content ──
+            // ── Tab Bar & Content wrapped in a separate floating card ──
             Expanded(
-              child: bodyContent,
+              child: Container(
+                margin: EdgeInsets.fromLTRB(16 * scale, 0, 16 * scale, 16 * scale),
+                decoration: BoxDecoration(
+                  color: AppColors.pureWhite,
+                  borderRadius: BorderRadius.circular(32 * scale),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 16),
+                    _EditRecipeTabBar(
+                      activeTab: _activeTab,
+                      scale: scale,
+                      onChanged: (t) => setState(() => _activeTab = t),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: bodyContent,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -235,7 +317,6 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
           _RequiredNote(scale: scale),
           const SizedBox(height: 20),
 
-          // Cover picture
           _SectionLabel(label: 'Cover Picture*', scale: scale),
           const SizedBox(height: 8),
           _CoverPicturePicker(
@@ -245,8 +326,7 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
           ),
           const SizedBox(height: 20),
 
-          // Recipe name
-          _SectionLabel(label: "Recipe's Name:*", scale: scale),
+          _SectionLabel(label: "Recipe's Name*", scale: scale),
           const SizedBox(height: 8),
           _LuvcoInputField(
             controller: _nameCtrl,
@@ -255,7 +335,6 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Description
           _SectionLabel(label: 'Description*', scale: scale),
           const SizedBox(height: 8),
           _LuvcoInputField(
@@ -265,7 +344,6 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Time of preparation
           _SectionLabel(label: 'Time of preparation*', scale: scale),
           const SizedBox(height: 8),
           _DropdownField<int>(
@@ -277,7 +355,6 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Servings
           _SectionLabel(label: 'Servings*', scale: scale),
           const SizedBox(height: 8),
           _DropdownField<int>(
@@ -289,7 +366,6 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Type of Diet
           _SectionLabel(label: 'Type of Diet*', scale: scale),
           const SizedBox(height: 10),
           _ChipGroup(
@@ -300,7 +376,6 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Free of Ingredients
           _SectionLabel(label: 'Free of Ingredients', scale: scale),
           const SizedBox(height: 10),
           _ChipGroup(
@@ -312,7 +387,6 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
 
           const SizedBox(height: 32),
 
-          // Save Changes button
           SizedBox(
             width: double.infinity,
             height: 52,
@@ -348,6 +422,17 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
 
     final detail = ref.watch(recipeDetailProvider(RecipeDetailModel(core: widget.recipe!)));
 
+    if (!_prepInitialized && (detail.ingredientsList.isNotEmpty || detail.instructionsList.isNotEmpty)) {
+      final ingText = detail.ingredientsList.map((e) => e.description).join('\n');
+      _ingredientsTextCtrl.text = ingText;
+
+      int stepNum = 1;
+      final instText = detail.instructionsList.map((e) => '${stepNum++}. ${e.text}').join('\n');
+      _instructionsTextCtrl.text = instText;
+
+      _prepInitialized = true;
+    }
+
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       padding: EdgeInsets.symmetric(
@@ -358,151 +443,111 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Edit Preparation Steps & Ingredients:',
+            'Edit the details of the preparation:',
             style: GoogleFonts.inter(
               fontSize: 18 * scale.clamp(0.85, 1.2),
               fontWeight: FontWeight.w700,
               color: AppColors.black,
             ),
           ),
+          _RequiredNote(scale: scale),
           const SizedBox(height: 20),
 
-          // Ingredients section
-          Text(
-            'Ingredients',
+          _SectionLabel(label: "Recipe's Ingredients*", scale: scale),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _ingredientsTextCtrl,
+            maxLines: 8,
             style: GoogleFonts.inter(
-              fontSize: 15 * scale.clamp(0.85, 1.2),
-              fontWeight: FontWeight.w700,
+              fontSize: 14 * scale.clamp(0.85, 1.2),
               color: AppColors.black,
             ),
-          ),
-          const SizedBox(height: 10),
-
-          if (detail.ingredientsList.isEmpty)
-            Text(
-              'No ingredients added yet.',
-              style: GoogleFonts.inter(color: AppColors.neutralGrey, fontSize: 13),
-            )
-          else
-            ...detail.ingredientsList.map((ing) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '• ${ing.description}',
-                          style: GoogleFonts.inter(fontSize: 14, color: AppColors.black),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline, color: Colors.red),
-                        onPressed: () {
-                          ref.read(recipeDetailProvider(detail).notifier).removeIngredient(ing.id);
-                        },
-                      )
-                    ],
-                  ),
-                )),
-
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                child: _LuvcoInputField(
-                  controller: _ingredientCtrl,
-                  hint: 'Add an ingredient',
-                  scale: scale,
+            decoration: InputDecoration(
+              hintText: 'Enter ingredients (one per line)',
+              hintStyle: GoogleFonts.inter(
+                fontSize: 14 * scale.clamp(0.85, 1.2),
+                color: AppColors.neutralGrey,
+              ),
+              contentPadding: const EdgeInsets.all(14),
+              filled: true,
+              fillColor: AppColors.pureWhite,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.inputBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.inputBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppColors.royalPurple,
+                  width: 1.5,
                 ),
               ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                onPressed: () {
-                  final text = _ingredientCtrl.text.trim();
-                  if (text.isNotEmpty) {
-                    ref.read(recipeDetailProvider(detail).notifier).addIngredient(text);
-                    _ingredientCtrl.clear();
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.royalPurple,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('Add', style: TextStyle(color: Colors.white)),
-              ),
-            ],
+            ),
           ),
+          const SizedBox(height: 20),
 
+          _SectionLabel(label: "Recipe's Instructions*", scale: scale),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _instructionsTextCtrl,
+            maxLines: 12,
+            style: GoogleFonts.inter(
+              fontSize: 14 * scale.clamp(0.85, 1.2),
+              color: AppColors.black,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Enter instructions (one per line)',
+              hintStyle: GoogleFonts.inter(
+                fontSize: 14 * scale.clamp(0.85, 1.2),
+                color: AppColors.neutralGrey,
+              ),
+              contentPadding: const EdgeInsets.all(14),
+              filled: true,
+              fillColor: AppColors.pureWhite,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.inputBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.inputBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppColors.royalPurple,
+                  width: 1.5,
+                ),
+              ),
+            ),
+          ),
           const SizedBox(height: 32),
 
-          // Instructions Section
-          Text(
-            'Instructions Steps',
-            style: GoogleFonts.inter(
-              fontSize: 15 * scale.clamp(0.85, 1.2),
-              fontWeight: FontWeight.w700,
-              color: AppColors.black,
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _savePreparation,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.faintPink,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: Text(
+                'Save Changes',
+                style: GoogleFonts.inter(
+                  fontSize: 15 * scale.clamp(0.85, 1.2),
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.royalPurple,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-
-          if (detail.instructionsList.isEmpty)
-            Text(
-              'No steps added yet.',
-              style: GoogleFonts.inter(color: AppColors.neutralGrey, fontSize: 13),
-            )
-          else
-            ...detail.instructionsList.map((step) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${step.stepNumber}. ${step.text}',
-                          style: GoogleFonts.inter(fontSize: 14, color: AppColors.black),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline, color: Colors.red),
-                        onPressed: () {
-                          ref.read(recipeDetailProvider(detail).notifier).removeInstructionStep(step.id);
-                        },
-                      )
-                    ],
-                  ),
-                )),
-
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                child: _LuvcoInputField(
-                  controller: _stepCtrl,
-                  hint: 'Add a preparation step',
-                  scale: scale,
-                ),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                onPressed: () {
-                  final text = _stepCtrl.text.trim();
-                  if (text.isNotEmpty) {
-                    ref.read(recipeDetailProvider(detail).notifier).addInstructionStep(text);
-                    _stepCtrl.clear();
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.royalPurple,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('Add', style: TextStyle(color: Colors.white)),
-              ),
-            ],
           ),
           const SizedBox(height: 40),
         ],
@@ -527,104 +572,67 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Link Products to Recipe:',
+            'Edit the products attached to the recipe:',
             style: GoogleFonts.inter(
               fontSize: 18 * scale.clamp(0.85, 1.2),
               fontWeight: FontWeight.w700,
               color: AppColors.black,
             ),
           ),
+          _RequiredNote(scale: scale),
+          const SizedBox(height: 20),
+
+          // Add Products button matching details design
+          _AddProductsButton(scale: scale),
           const SizedBox(height: 20),
 
           if (detail.products.isEmpty)
-            Text(
-              'No products linked yet.',
-              style: GoogleFonts.inter(color: AppColors.neutralGrey, fontSize: 13),
-            )
-          else
-            ...detail.products.map((p) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: SizedBox(
-                          width: 50,
-                          height: 50,
-                          child: p.productImageUrl.isNotEmpty
-                              ? (p.productImageUrl.startsWith('http')
-                                  ? Image.network(p.productImageUrl, fit: BoxFit.cover)
-                                  : Image.asset(p.productImageUrl, fit: BoxFit.cover))
-                              : Container(color: AppColors.clearGrey),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              p.productName,
-                              style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.black),
-                            ),
-                            if (p.barcode != null)
-                              Text(
-                                'Barcode: ${p.barcode}',
-                                style: GoogleFonts.inter(color: AppColors.neutralGrey, fontSize: 11),
-                              ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline, color: Colors.red),
-                        onPressed: () {
-                          ref.read(recipeDetailProvider(detail).notifier).removeProduct(p.id);
-                        },
-                      )
-                    ],
-                  ),
-                )),
-
-          const SizedBox(height: 24),
-          Text(
-            'Quick-Link a custom product:',
-            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.black),
-          ),
-          const SizedBox(height: 10),
-          _LuvcoInputField(
-            controller: _productNameCtrl,
-            hint: 'Product Name',
-            scale: scale,
-          ),
-          const SizedBox(height: 10),
-          _LuvcoInputField(
-            controller: _productBarcodeCtrl,
-            hint: 'Product Barcode (Optional)',
-            scale: scale,
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                final name = _productNameCtrl.text.trim();
-                final barcode = _productBarcodeCtrl.text.trim();
-                if (name.isNotEmpty) {
-                  ref.read(recipeDetailProvider(detail).notifier).addProduct({
-                    'productName': name,
-                    'barcode': barcode.isNotEmpty ? barcode : null,
-                  });
-                  _productNameCtrl.clear();
-                  _productBarcodeCtrl.clear();
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.royalPurple,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: Text(
+                  'No products linked yet.',
+                  style: GoogleFonts.inter(color: AppColors.neutralGrey, fontSize: 13),
                 ),
               ),
-              child: const Text('Link Product', style: TextStyle(color: Colors.white)),
+            )
+          else
+            ...detail.products.map(
+              (p) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _ProductCard(
+                  product: p,
+                  scale: scale,
+                  isOwner: detail.isOwner,
+                  onDelete: () {
+                    ref.read(recipeDetailProvider(detail).notifier).removeProduct(p.id);
+                  },
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 32),
+
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(), // Pop edit screen
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.faintPink,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: Text(
+                'Save Changes',
+                style: GoogleFonts.inter(
+                  fontSize: 15 * scale.clamp(0.85, 1.2),
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.royalPurple,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 40),
@@ -634,20 +642,77 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
   }
 }
 
-// ── Header with back arrow + "Edit Recipe" title + tab bar ──
+// ── Header — back arrow + "Edit Recipe" title ──
 class _EditRecipeHeader extends StatelessWidget {
   final EdgeInsets padding;
   final double scale;
   final Size size;
-  final int activeTab;
-  final ValueChanged<int> onTabChanged;
 
   const _EditRecipeHeader({
     required this.padding,
     required this.scale,
     required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.pureWhite,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.only(
+        top: padding.top + 8,
+        bottom: 24 * scale,
+        left: 8,
+        right: 8,
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.vibrantPink,
+              size: 20,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              'Edit Recipe',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 18 * scale.clamp(0.85, 1.2),
+                fontWeight: FontWeight.w700,
+                color: AppColors.vibrantPink,
+              ),
+            ),
+          ),
+          const SizedBox(width: 48), // Spacer to balance back button
+        ],
+      ),
+    );
+  }
+}
+
+// ── Tab Bar — pill style ──
+class _EditRecipeTabBar extends StatelessWidget {
+  final int activeTab;
+  final double scale;
+  final ValueChanged<int> onChanged;
+
+  const _EditRecipeTabBar({
     required this.activeTab,
-    required this.onTabChanged,
+    required this.scale,
+    required this.onChanged,
   });
 
   static const _tabs = ['Details', 'Preparation', 'Products'];
@@ -655,82 +720,288 @@ class _EditRecipeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        color: AppColors.pureWhite,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x0D000000),
-            blurRadius: 12,
-            offset: Offset(0, 3),
-          ),
-        ],
+      margin: EdgeInsets.symmetric(horizontal: 16 * scale),
+      height: 42,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0EBF9),
+        borderRadius: BorderRadius.circular(24),
       ),
-      padding: EdgeInsets.only(
-        top: padding.top + 10,
-        bottom: 0,
-        left: size.width * 0.058,
-        right: size.width * 0.058,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: AppColors.royalPurple,
-                    size: 20,
+      child: Row(
+        children: List.generate(_tabs.length, (i) {
+          final isActive = i == activeTab;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => onChanged(i),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: isActive ? AppColors.royalPurple : Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Center(
+                  child: Text(
+                    _tabs[i],
+                    style: GoogleFonts.inter(
+                      fontSize: 12 * scale.clamp(0.85, 1.2),
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                      color: isActive
+                          ? AppColors.pureWhite
+                          : AppColors.neutralGrey,
+                    ),
                   ),
                 ),
               ),
-              Text(
-                'Edit Recipe',
-                style: GoogleFonts.inter(
-                  fontSize: 18 * scale.clamp(0.85, 1.2),
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.royalPurple,
-                ),
-              ),
-            ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+// ── Add Products Button ──
+class _AddProductsButton extends StatelessWidget {
+  final double scale;
+  const _AddProductsButton({required this.scale});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: OutlinedButton.icon(
+        onPressed: () => context.push('/dashboard-search'),
+        icon: Icon(
+          Icons.add,
+          size: 18 * scale.clamp(0.85, 1.2),
+          color: AppColors.royalPurple,
+        ),
+        label: Text(
+          'Add Products',
+          style: GoogleFonts.inter(
+            fontSize: 14 * scale.clamp(0.85, 1.2),
+            fontWeight: FontWeight.w600,
+            color: AppColors.royalPurple,
           ),
-          const SizedBox(height: 14),
-          Row(
-            children: List.generate(_tabs.length, (i) {
-              final isActive = i == activeTab;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => onTabChanged(i),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.only(bottom: 12),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: AppColors.royalPurple, width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          backgroundColor: Colors.transparent,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Product Card — uses same design as Recipe Detail screen ──
+class _ProductCard extends StatelessWidget {
+  final RecipeProduct product;
+  final double scale;
+  final bool isOwner;
+  final VoidCallback? onDelete;
+
+  const _ProductCard({
+    required this.product,
+    required this.scale,
+    required this.isOwner,
+    this.onDelete,
+  });
+
+  Color get _sustainabilityColor {
+    switch (product.sustainabilityLevel) {
+      case 'Unsustainable':
+        return const Color(0xFFEF4444);
+      case 'Moderate Impact':
+        return const Color(0xFFF59E0B);
+      case 'Eco-Friendly':
+        return const Color(0xFF22C55E);
+      default:
+        return AppColors.neutralGrey;
+    }
+  }
+
+  Color get _safetyColor {
+    switch (product.safetyLevel) {
+      case 'Avoid':
+        return const Color(0xFFF59E0B);
+      case 'Safe':
+        return const Color(0xFF22C55E);
+      default:
+        return AppColors.neutralGrey;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 20 * scale),
+      child: Stack(
+        children: [
+          // ── Background Tabs ──
+          SizedBox(
+            height: 48 * scale,
+            width: double.infinity,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
                     decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: isActive ? AppColors.royalPurple : Colors.transparent,
-                          width: 2.5,
-                        ),
+                      color: _sustainabilityColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16 * scale),
+                        topRight: Radius.circular(16 * scale),
                       ),
                     ),
-                    child: Center(
-                      child: Text(
-                        _tabs[i],
+                    padding: EdgeInsets.only(top: 8 * scale),
+                    alignment: Alignment.topCenter,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.eco_outlined,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          product.sustainabilityLevel,
+                          style: GoogleFonts.inter(
+                            fontSize: 13 * scale.clamp(0.85, 1.2),
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: _safetyColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16 * scale),
+                        topRight: Radius.circular(16 * scale),
+                      ),
+                    ),
+                    padding: EdgeInsets.only(top: 8 * scale),
+                    alignment: Alignment.topCenter,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.flag_outlined,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          product.safetyLevel,
+                          style: GoogleFonts.inter(
+                            fontSize: 13 * scale.clamp(0.85, 1.2),
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Product Info Area (White Foreground Card) ──
+          Container(
+            margin: EdgeInsets.only(top: 32 * scale),
+            decoration: BoxDecoration(
+              color: AppColors.pureWhite,
+              borderRadius: BorderRadius.circular(24 * scale),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 15,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            padding: EdgeInsets.symmetric(
+              vertical: 20 * scale,
+              horizontal: 16 * scale,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 64 * scale,
+                  height: 64 * scale,
+                  child: product.imageAsset != null
+                      ? (product.imageAsset!.startsWith('assets/')
+                          ? Image.asset(product.imageAsset!, fit: BoxFit.contain)
+                          : Image.network(
+                              product.imageAsset!,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => Icon(
+                                Icons.image_outlined,
+                                size: 32 * scale,
+                                color: AppColors.clearGrey,
+                              ),
+                            ))
+                      : Icon(
+                          Icons.image_outlined,
+                          size: 32 * scale,
+                          color: AppColors.clearGrey,
+                        ),
+                ),
+                SizedBox(width: 16 * scale),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product.name,
+                        style: GoogleFonts.inter(
+                          fontSize: 14 * scale.clamp(0.85, 1.2),
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.black,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        product.otherData,
                         style: GoogleFonts.inter(
                           fontSize: 13 * scale.clamp(0.85, 1.2),
-                          fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                          color: isActive ? AppColors.royalPurple : AppColors.neutralGrey,
+                          color: AppColors.darkGrey,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                if (isOwner && onDelete != null) ...[
+                  SizedBox(width: 12 * scale),
+                  GestureDetector(
+                    onTap: onDelete,
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Icon(
+                        Icons.delete_outline_rounded,
+                        size: 24 * scale.clamp(0.85, 1.2),
+                        color: AppColors.black,
                       ),
                     ),
                   ),
-                ),
-              );
-            }),
+                ],
+              ],
+            ),
           ),
         ],
       ),
@@ -850,7 +1121,7 @@ class _LuvcoInputField extends StatelessWidget {
           vertical: 14,
         ),
         filled: true,
-        fillColor: AppColors.softGrey,
+        fillColor: AppColors.pureWhite,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.inputBorder),
@@ -892,7 +1163,7 @@ class _DropdownField<T> extends StatelessWidget {
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: AppColors.softGrey,
+        color: AppColors.pureWhite,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.inputBorder),
       ),
