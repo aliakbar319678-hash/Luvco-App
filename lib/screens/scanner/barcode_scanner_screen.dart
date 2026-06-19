@@ -877,6 +877,31 @@ class _ScanErrorIconPainter extends CustomPainter {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// Helper functions for label sanitization and English filtering
+// ═══════════════════════════════════════════════════════════════
+List<String> _filterEnglish(List<String> all) {
+  final englishOnly = all
+      .where((l) => !RegExp(r'^[a-z]{2,3}:').hasMatch(l) || l.startsWith('en:'))
+      .toList();
+  return englishOnly.isNotEmpty ? englishOnly : all;
+}
+
+String _cleanLabel(String raw) {
+  // Strip any language prefix code (e.g. "en:", "fr:", "en-us:")
+  String cleaned = raw.replaceAll(RegExp(r'^[a-z]{2,3}(-[a-z]{2,3})?:'), '');
+  cleaned = cleaned.replaceAll(RegExp(r'[-_]'), ' ').trim();
+  if (cleaned.isEmpty) return raw;
+  return cleaned
+      .split(' ')
+      .map((w) {
+        if (w.isEmpty) return '';
+        if (w.toLowerCase() == 'eu') return 'EU';
+        return '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}';
+      })
+      .join(' ');
+}
+
 // 2.2.3 — Product card bottom sheet
 // ═══════════════════════════════════════════════════════════════
 class _ProductCardLayer extends StatelessWidget {
@@ -906,6 +931,9 @@ class _ProductCardLayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final filteredLabels = _filterEnglish(product.labels);
+    final filteredAllergens = _filterEnglish(product.allergens);
+
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
@@ -982,17 +1010,21 @@ class _ProductCardLayer extends StatelessWidget {
                       onFavorite: onFavorite,
                     ),
                     SizedBox(height: 20 * scale),
-                    _SectionLabel(
-                      title: 'Labels and Certifications',
-                      scale: scale,
-                    ),
-                    SizedBox(height: 10 * scale),
-                    _HexRow(labels: product.labels, scale: scale),
-                    SizedBox(height: 20 * scale),
-                    _SectionLabel(title: 'Possible allergens', scale: scale),
-                    SizedBox(height: 10 * scale),
-                    _HexRow(labels: product.allergens, scale: scale),
-                    SizedBox(height: 24 * scale),
+                    if (filteredLabels.isNotEmpty) ...[
+                      _SectionLabel(
+                        title: 'Labels and Certifications',
+                        scale: scale,
+                      ),
+                      SizedBox(height: 10 * scale),
+                      _HexRow(labels: filteredLabels, scale: scale),
+                      SizedBox(height: 20 * scale),
+                    ],
+                    if (filteredAllergens.isNotEmpty) ...[
+                      _SectionLabel(title: 'Possible allergens', scale: scale),
+                      SizedBox(height: 10 * scale),
+                      _HexRow(labels: filteredAllergens, scale: scale),
+                      SizedBox(height: 24 * scale),
+                    ],
                     Row(
                       children: [
                         Expanded(
@@ -1075,94 +1107,105 @@ class _ImageWithBadges extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ── ONE unified card — exact Figma match ──────────────────────────
-    // Top: [Unsustainable red | Safe green] tabs with rounded top corners
-    // Below: white image area with centered product image + heart overlay
-    return Container(
-      width: double.infinity,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16 * scale),
-        border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // ── Status tabs — flush at top, rounded by clipBehavior ──────
-          IntrinsicHeight(
-            child: Row(
-              children: [
-                // Unsustainable (red)
-                Expanded(
-                  child: Container(
+    return Column(
+      children: [
+        // ── Status tabs — flush at top, separate from white card ──────
+        IntrinsicHeight(
+          child: Row(
+            children: [
+              // Unsustainable (red)
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
                     color: const Color(0xFFE53935),
-                    padding: EdgeInsets.symmetric(
-                      vertical: 10 * scale,
-                      horizontal: 4 * scale,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.eco_outlined,
-                          color: Colors.white,
-                          size: 15 * scale,
-                        ),
-                        SizedBox(width: 5 * scale),
-                        Text(
-                          'Unsustainable',
-                          style: GoogleFonts.inter(
-                            fontSize: 12 * scale,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20 * scale),
+                      topRight: Radius.circular(16 * scale),
                     ),
                   ),
+                  padding: EdgeInsets.symmetric(
+                    vertical: 10 * scale,
+                    horizontal: 4 * scale,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.eco_outlined,
+                        color: Colors.white,
+                        size: 15 * scale,
+                      ),
+                      SizedBox(width: 5 * scale),
+                      Text(
+                        'Unsustainable',
+                        style: GoogleFonts.inter(
+                          fontSize: 12 * scale,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                // Safe (green)
-                Expanded(
-                  child: Container(
+              ),
+              // Safe (green)
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
                     color: const Color(0xFF43A047),
-                    padding: EdgeInsets.symmetric(
-                      vertical: 10 * scale,
-                      horizontal: 4 * scale,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.flag_outlined,
-                          color: Colors.white,
-                          size: 15 * scale,
-                        ),
-                        SizedBox(width: 5 * scale),
-                        Text(
-                          'Safe',
-                          style: GoogleFonts.inter(
-                            fontSize: 12 * scale,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16 * scale),
+                      topRight: Radius.circular(20 * scale),
                     ),
                   ),
+                  padding: EdgeInsets.symmetric(
+                    vertical: 10 * scale,
+                    horizontal: 4 * scale,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.flag_outlined,
+                        color: Colors.white,
+                        size: 15 * scale,
+                      ),
+                      SizedBox(width: 5 * scale),
+                      Text(
+                        'Safe',
+                        style: GoogleFonts.inter(
+                          fontSize: 12 * scale,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+        ),
 
-          // ── White image area with heart overlay ───────────────────────
-          Stack(
+        SizedBox(height: 4 * scale), // Small visually balanced spacing
+
+        // ── White image area with heart overlay (all corners rounded) ──
+        Container(
+          width: double.infinity,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16 * scale),
+            border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.07),
+                blurRadius: 12,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Stack(
             children: [
               // Centered product image
               Container(
@@ -1173,17 +1216,40 @@ class _ImageWithBadges extends StatelessWidget {
                 ),
                 color: Colors.white,
                 child: Center(
-                  child: product.imageAsset != null
-                      ? Image.asset(
-                          product.imageAsset!,
-                          height: 150 * scale,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => Icon(
-                            Icons.image_outlined,
-                            size: 60 * scale,
-                            color: AppColors.neutralGrey,
-                          ),
-                        )
+                  child: product.imageAsset != null && product.imageAsset!.isNotEmpty
+                      ? (product.imageAsset!.startsWith('http')
+                          ? Image.network(
+                              product.imageAsset!,
+                              height: 150 * scale,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => Icon(
+                                Icons.image_outlined,
+                                size: 60 * scale,
+                                color: AppColors.neutralGrey,
+                              ),
+                              loadingBuilder: (ctx, child, prog) {
+                                if (prog == null) return child;
+                                return SizedBox(
+                                  height: 150 * scale,
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.royalPurple,
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                          : Image.asset(
+                              product.imageAsset!,
+                              height: 150 * scale,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => Icon(
+                                Icons.image_outlined,
+                                size: 60 * scale,
+                                color: AppColors.neutralGrey,
+                              ),
+                            ))
                       : Icon(
                           Icons.image_outlined,
                           size: 60 * scale,
@@ -1210,8 +1276,8 @@ class _ImageWithBadges extends StatelessWidget {
               ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -1248,9 +1314,7 @@ class _HexRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = labels.isEmpty
-        ? const ['Label', 'Label', 'Label', 'Label']
-        : labels;
+    final items = labels;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
@@ -1277,7 +1341,7 @@ class _HexRow extends StatelessWidget {
                     ),
                     SizedBox(height: 5 * scale),
                     Text(
-                      l,
+                      _cleanLabel(l),
                       style: GoogleFonts.inter(
                         fontSize: 11 * scale,
                         fontWeight: FontWeight.w500,
