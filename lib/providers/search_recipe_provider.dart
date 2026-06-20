@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/recipe_model.dart';
+import '../core/network/recipe_api_service.dart';
 
 // ─────────────────────────────────────────────────
 // Filter State
@@ -74,56 +75,26 @@ class SearchRecipeState {
 }
 
 // ─────────────────────────────────────────────────
-// Demo catalogue
-// ─────────────────────────────────────────────────
-final _recipeCatalogue = [
-  const RecipeModel(
-    id: 'sr1',
-    title: 'Recipe Title',
-    description: 'Short description of the recipe.',
-    imageUrl: 'assets/images/rice_image.png',
-    dietTags: ['Gluten Free', 'Label 01', 'Label 02'],
-    servings: 2,
-    timeOfPreparation: 30,
-    freeOfIngredients: ['Label', 'Label', 'Label', 'Label'],
-  ),
-  const RecipeModel(
-    id: 'sr2',
-    title: 'Recipe Title',
-    description: 'Short description of the recipe.',
-    imageUrl: 'assets/images/rice_image.png',
-    dietTags: ['Gluten Free', 'Label 01', 'Label 02'],
-    servings: 2,
-    timeOfPreparation: 30,
-    freeOfIngredients: ['Label', 'Label', 'Label', 'Label'],
-  ),
-  const RecipeModel(
-    id: 'sr3',
-    title: 'Recipe Title',
-    description: 'Short description of the recipe.',
-    imageUrl: 'assets/images/rice_image.png',
-    dietTags: ['Gluten Free', 'Label 01', 'Label 02'],
-    servings: 2,
-    timeOfPreparation: 30,
-    freeOfIngredients: ['Label', 'Label', 'Label', 'Label'],
-  ),
-  const RecipeModel(
-    id: 'sr4',
-    title: 'Recipe Title',
-    description: 'Short description of the recipe.',
-    imageUrl: 'assets/images/rice_image.png',
-    dietTags: ['Gluten Free', 'Label 01', 'Label 02'],
-    servings: 2,
-    timeOfPreparation: 30,
-    freeOfIngredients: ['Label', 'Label', 'Label', 'Label'],
-  ),
-];
-
-// ─────────────────────────────────────────────────
 // Notifier
 // ─────────────────────────────────────────────────
 class SearchRecipeNotifier extends StateNotifier<SearchRecipeState> {
-  SearchRecipeNotifier() : super(const SearchRecipeState());
+  SearchRecipeNotifier() : super(const SearchRecipeState()) {
+    fetchRecipes();
+  }
+
+  List<RecipeModel> _allRecipes = [];
+
+  Future<void> fetchRecipes() async {
+    try {
+      final recipes = await RecipeApiService.instance.getRecipes('public');
+      _allRecipes = recipes;
+      if (state.query.isNotEmpty) {
+        _applySearchAndFilters(state.query, state.filter);
+      }
+    } catch (e) {
+      // Keep _allRecipes empty or handle if needed
+    }
+  }
 
   void onSearchChanged(String query) {
     if (query.trim().isEmpty) {
@@ -135,19 +106,59 @@ class SearchRecipeNotifier extends StateNotifier<SearchRecipeState> {
       );
       return;
     }
-    final results = _recipeCatalogue
-        .where(
-          (r) =>
-              r.title.toLowerCase().contains(query.toLowerCase()) ||
-              r.dietTags.any(
-                (t) => t.toLowerCase().contains(query.toLowerCase()),
-              ),
-        )
-        .toList();
+    _applySearchAndFilters(query, state.filter);
+  }
+
+  void _applySearchAndFilters(String query, SearchRecipeFilter filter) {
+    if (query.trim().isEmpty) {
+      state = state.copyWith(
+        query: query,
+        filter: filter,
+        results: [],
+      );
+      return;
+    }
+
+    // 1. Text filter (on title or diet tags)
+    final filtered = _allRecipes.where((r) {
+      final matchesQuery = r.title.toLowerCase().contains(query.toLowerCase()) ||
+          r.dietTags.any((t) => t.toLowerCase().contains(query.toLowerCase()));
+      if (!matchesQuery) return false;
+
+      // 2. Filter 2 (Diet tags)
+      if (filter.filter2Tags.isNotEmpty) {
+        final matchesDiet = r.dietTags.any((t) => filter.filter2Tags.contains(t));
+        if (!matchesDiet) return false;
+      }
+
+      // 3. Filter 3 (Free of tags)
+      if (filter.filter3Tags.isNotEmpty) {
+        final matchesFreeOf = r.freeOfIngredients.any((t) => filter.filter3Tags.contains(t));
+        if (!matchesFreeOf) return false;
+      }
+
+      return true;
+    }).toList();
+
+    // 4. Sort
+    if (filter.sortBy == 'Most Recent') {
+      filtered.sort((a, b) {
+        if (a.createdAt == null && b.createdAt == null) return 0;
+        if (a.createdAt == null) return 1;
+        if (b.createdAt == null) return -1;
+        return b.createdAt!.compareTo(a.createdAt!);
+      });
+    } else if (filter.sortBy == 'Popularity') {
+      filtered.sort((a, b) => b.saveCount.compareTo(a.saveCount));
+    } else if (filter.sortBy == 'Highest Rated') {
+      filtered.sort((a, b) => a.title.compareTo(b.title));
+    }
+
     state = state.copyWith(
       query: query,
       isSearching: true,
-      results: results.isEmpty ? _recipeCatalogue : results,
+      filter: filter,
+      results: filtered,
     );
   }
 
@@ -174,16 +185,61 @@ class SearchRecipeNotifier extends StateNotifier<SearchRecipeState> {
     state = state.copyWith(showMoreActions: false, clearMoreActions: true);
   }
 
-  void toggleSave(String recipeId) {
-    final updated = state.results.map((r) {
-      if (r.id == recipeId) return r.copyWith(isSaved: !r.isSaved);
+  void toggleSave(String recipeId) async {
+    final index = _allRecipes.indexWhere((r) => r.id == recipeId);
+    if (index == -1) return;
+
+    final recipe = _allRecipes[index];
+    final wasSaved = recipe.isSaved;
+    final newSaved = !wasSaved;
+
+    // Optimistic update
+    _allRecipes[index] = recipe.copyWith(isSaved: newSaved);
+
+    final updatedResults = state.results.map((r) {
+      if (r.id == recipeId) return r.copyWith(isSaved: newSaved);
       return r;
     }).toList();
-    state = state.copyWith(results: updated);
+
+    RecipeModel? updatedSelected = state.selectedRecipe;
+    if (updatedSelected != null && updatedSelected.id == recipeId) {
+      updatedSelected = updatedSelected.copyWith(isSaved: newSaved);
+    }
+
+    state = state.copyWith(
+      results: updatedResults,
+      selectedRecipe: updatedSelected,
+    );
+
+    try {
+      if (wasSaved) {
+        await RecipeApiService.instance.unsaveRecipe(recipeId);
+      } else {
+        await RecipeApiService.instance.saveRecipe(recipeId);
+      }
+    } catch (e) {
+      // Revert on failure
+      _allRecipes[index] = recipe.copyWith(isSaved: wasSaved);
+
+      final revertedResults = state.results.map((r) {
+        if (r.id == recipeId) return r.copyWith(isSaved: wasSaved);
+        return r;
+      }).toList();
+
+      RecipeModel? revertedSelected = state.selectedRecipe;
+      if (revertedSelected != null && revertedSelected.id == recipeId) {
+        revertedSelected = revertedSelected.copyWith(isSaved: wasSaved);
+      }
+
+      state = state.copyWith(
+        results: revertedResults,
+        selectedRecipe: revertedSelected,
+      );
+    }
   }
 
   void updateFilter(SearchRecipeFilter filter) {
-    state = state.copyWith(filter: filter);
+    _applySearchAndFilters(state.query, filter);
   }
 
   void reset() => state = const SearchRecipeState();

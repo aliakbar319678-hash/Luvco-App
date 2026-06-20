@@ -9,6 +9,8 @@ class RecipeModel {
   final List<String> freeOfIngredients;
   final bool isSaved;
   final bool isPublic;
+  final DateTime? createdAt;
+  final int saveCount;
 
   const RecipeModel({
     required this.id,
@@ -21,6 +23,8 @@ class RecipeModel {
     this.freeOfIngredients = const [],
     this.isSaved = false,
     this.isPublic = true,
+    this.createdAt,
+    this.saveCount = 0,
   });
 
   RecipeModel copyWith({
@@ -34,6 +38,8 @@ class RecipeModel {
     List<String>? freeOfIngredients,
     bool? isSaved,
     bool? isPublic,
+    DateTime? createdAt,
+    int? saveCount,
   }) => RecipeModel(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -45,6 +51,8 @@ class RecipeModel {
     freeOfIngredients: freeOfIngredients ?? this.freeOfIngredients,
     isSaved: isSaved ?? this.isSaved,
     isPublic: isPublic ?? this.isPublic,
+    createdAt: createdAt ?? this.createdAt,
+    saveCount: saveCount ?? this.saveCount,
   );
 
   factory RecipeModel.fromJson(Map<String, dynamic> json) {
@@ -62,6 +70,8 @@ class RecipeModel {
       freeOfIngredients: parsedFreeOfTags,
       isSaved: json['isSaved'] as bool? ?? false,
       isPublic: json['isPublic'] as bool? ?? true,
+      createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'] as String) : null,
+      saveCount: json['saveCount'] as int? ?? 0,
     );
   }
 
@@ -77,6 +87,8 @@ class RecipeModel {
       'freeOfTags': freeOfIngredients,
       'isSaved': isSaved,
       'isPublic': isPublic,
+      'createdAt': createdAt?.toIso8601String(),
+      'saveCount': saveCount,
     };
   }
 }

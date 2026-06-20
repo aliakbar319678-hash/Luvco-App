@@ -846,9 +846,17 @@ class _ProductDetailSheetState extends ConsumerState<_ProductDetailSheet> {
       minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (_, controller) => Container(
-        decoration: const BoxDecoration(
+        margin: EdgeInsets.fromLTRB(16 * s, 16 * s, 16 * s, 24 * s),
+        decoration: BoxDecoration(
           color: AppColors.pureWhite,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: BorderRadius.circular(24 * s),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -906,106 +914,135 @@ class _ProductDetailSheetState extends ConsumerState<_ProductDetailSheet> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // Full-width side-by-side badges matching Figma
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            height: 38 * s,
-                            color: _ecoColor(eco),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.eco_outlined, color: Colors.white, size: 15 * s),
-                                SizedBox(width: 6 * s),
-                                Text(
-                                  eco,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 13 * s,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Container(
-                            height: 38 * s,
-                            color: _ecoColor(safe),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.flag_outlined, color: Colors.white, size: 15 * s),
-                                SizedBox(width: 6 * s),
-                                Text(
-                                  safe,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 13 * s,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                  // Overlapping Stack matching Figma exact layout
                   Stack(
-                    alignment: Alignment.topRight,
                     children: [
-                      Center(
-                        child: Container(
-                          width: 180 * s,
-                          height: 180 * s,
-                          decoration: BoxDecoration(
-                            color: AppColors.softGrey,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: Image.asset(
-                              product.imageAsset ?? '',
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) => Icon(
-                                Icons.image_outlined,
-                                size: 60 * s,
-                                color: AppColors.neutralGrey,
+                      // ── BADGE LAYER (behind) ──
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 2 * s),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                height: 42 * s,
+                                decoration: BoxDecoration(
+                                  color: _ecoColor(eco),
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(20 * s),
+                                    topRight: Radius.circular(16 * s),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.eco_outlined, color: Colors.white, size: 15 * s),
+                                    SizedBox(width: 6 * s),
+                                    Text(
+                                      eco,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12 * s,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
+                            Expanded(
+                              child: Container(
+                                height: 42 * s,
+                                decoration: BoxDecoration(
+                                  color: _ecoColor(safe),
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(16 * s),
+                                    topRight: Radius.circular(20 * s),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.flag_outlined, color: Colors.white, size: 15 * s),
+                                    SizedBox(width: 6 * s),
+                                    Text(
+                                      safe,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12 * s,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () async {
-                          final notifier = ref.read(favoritesProvider.notifier);
-                          if (isFav) {
-                            await notifier.removeItem(product.id);
-                          } else {
-                            await notifier.addFavorite(
-                              barcode: product.id,
-                              productName: product.name,
-                              productImageUrl: product.thumbnailAsset,
-                            );
-                          }
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: Icon(
-                            isFav
-                                ? Icons.favorite_rounded
-                                : Icons.favorite_border_rounded,
-                            color: isFav
-                                ? AppColors.vibrantPink
-                                : AppColors.neutralGrey,
-                            size: 26 * s,
-                          ),
+
+                      // ── WHITE CARD LAYER (in front) ──
+                      Container(
+                        margin: EdgeInsets.only(top: 28 * s),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: AppColors.pureWhite,
+                          border: Border.all(color: const Color(0xFFE0E0E0), width: 1.2),
+                          borderRadius: BorderRadius.circular(20 * s),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 24 * s, horizontal: 20 * s),
+                        child: Stack(
+                          alignment: Alignment.topRight,
+                          children: [
+                            Center(
+                              child: product.imageAsset != null && product.imageAsset!.isNotEmpty
+                                  ? Image.asset(
+                                      product.imageAsset!,
+                                      height: 180 * s,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (_, __, ___) => Icon(
+                                        Icons.image_outlined,
+                                        size: 80 * s,
+                                        color: AppColors.neutralGrey,
+                                      ),
+                                    )
+                                  : Icon(
+                                      Icons.image_outlined,
+                                      size: 80 * s,
+                                      color: AppColors.neutralGrey,
+                                    ),
+                            ),
+                            // Favorite Heart Icon overlay in the top right of the card
+                            GestureDetector(
+                              onTap: () async {
+                                final notifier = ref.read(favoritesProvider.notifier);
+                                if (isFav) {
+                                  await notifier.removeItem(product.id);
+                                } else {
+                                  await notifier.addFavorite(
+                                    barcode: product.id,
+                                    productName: product.name,
+                                    productImageUrl: product.thumbnailAsset,
+                                  );
+                                }
+                              },
+                              child: Icon(
+                                isFav
+                                    ? Icons.favorite_rounded
+                                    : Icons.favorite_border_rounded,
+                                color: isFav
+                                    ? AppColors.vibrantPink
+                                    : AppColors.neutralGrey,
+                                size: 26 * s,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

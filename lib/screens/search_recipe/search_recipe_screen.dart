@@ -568,8 +568,8 @@ class _RecipeCard extends ConsumerWidget {
                               value: 1,
                               height: 48 * scale,
                               child: _PopupItemRow(
-                                label: 'Save Recipe',
-                                icon: Icons.bookmark_border,
+                                label: recipe.isSaved ? 'Unsave Recipe' : 'Save Recipe',
+                                icon: recipe.isSaved ? Icons.bookmark : Icons.bookmark_border,
                                 scale: scale,
                               ),
                             ),
@@ -852,12 +852,12 @@ class _QuickViewModal extends StatelessWidget {
                         child: ElevatedButton.icon(
                           onPressed: onSave,
                           icon: Icon(
-                            Icons.bookmark_border_rounded,
+                            recipe.isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
                             size: 20 * scale,
                             color: AppColors.pureWhite,
                           ),
                           label: Text(
-                            'Save Recipe',
+                            recipe.isSaved ? 'Unsave Recipe' : 'Save Recipe',
                             style: GoogleFonts.inter(
                               fontSize: 15 * scale,
                               fontWeight: FontWeight.w700,
