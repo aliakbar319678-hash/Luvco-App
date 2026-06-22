@@ -44,4 +44,18 @@ class ProductApiService {
       throw handleError(e);
     }
   }
+
+  /// GET /products/recommended
+  /// Fetch user-specific recommended products
+  Future<List<dynamic>> getRecommendedProducts() async {
+    try {
+      final response = await _dio.get('/products/recommended');
+      if (response.data['success'] == true && response.data['products'] != null) {
+        return response.data['products'] as List;
+      }
+      throw Exception('Failed to load recommended products');
+    } catch (e) {
+      throw handleError(e);
+    }
+  }
 }

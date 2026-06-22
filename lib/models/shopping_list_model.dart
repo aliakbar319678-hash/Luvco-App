@@ -38,12 +38,23 @@ class ShoppingListModel {
 
     final desc = json['description'] as String? ?? 'Custom shopping list';
 
+    String? imgUrl = json['imageUrl'] as String?;
+    if (imgUrl == null && json['items'] != null && json['items'] is List) {
+      final list = json['items'] as List;
+      if (list.isNotEmpty) {
+        final firstItem = list[0];
+        if (firstItem is Map<String, dynamic>) {
+          imgUrl = firstItem['productImageUrl'] as String?;
+        }
+      }
+    }
+
     return ShoppingListModel(
       id: json['id'] as String,
       title: json['title'] as String? ?? 'Shopping List',
       description: desc,
       itemCount: count,
-      imageUrl: json['imageUrl'] as String? ?? 'assets/images/bread_pic.png',
+      imageUrl: imgUrl ?? 'assets/images/bread_pic.png',
     );
   }
 

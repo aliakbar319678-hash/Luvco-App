@@ -259,4 +259,19 @@ class RecipeApiService {
       throw handleError(e);
     }
   }
+
+  /// GET /recipes/recent
+  /// Fetch user's recently viewed recipes (or public fallbacks)
+  Future<List<RecipeModel>> getRecentlyViewedRecipes() async {
+    try {
+      final response = await _dio.get('/recipes/recent');
+      if (response.data['success'] == true && response.data['recipes'] != null) {
+        final list = response.data['recipes'] as List;
+        return list.map((e) => RecipeModel.fromJson(e as Map<String, dynamic>)).toList();
+      }
+      throw Exception('Failed to load recently viewed recipes');
+    } catch (e) {
+      throw handleError(e);
+    }
+  }
 }

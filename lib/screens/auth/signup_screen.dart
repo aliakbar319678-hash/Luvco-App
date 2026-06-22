@@ -235,13 +235,21 @@ class SignupScreen extends ConsumerWidget {
                       label: 'Create Account',
                       isLoading: isLoading,
                       onTap: () {
-                        final model = SignupModel(
-                          firstName: ref.read(signupFirstNameProvider),
-                          lastName: ref.read(signupLastNameProvider),
-                          email: ref.read(signupEmailProvider),
-                          password: ref.read(signupPasswordProvider),
-                        );
-                        ref.read(signupProvider.notifier).signup(model);
+                        if (termsAccepted && privacyAccepted) {
+                          final model = SignupModel(
+                            firstName: ref.read(signupFirstNameProvider),
+                            lastName: ref.read(signupLastNameProvider),
+                            email: ref.read(signupEmailProvider),
+                            password: ref.read(signupPasswordProvider),
+                          );
+                          ref.read(signupProvider.notifier).signup(model);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please accept Terms & Conditions and Privacy Policy before continuing.'),
+                            ),
+                          );
+                        }
                       },
                     ),
 
@@ -344,7 +352,16 @@ class _CheckboxRow extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         GestureDetector(
-          onTap: () => onChanged(!value),
+          onTap: () {
+            // Open corresponding document screen based on label
+            if (label.toLowerCase().contains('terms')) {
+              context.go('/terms');
+            } else if (label.toLowerCase().contains('privacy')) {
+              context.go('/privacy');
+            }
+            // Also toggle checkbox as before
+            onChanged(!value);
+          },
           child: Text(
             label,
             style: GoogleFonts.inter(

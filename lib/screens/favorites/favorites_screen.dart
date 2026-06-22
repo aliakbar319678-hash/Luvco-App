@@ -406,8 +406,23 @@ class _FavoriteCardState extends ConsumerState<_FavoriteCard> {
                 height: 60 * widget.scale.clamp(0.85, 1.1),
                 color: AppColors.softGrey,
                 child: widget.item.thumbnailAsset != null
-                    ? Image.asset(widget.item.thumbnailAsset!, fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.image_outlined, color: AppColors.neutralGrey))
+                    ? (widget.item.thumbnailAsset!.startsWith('http')
+                        ? Image.network(
+                            widget.item.thumbnailAsset!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.image_outlined,
+                              color: AppColors.neutralGrey,
+                            ),
+                          )
+                        : Image.asset(
+                            widget.item.thumbnailAsset!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.image_outlined,
+                              color: AppColors.neutralGrey,
+                            ),
+                          ))
                     : const Icon(Icons.image_outlined, color: AppColors.neutralGrey),
               ),
             ),

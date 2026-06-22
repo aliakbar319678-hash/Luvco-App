@@ -840,98 +840,108 @@ class _ProductDetailSheetState extends ConsumerState<_ProductDetailSheet> {
     final safe = widget.result.badges.safetyLabel;
     final product = widget.result.product;
     final isFav = ref.watch(favoritesProvider).items.any((i) => i.barcode == product.id);
+    final size = MediaQuery.sizeOf(context);
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.88,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      builder: (_, controller) => Container(
-        margin: EdgeInsets.fromLTRB(16 * s, 16 * s, 16 * s, 24 * s),
-        decoration: BoxDecoration(
-          color: AppColors.pureWhite,
-          borderRadius: BorderRadius.circular(24 * s),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 10, bottom: 4),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.clearGrey,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+    return Container(
+      height: size.height * 0.85,
+      margin: EdgeInsets.fromLTRB(16 * s, 16 * s, 16 * s, 24 * s),
+      decoration: BoxDecoration(
+        color: AppColors.pureWhite,
+        borderRadius: BorderRadius.circular(24 * s),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(top: 10, bottom: 4),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.clearGrey,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            Expanded(
-              child: ListView(
-                controller: controller,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                children: [
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: AppColors.softGrey,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.close_rounded,
-                          size: 18 * s,
-                          color: AppColors.darkGrey,
-                        ),
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        color: AppColors.softGrey,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 18 * s,
+                        color: AppColors.darkGrey,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    product.name,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 18 * s,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.vibrantPink,
-                    ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  product.name,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 18 * s,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.vibrantPink,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    product.description,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 13 * s,
-                      color: AppColors.darkGrey,
-                    ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  product.description,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 13 * s,
+                    color: AppColors.darkGrey,
                   ),
-                  const SizedBox(height: 12),
-                  // Overlapping Stack matching Figma exact layout
-                  Stack(
-                    children: [
-                      // ── BADGE LAYER (behind) ──
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 2 * s),
-                        child: Row(
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24 * s),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24 * s),
+                    child: Stack(
+                      children: [
+                        // ── BADGE LAYER (behind) ──
+                        Row(
                           children: [
                             Expanded(
                               child: Container(
-                                height: 42 * s,
+                                height: 90 * s,
                                 decoration: BoxDecoration(
                                   color: _ecoColor(eco),
                                   borderRadius: BorderRadius.only(
-                                    topLeft: Radius.circular(20 * s),
+                                    topLeft: Radius.circular(24 * s),
                                     topRight: Radius.circular(16 * s),
                                   ),
                                 ),
+                                alignment: Alignment.topCenter,
+                                padding: EdgeInsets.only(top: 14 * s),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -951,14 +961,16 @@ class _ProductDetailSheetState extends ConsumerState<_ProductDetailSheet> {
                             ),
                             Expanded(
                               child: Container(
-                                height: 42 * s,
+                                height: 90 * s,
                                 decoration: BoxDecoration(
                                   color: _ecoColor(safe),
                                   borderRadius: BorderRadius.only(
                                     topLeft: Radius.circular(16 * s),
-                                    topRight: Radius.circular(20 * s),
+                                    topRight: Radius.circular(24 * s),
                                   ),
                                 ),
+                                alignment: Alignment.topCenter,
+                                padding: EdgeInsets.only(top: 14 * s),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -978,151 +990,146 @@ class _ProductDetailSheetState extends ConsumerState<_ProductDetailSheet> {
                             ),
                           ],
                         ),
-                      ),
 
-                      // ── WHITE CARD LAYER (in front) ──
-                      Container(
-                        margin: EdgeInsets.only(top: 28 * s),
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: AppColors.pureWhite,
-                          border: Border.all(color: const Color(0xFFE0E0E0), width: 1.2),
-                          borderRadius: BorderRadius.circular(20 * s),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.03),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
+                        // ── WHITE CARD LAYER (in front) ──
+                        Container(
+                          margin: EdgeInsets.only(top: 46 * s),
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: AppColors.pureWhite,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(24 * s),
+                              topRight: Radius.circular(24 * s),
                             ),
-                          ],
-                        ),
-                        padding: EdgeInsets.symmetric(vertical: 24 * s, horizontal: 20 * s),
-                        child: Stack(
-                          alignment: Alignment.topRight,
-                          children: [
-                            Center(
-                              child: product.imageAsset != null && product.imageAsset!.isNotEmpty
-                                  ? Image.asset(
-                                      product.imageAsset!,
-                                      height: 180 * s,
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (_, __, ___) => Icon(
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 20 * s, horizontal: 20 * s),
+                          child: Stack(
+                            alignment: Alignment.topRight,
+                            children: [
+                              Center(
+                                child: product.imageAsset != null && product.imageAsset!.isNotEmpty
+                                    ? Image.asset(
+                                        product.imageAsset!,
+                                        height: 180 * s,
+                                        fit: BoxFit.contain,
+                                        errorBuilder: (_, __, ___) => Icon(
+                                          Icons.image_outlined,
+                                          size: 80 * s,
+                                          color: AppColors.neutralGrey,
+                                        ),
+                                      )
+                                    : Icon(
                                         Icons.image_outlined,
                                         size: 80 * s,
                                         color: AppColors.neutralGrey,
                                       ),
-                                    )
-                                  : Icon(
-                                      Icons.image_outlined,
-                                      size: 80 * s,
-                                      color: AppColors.neutralGrey,
-                                    ),
-                            ),
-                            // Favorite Heart Icon overlay in the top right of the card
-                            GestureDetector(
-                              onTap: () async {
-                                final notifier = ref.read(favoritesProvider.notifier);
-                                if (isFav) {
-                                  await notifier.removeItem(product.id);
-                                } else {
-                                  await notifier.addFavorite(
-                                    barcode: product.id,
-                                    productName: product.name,
-                                    productImageUrl: product.thumbnailAsset,
-                                  );
-                                }
-                              },
-                              child: Icon(
-                                isFav
-                                    ? Icons.favorite_rounded
-                                    : Icons.favorite_border_rounded,
-                                color: isFav
-                                    ? AppColors.vibrantPink
-                                    : AppColors.neutralGrey,
-                                size: 26 * s,
                               ),
-                            ),
-                          ],
+                              // Favorite Heart Icon overlay in the top right of the card
+                              GestureDetector(
+                                onTap: () async {
+                                  final notifier = ref.read(favoritesProvider.notifier);
+                                  if (isFav) {
+                                    await notifier.removeItem(product.id);
+                                  } else {
+                                    await notifier.addFavorite(
+                                      barcode: product.id,
+                                      productName: product.name,
+                                      productImageUrl: product.thumbnailAsset,
+                                    );
+                                  }
+                                },
+                                child: Icon(
+                                  isFav
+                                      ? Icons.favorite_rounded
+                                      : Icons.favorite_border_rounded,
+                                  color: isFav
+                                      ? AppColors.vibrantPink
+                                      : AppColors.neutralGrey,
+                                  size: 26 * s,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  _ChipSection(
-                    title: 'Labels and Certifications',
-                    items: product.labels,
-                    scale: s,
-                  ),
-                  const SizedBox(height: 16),
-                  _ChipSection(
-                    title: 'Possible allergens',
-                    items: product.allergens,
-                    scale: s,
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _OutlineActionButton(
-                          label: 'Add To List',
-                          icon: Icons.add_shopping_cart_outlined,
-                          scale: s,
-                          onTap: _showAddToList,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _OutlineActionButton(
-                          label: 'Add To Recipe',
-                          icon: Icons.menu_book_outlined,
-                          scale: s,
-                          onTap: _showAddToRecipe,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52 * s,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        context.push('/product-detail', extra: product);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.royalPurple,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'See More Details',
-                        style: GoogleFonts.inter(
-                          fontSize: 15 * s,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.pureWhite,
-                        ),
-                      ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Center(
+                ),
+                const SizedBox(height: 20),
+                _ChipSection(
+                  title: 'Labels and Certifications',
+                  items: product.labels,
+                  scale: s,
+                ),
+                const SizedBox(height: 16),
+                _ChipSection(
+                  title: 'Possible allergens',
+                  items: product.allergens,
+                  scale: s,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _OutlineActionButton(
+                        label: 'Add To List',
+                        icon: Icons.add_shopping_cart_outlined,
+                        scale: s,
+                        onTap: _showAddToList,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _OutlineActionButton(
+                        label: 'Add To Recipe',
+                        icon: Icons.menu_book_outlined,
+                        scale: s,
+                        onTap: _showAddToRecipe,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52 * s,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.push('/product-detail', extra: product);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.royalPurple,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
                     child: Text(
-                      'Swipe up to see similar',
+                      'See More Details',
                       style: GoogleFonts.inter(
-                        fontSize: 12 * s,
-                        color: AppColors.neutralGrey,
+                        fontSize: 15 * s,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.pureWhite,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                ],
-              ),
+                ),
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    'Swipe up to see similar',
+                    style: GoogleFonts.inter(
+                      fontSize: 12 * s,
+                      color: AppColors.neutralGrey,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

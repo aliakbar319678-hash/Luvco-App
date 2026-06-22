@@ -1305,58 +1305,149 @@ class _SectionLabel extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────
-// Horizontal scrollable hex/circle label row
-// ─────────────────────────────────────────────────
 class _HexRow extends StatelessWidget {
   final List<String> labels;
   final double scale;
   const _HexRow({required this.labels, required this.scale});
 
-  @override
-  Widget build(BuildContext context) {
-    final items = labels;
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        children: items
-            .map(
-              (l) => Padding(
-                padding: EdgeInsets.only(right: 10 * scale),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 50 * scale,
-                      height: 50 * scale,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.clearGrey),
-                      ),
-                      child: Icon(
-                        Icons.hexagon_outlined,
-                        color: AppColors.black,
-                        size: 24 * scale,
-                      ),
-                    ),
-                    SizedBox(height: 5 * scale),
-                    Text(
-                      _cleanLabel(l),
-                      style: GoogleFonts.inter(
-                        fontSize: 11 * scale,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.black,
-                      ),
-                    ),
-                  ],
-                ),
+  static (IconData, Color) _getIconAndColor(String name) {
+    final lower = name.toLowerCase();
+    
+    // Allergens
+    if (lower.contains('gluten') || lower.contains('wheat')) {
+      return (Icons.grain_rounded, const Color(0xFFE5A93C)); // Amber/Orange
+    }
+    if (lower.contains('nut') || lower.contains('almond') || lower.contains('hazelnut') || lower.contains('pecan') || lower.contains('cashew')) {
+      return (Icons.cookie_rounded, const Color(0xFF8D6E63)); // Brown
+    }
+    if (lower.contains('milk') || lower.contains('lactose') || lower.contains('dairy')) {
+      return (Icons.water_drop_rounded, const Color(0xFF64B5F6)); // Light Blue
+    }
+    if (lower.contains('egg')) {
+      return (Icons.egg_rounded, const Color(0xFFFFD54F)); // Yellow
+    }
+    if (lower.contains('soy')) {
+      return (Icons.grass_rounded, const Color(0xFF81C784)); // Green
+    }
+    if (lower.contains('fish') || lower.contains('seafood') || lower.contains('shrimp')) {
+      return (Icons.set_meal_rounded, const Color(0xFF4FC3F7)); // Blue
+    }
+
+    // Certifications & Labels
+    if (lower.contains('organic') || lower.contains('bio')) {
+      return (Icons.eco_rounded, const Color(0xFF4CAF50)); // Green
+    }
+    if (lower.contains('ecocert')) {
+      return (Icons.verified_rounded, const Color(0xFF2E7D32)); // Dark Green
+    }
+    if (lower.contains('green dot') || lower.contains('recycl')) {
+      return (Icons.recycling_rounded, const Color(0xFF388E3C)); // Green
+    }
+    if (lower.contains('agriculture') || lower.contains('grower')) {
+      return (Icons.spa_rounded, const Color(0xFF81C784)); // Soft Green
+    }
+    if (lower.contains('vegan') || lower.contains('vegetarian')) {
+      return (Icons.spa_rounded, const Color(0xFF4CAF50)); // Green
+    }
+    if (lower.contains('halal') || lower.contains('kosher')) {
+      return (Icons.task_alt_rounded, const Color(0xFF009688)); // Teal
+    }
+    if (lower.contains('fair trade') || lower.contains('fairtrade')) {
+      return (Icons.handshake_rounded, const Color(0xFF00897B)); // Teal
+    }
+
+    return (Icons.verified_rounded, const Color(0xFF7B52D3)); // Purple accent
+  }
+
+  Widget _buildLabelItem(String label) {
+    final clean = _cleanLabel(label);
+    final iconInfo = _getIconAndColor(clean);
+    final iconData = iconInfo.$1;
+    final iconColor = iconInfo.$2;
+
+    return Padding(
+      padding: EdgeInsets.only(right: 12 * scale),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 50 * scale,
+            height: 50 * scale,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.clearGrey, width: 1.2),
+            ),
+            child: Center(
+              child: Icon(
+                iconData,
+                color: iconColor,
+                size: 24 * scale,
               ),
-            )
-            .toList(),
+            ),
+          ),
+          SizedBox(height: 5 * scale),
+          SizedBox(
+            width: 62 * scale,
+            child: Text(
+              clean,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 10 * scale,
+                fontWeight: FontWeight.w500,
+                color: AppColors.black,
+                height: 1.2,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = labels;
+
+    final List<String> row1;
+    final List<String> row2;
+
+    if (items.length <= 4) {
+      row1 = items;
+      row2 = [];
+    } else {
+      final half = (items.length / 2).ceil();
+      row1 = items.sublist(0, half);
+      row2 = items.sublist(half);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: row1.map((item) => _buildLabelItem(item)).toList(),
+          ),
+        ),
+        if (row2.isNotEmpty) ...[
+          SizedBox(height: 12 * scale),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: row2.map((item) => _buildLabelItem(item)).toList(),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }
+
 
 // ─────────────────────────────────────────────────
 // Outlined icon button (Add To List / Add To Recipe)

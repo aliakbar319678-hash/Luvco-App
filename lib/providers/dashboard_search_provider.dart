@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/product_model.dart';
 import 'favorites_provider.dart';
+import '../core/network/product_api_service.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // Filter state
@@ -102,50 +103,7 @@ class DashboardSearchState {
       );
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Demo catalogue with badge pairs
-// ─────────────────────────────────────────────────────────────────
-final _catalogue = [
-  DashboardSearchResult(
-    product: const ProductModel(
-      id: 'ds1',
-      name: 'Name of the Product',
-      description: 'Other data from the product.',
-      thumbnailAsset: 'assets/images/nutila.png',
-      imageAsset: 'assets/images/nutila.png',
-      labels: ['Label', 'Label', 'Label', 'Label'],
-      allergens: ['Label', 'Label', 'Label', 'Label'],
-      isSustainable: false,
-    ),
-    badges: const ProductBadgePair(ecoLabel: 'Unsustainable', safetyLabel: 'Avoid'),
-  ),
-  DashboardSearchResult(
-    product: const ProductModel(
-      id: 'ds2',
-      name: 'Name of the Product',
-      description: 'Other data from the product.',
-      thumbnailAsset: 'assets/images/nutila.png',
-      imageAsset: 'assets/images/nutila.png',
-      labels: ['Label', 'Label', 'Label', 'Label'],
-      allergens: ['Label', 'Label', 'Label', 'Label'],
-      isSustainable: true,
-    ),
-    badges: const ProductBadgePair(ecoLabel: 'Moderate Impact', safetyLabel: 'Safe'),
-  ),
-  DashboardSearchResult(
-    product: const ProductModel(
-      id: 'ds3',
-      name: 'Name of the Product',
-      description: 'Other data from the product.',
-      thumbnailAsset: 'assets/images/nutila.png',
-      imageAsset: 'assets/images/nutila.png',
-      labels: ['Label', 'Label', 'Label', 'Label'],
-      allergens: ['Label', 'Label', 'Label', 'Label'],
-      isSustainable: true,
-    ),
-    badges: const ProductBadgePair(ecoLabel: 'Eco-Friendly', safetyLabel: 'Safe'),
-  ),
-];
+
 
 // ─────────────────────────────────────────────────────────────────
 // Notifier
@@ -155,30 +113,39 @@ class DashboardSearchNotifier extends StateNotifier<DashboardSearchState> {
 
   DashboardSearchNotifier(this._ref) : super(const DashboardSearchState());
 
-  void onSearchChanged(String query) {
+  Future<void> onSearchChanged(String query) async {
     if (query.trim().isEmpty) {
       state = state.copyWith(query: '', isSearching: false, results: []);
       return;
     }
     
-    final favorites = _ref.read(favoritesProvider).items;
-    final results = _catalogue
-        .where((r) => r.product.name.toLowerCase().contains(query.toLowerCase()))
-        .map((r) {
-          final isFav = favorites.any((i) => i.barcode == r.product.id);
-          return DashboardSearchResult(
-            product: r.product,
-            badges: r.badges,
-            isFavorite: isFav,
-          );
-        })
-        .toList();
-        
-    state = state.copyWith(
-      query: query,
-      isSearching: true,
-      results: results,
-    );
+    state = state.copyWith(query: query, isSearching: true);
+    
+    try {
+      final products = await ProductApiService.instance.searchProducts(query);
+      
+      // If query changed while we were fetching, ignore this result
+      if (state.query != query) return;
+      
+      final favorites = _ref.read(favoritesProvider).items;
+      final results = products.map((p) {
+        final isFav = favorites.any((i) => i.barcode == p.id);
+        return DashboardSearchResult(
+          product: p,
+          badges: ProductBadgePair(
+            ecoLabel: p.sustainabilityLabel,
+            safetyLabel: p.safetyLabel,
+          ),
+          isFavorite: isFav,
+        );
+      }).toList();
+      
+      state = state.copyWith(results: results);
+    } catch (e) {
+      if (state.query == query) {
+        state = state.copyWith(results: []);
+      }
+    }
   }
 
   void clearSearch() {

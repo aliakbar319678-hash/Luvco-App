@@ -113,13 +113,13 @@ class UserProfileScreen extends ConsumerWidget {
                     showLuvcoFabActionMenu(
                       context,
                       onCreateList: () => context.push('/new-shopping-list'),
-                      onSearchProducts: () => context.push('/new-shopping-list'),
+                      onSearchProducts: () => context.push('/dashboard-search'),
                       onCreateRecipe: () {
                         ref.read(newRecipeProvider.notifier).reset();
                         ref.read(newRecipeStepProvider.notifier).state = 1;
                         context.push('/new-recipe');
                       },
-                      onSearchRecipe: () {},
+                      onSearchRecipe: () => context.push('/search-recipe'),
                     );
                 },
               ),

@@ -135,4 +135,17 @@ class UserApiService {
       throw handleError(e);
     }
   }
+
+  /// DELETE /users/me
+  /// Delete currently authorized user account
+  Future<void> deleteAccount() async {
+    try {
+      final response = await _dio.delete('/users/me');
+      if (response.data['success'] != true) {
+        throw Exception('Failed to delete account');
+      }
+    } catch (e) {
+      throw handleError(e);
+    }
+  }
 }

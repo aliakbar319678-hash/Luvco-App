@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/network/product_api_service.dart';
+import '../../models/product_model.dart';
 import '../../providers/shopping_list_detail_provider.dart';
 import '../../providers/favorites_provider.dart';
 
@@ -196,9 +198,36 @@ class _ProductImageSection extends ConsumerStatefulWidget {
 }
 
 class _ProductImageSectionState extends ConsumerState<_ProductImageSection> {
+  ProductModel? _fullProduct;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProduct();
+  }
+
+  Future<void> _loadProduct() async {
+    final barcode = widget.item.barcode;
+    if (barcode == null || barcode.isEmpty) return;
+    try {
+      final product = await ProductApiService.instance.lookupProduct(barcode);
+      if (mounted) {
+        setState(() {
+          _fullProduct = product;
+        });
+      }
+    } catch (e) {
+      // Ignore lookup errors
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isFavorite = ref.watch(favoritesProvider).items.any((i) => i.barcode == (widget.item.barcode ?? widget.item.id));
+    final isSustainable = _fullProduct?.isSustainable ?? false;
+    final sustainColor = isSustainable ? const Color(0xFF43A047) : const Color(0xFFE53935);
+    final sustainLabel = isSustainable ? 'Sustainable' : 'Unsustainable';
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -222,9 +251,9 @@ class _ProductImageSectionState extends ConsumerState<_ProductImageSection> {
                 Expanded(
                   child: Container(
                     height: 90 * widget.scale.clamp(0.85, 1.2),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFE53935), // Red
-                      borderRadius: BorderRadius.only(
+                    decoration: BoxDecoration(
+                      color: sustainColor,
+                      borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(20),
                         topRight: Radius.circular(16),
                       ),
@@ -237,7 +266,7 @@ class _ProductImageSectionState extends ConsumerState<_ProductImageSection> {
                         const Icon(Icons.eco_outlined, color: Colors.white, size: 16),
                         const SizedBox(width: 6),
                         Text(
-                          'Unsustainable',
+                          sustainLabel,
                           style: GoogleFonts.inter(
                             color: Colors.white,
                             fontSize: 12 * widget.scale.clamp(0.85, 1.2),

@@ -168,15 +168,17 @@ class _ProductDetailSheetState extends ConsumerState<_ProductDetailSheet> {
                               borderRadius: BorderRadius.circular(24),
                               child: Stack(
                                 children: [
-                                  // Top tabs (Unsustainable / Safe) - Background Layer
+                                  // Top tabs (Sustainable/Unsustainable & Safe) - Background Layer
                                   Row(
                                     children: [
                                       Expanded(
                                         child: Container(
                                           height: 90 * scale.clamp(0.85, 1.2),
-                                          decoration: const BoxDecoration(
-                                            color: AppColors.errorRed,
-                                            borderRadius: BorderRadius.only(
+                                          decoration: BoxDecoration(
+                                            color: product.isSustainable
+                                                ? const Color(0xFF43A047)
+                                                : AppColors.errorRed,
+                                            borderRadius: const BorderRadius.only(
                                               topLeft: Radius.circular(24),
                                               topRight: Radius.circular(16),
                                             ),
@@ -186,20 +188,14 @@ class _ProductDetailSheetState extends ConsumerState<_ProductDetailSheet> {
                                           child: Row(
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
-                                              Image.asset(
-                                                'assets/icons/tabler-icon-leaf.png',
-                                                width: 18 * scale.clamp(0.85, 1.2),
-                                                height: 18 * scale.clamp(0.85, 1.2),
+                                              Icon(
+                                                Icons.eco_outlined,
                                                 color: Colors.white,
-                                                errorBuilder: (_, __, ___) => Icon(
-                                                  Icons.recycling_outlined,
-                                                  color: Colors.white,
-                                                  size: 16 * scale.clamp(0.85, 1.2),
-                                                ),
+                                                size: 16 * scale.clamp(0.85, 1.2),
                                               ),
                                               const SizedBox(width: 8),
                                               Text(
-                                                'Unsustainable',
+                                                product.isSustainable ? 'Sustainable' : 'Unsustainable',
                                                 style: GoogleFonts.inter(
                                                   fontSize: 11 * scale.clamp(0.85, 1.2),
                                                   fontWeight: FontWeight.w600,

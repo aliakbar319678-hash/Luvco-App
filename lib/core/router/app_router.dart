@@ -8,6 +8,8 @@ import 'package:luvco_logo/screens/auth/otp_verification_screen.dart';
 import 'package:luvco_logo/screens/auth/password_updated_screen.dart';
 import 'package:luvco_logo/screens/auth/signup_otp_screen.dart';
 import 'package:luvco_logo/screens/auth/signup_screen.dart';
+import 'package:luvco_logo/screens/auth/terms_and_conditions_screen.dart';
+import 'package:luvco_logo/screens/auth/privacy_policy_screen.dart';
 import 'package:luvco_logo/screens/recipe/new_recipe_screen.dart';
 import 'package:luvco_logo/screens/recipe/recipe_detail_screen.dart';
 import 'package:luvco_logo/models/recipe_detail_model.dart';
@@ -125,6 +127,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => _fadeSlide(
           key: state.pageKey,
           child: const SignupScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/terms',
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const TermsAndConditionsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/privacy',
+        pageBuilder: (context, state) => _fadeSlide(
+          key: state.pageKey,
+          child: const PrivacyPolicyScreen(),
         ),
       ),
       GoRoute(

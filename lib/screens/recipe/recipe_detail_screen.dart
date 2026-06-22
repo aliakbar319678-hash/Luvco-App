@@ -446,6 +446,10 @@ class _DietChipsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final showDiet = recipe.dietTypes.isNotEmpty;
+    final showFree = recipe.freeOfIngredients.isNotEmpty;
+    if (!showDiet && !showFree) return const SizedBox.shrink();
+
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: 16 * scale,
@@ -454,13 +458,16 @@ class _DietChipsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _ChipRow(label: 'Diet Type', tags: recipe.dietTypes, scale: scale),
-          const SizedBox(height: 12),
-          _ChipRow(
-            label: 'Free of Ingredients',
-            tags: recipe.freeOfIngredients,
-            scale: scale,
-          ),
+          if (showDiet) ...[
+            _ChipRow(label: 'Diet Type', tags: recipe.dietTypes, scale: scale),
+            if (showFree) const SizedBox(height: 12),
+          ],
+          if (showFree)
+            _ChipRow(
+              label: 'Free of Ingredients',
+              tags: recipe.freeOfIngredients,
+              scale: scale,
+            ),
         ],
       ),
     );
@@ -479,8 +486,19 @@ class _ChipRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ALWAYS show 4 'Label' items to match the Figma design screenshot exactly
-    const displayTags = ['Label', 'Label', 'Label', 'Label'];
+    if (tags.isEmpty) return const SizedBox.shrink();
+
+    final List<String> row1;
+    final List<String> row2;
+
+    if (tags.length <= 4) {
+      row1 = tags;
+      row2 = [];
+    } else {
+      final half = (tags.length / 2).ceil();
+      row1 = tags.sublist(0, half);
+      row2 = tags.sublist(half);
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -494,14 +512,27 @@ class _ChipRow extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 12 * scale,
-          runSpacing: 12 * scale,
-          children: displayTags
-              .map(
-                (tag) => _OutlineChip(label: tag, scale: scale),
-              )
-              .toList(),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: row1.map((tag) => _OutlineChip(label: tag, scale: scale)).toList(),
+              ),
+            ),
+            if (row2.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: row2.map((tag) => _OutlineChip(label: tag, scale: scale)).toList(),
+                ),
+              ),
+            ],
+          ],
         ),
       ],
     );
@@ -513,39 +544,110 @@ class _OutlineChip extends StatelessWidget {
   final double scale;
   const _OutlineChip({required this.label, required this.scale});
 
+  static (IconData, Color) _getIconAndColor(String name) {
+    final lower = name.toLowerCase();
+    
+    // Allergens
+    if (lower.contains('gluten') || lower.contains('wheat')) {
+      return (Icons.grain_rounded, const Color(0xFFE5A93C)); // Amber/Orange
+    }
+    if (lower.contains('nut') || lower.contains('almond') || lower.contains('hazelnut') || lower.contains('pecan') || lower.contains('cashew')) {
+      return (Icons.cookie_rounded, const Color(0xFF8D6E63)); // Brown
+    }
+    if (lower.contains('milk') || lower.contains('lactose') || lower.contains('dairy')) {
+      return (Icons.water_drop_rounded, const Color(0xFF64B5F6)); // Light Blue
+    }
+    if (lower.contains('egg')) {
+      return (Icons.egg_rounded, const Color(0xFFFFD54F)); // Yellow
+    }
+    if (lower.contains('soy')) {
+      return (Icons.grass_rounded, const Color(0xFF81C784)); // Green
+    }
+    if (lower.contains('fish') || lower.contains('seafood') || lower.contains('shrimp')) {
+      return (Icons.set_meal_rounded, const Color(0xFF4FC3F7)); // Blue
+    }
+
+    // Certifications & Labels
+    if (lower.contains('organic') || lower.contains('bio')) {
+      return (Icons.eco_rounded, const Color(0xFF4CAF50)); // Green
+    }
+    if (lower.contains('ecocert')) {
+      return (Icons.verified_rounded, const Color(0xFF2E7D32)); // Dark Green
+    }
+    if (lower.contains('green dot') || lower.contains('recycl')) {
+      return (Icons.recycling_rounded, const Color(0xFF388E3C)); // Green
+    }
+    if (lower.contains('agriculture') || lower.contains('grower')) {
+      return (Icons.spa_rounded, const Color(0xFF81C784)); // Soft Green
+    }
+    if (lower.contains('vegan') || lower.contains('vegetarian')) {
+      return (Icons.spa_rounded, const Color(0xFF4CAF50)); // Green
+    }
+    if (lower.contains('halal') || lower.contains('kosher')) {
+      return (Icons.task_alt_rounded, const Color(0xFF009688)); // Teal
+    }
+    if (lower.contains('fair trade') || lower.contains('fairtrade')) {
+      return (Icons.handshake_rounded, const Color(0xFF00897B)); // Teal
+    }
+
+    return (Icons.verified_rounded, const Color(0xFF7B52D3)); // Purple accent
+  }
+
+  static String _cleanLabel(String raw) {
+    String cleaned = raw.replaceAll(RegExp(r'^[a-z]{2}:'), '');
+    cleaned = cleaned.replaceAll(RegExp(r'[-_]'), ' ').trim();
+    if (cleaned.isEmpty) return raw;
+    return cleaned
+        .split(' ')
+        .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w)
+        .join(' ');
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 72 * scale.clamp(0.85, 1.2),
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.clearGrey, width: 1.2),
-        color: AppColors.pureWhite,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    final clean = _cleanLabel(label);
+    final iconInfo = _getIconAndColor(clean);
+    final iconData = iconInfo.$1;
+    final iconColor = iconInfo.$2;
+
+    return Padding(
+      padding: EdgeInsets.only(right: 14 * scale),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.hexagon_outlined,
-            size: 18 * scale.clamp(0.85, 1.2),
-            color: Colors.black, // Black icon — matches Figma
+          Container(
+            width: 58 * scale.clamp(0.85, 1.2),
+            height: 58 * scale.clamp(0.85, 1.2),
+            decoration: BoxDecoration(
+              color: AppColors.pureWhite,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.clearGrey,
+                width: 1.2,
+              ),
+            ),
+            child: Center(
+              child: Icon(
+                iconData,
+                color: iconColor,
+                size: 26 * scale.clamp(0.85, 1.2),
+              ),
+            ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 11 * scale.clamp(0.85, 1.2),
-              fontWeight: FontWeight.w500,
-              color: Colors.black, // Black label — matches Figma
+          const SizedBox(height: 6),
+          SizedBox(
+            width: 68 * scale.clamp(0.85, 1.2),
+            child: Text(
+              clean,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 10 * scale.clamp(0.85, 1.2),
+                color: AppColors.black,
+                fontWeight: FontWeight.w500,
+                height: 1.2,
+              ),
             ),
           ),
         ],
@@ -772,32 +874,7 @@ class _ProductsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final displayProducts = recipe.products.isEmpty
-        ? [
-            const RecipeProduct(
-              id: 'demo_prod_1',
-              recipeId: 'demo',
-              productName: 'Name of the Product',
-              productImageUrl: 'assets/images/product_image.png',
-              quantity: 1,
-              unit: 'Other data from the product.',
-              position: 1,
-              sustainabilityLevel: 'Unsustainable',
-              safetyLevel: 'Avoid',
-            ),
-            const RecipeProduct(
-              id: 'demo_prod_2',
-              recipeId: 'demo',
-              productName: 'Name of the Product',
-              productImageUrl: 'assets/images/product_image.png',
-              quantity: 1,
-              unit: 'Other data from the product.',
-              position: 2,
-              sustainabilityLevel: 'Moderate Impact',
-              safetyLevel: 'Safe',
-            ),
-          ]
-        : recipe.products;
+    final displayProducts = recipe.products;
 
     return Padding(
       padding: EdgeInsets.all(16 * scale),
@@ -805,21 +882,27 @@ class _ProductsTab extends ConsumerWidget {
         children: [
           if (recipe.isOwner) _AddProductsButton(scale: scale),
           SizedBox(height: 12 * scale),
-          ...displayProducts.map(
-            (p) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _ProductCard(
-                product: p,
-                scale: scale,
-                isOwner: recipe.isOwner,
-                onDelete: recipe.isOwner
-                    ? () => ref
-                          .read(recipeDetailProvider(recipe).notifier)
-                          .removeProduct(p.id)
-                    : null,
+          if (displayProducts.isEmpty)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 24 * scale),
+              child: _ProductsEmptyState(scale: scale),
+            )
+          else
+            ...displayProducts.map(
+              (p) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _ProductCard(
+                  product: p,
+                  scale: scale,
+                  isOwner: recipe.isOwner,
+                  onDelete: recipe.isOwner
+                      ? () => ref
+                            .read(recipeDetailProvider(recipe).notifier)
+                            .removeProduct(p.id)
+                      : null,
+                ),
               ),
             ),
-          ),
           const SizedBox(height: 24),
         ],
       ),

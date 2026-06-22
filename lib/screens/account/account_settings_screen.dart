@@ -14,6 +14,7 @@ import 'modify_name_screen.dart';
 import 'modify_password_screen.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/network/auth_api_service.dart';
+import '../../core/network/user_api_service.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // Account Settings Screen — frame 1.6.0 → 1.6.23
@@ -418,7 +419,7 @@ class _AccountMenuList extends StatelessWidget {
     _MenuItem(
       icon: Icons.delete_outline_rounded,
       label: 'Delete Account',
-      isDestructive: false,
+      isDestructive: true,
       showChevron: true,
     ),
   ];
@@ -515,10 +516,96 @@ class _AccountMenuList extends StatelessWidget {
       Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
+    } else if (label == 'Delete Account') {
+      _showDeleteAccountConfirmDialog(context);
     } else if (label == 'Log Out') {
       AuthApiService.instance.logout();
       context.go('/login');
     }
+  }
+
+  void _showDeleteAccountConfirmDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => Dialog(
+        backgroundColor: AppColors.pureWhite,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Delete Account',
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.errorRed,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Are you sure you want to permanently delete your account? This action cannot be undone and will delete all your data.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.darkGrey,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(dialogCtx),
+                    child: Text(
+                      'Cancel',
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.black,
+                      ),
+                    ),
+                  ),
+                  Container(width: 1, height: 20, color: AppColors.clearGrey),
+                  GestureDetector(
+                    onTap: () async {
+                      Navigator.pop(dialogCtx);
+                      try {
+                        await UserApiService.instance.deleteAccount();
+                        AuthApiService.instance.logout();
+                        if (context.mounted) {
+                          context.go('/login');
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to delete account: $e'),
+                              backgroundColor: AppColors.errorRed,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    child: Text(
+                      'Delete',
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.errorRed,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

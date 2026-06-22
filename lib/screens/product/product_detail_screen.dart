@@ -276,7 +276,7 @@ class _ProductImageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Derive labels from model
+    // Derive labels and colors dynamically
     final sustainLabel = product.isSustainable ? 'Sustainable' : 'Unsustainable';
     final sustainColor = product.isSustainable
         ? const Color(0xFF43A047)
@@ -284,92 +284,87 @@ class _ProductImageCard extends StatelessWidget {
     const safeLabel = 'Safe';
     const safeColor = Color(0xFF43A047);
 
-    // ONE unified card — tabs at top clipped by clipBehavior, image below
+    final s = scale.clamp(0.85, 1.2);
+
     return Container(
-      width: double.infinity,
-      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: BorderRadius.circular(20 * scale),
-        border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24 * s),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        children: [
-          // ── Status tabs — flush at top ─────────────────────────────
-          IntrinsicHeight(
-            child: Row(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24 * s),
+        child: Stack(
+          children: [
+            // Top tabs (Unsustainable/Sustainable & Safe) - Background Layer
+            Row(
               children: [
-                // Left: Unsustainable / Sustainable
                 Expanded(
                   child: Container(
+                    height: 90 * s,
                     decoration: BoxDecoration(
                       color: sustainColor,
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20 * scale),
-                        topRight: Radius.circular(16 * scale),
+                        topLeft: Radius.circular(24 * s),
+                        topRight: Radius.circular(16 * s),
                       ),
                     ),
-                    padding: EdgeInsets.symmetric(
-                      vertical: 10 * scale,
-                      horizontal: 4 * scale,
-                    ),
+                    alignment: Alignment.topCenter,
+                    padding: EdgeInsets.only(top: 14 * s),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.eco_outlined,
                           color: Colors.white,
-                          size: 15 * scale,
+                          size: 16 * s,
                         ),
-                        SizedBox(width: 5 * scale),
+                        SizedBox(width: 5 * s),
                         Text(
                           sustainLabel,
                           style: GoogleFonts.inter(
-                            color: Colors.white,
-                            fontSize: 12 * scale,
+                            fontSize: 11 * s,
                             fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-                // Right: Safe
                 Expanded(
                   child: Container(
+                    height: 90 * s,
                     decoration: BoxDecoration(
                       color: safeColor,
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16 * scale),
-                        topRight: Radius.circular(20 * scale),
+                        topLeft: Radius.circular(16 * s),
+                        topRight: Radius.circular(24 * s),
                       ),
                     ),
-                    padding: EdgeInsets.symmetric(
-                      vertical: 10 * scale,
-                      horizontal: 4 * scale,
-                    ),
+                    alignment: Alignment.topCenter,
+                    padding: EdgeInsets.only(top: 14 * s),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.flag_outlined,
                           color: Colors.white,
-                          size: 15 * scale,
+                          size: 16 * s,
                         ),
-                        SizedBox(width: 5 * scale),
+                        SizedBox(width: 5 * s),
                         Text(
                           safeLabel,
                           style: GoogleFonts.inter(
-                            color: Colors.white,
-                            fontSize: 12 * scale,
+                            fontSize: 11 * s,
                             fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
                       ],
@@ -378,79 +373,84 @@ class _ProductImageCard extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-
-          // ── White image area with heart overlay ───────────────────
-          Stack(
-            children: [
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(
-                  vertical: 24 * scale,
-                  horizontal: 20 * scale,
+            // Bottom Image Section - Foreground Layer (Overlapping)
+            Container(
+              margin: EdgeInsets.only(top: 46 * s),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24 * s),
+                  topRight: Radius.circular(24 * s),
                 ),
-                color: AppColors.pureWhite,
-                child: Center(
-                  child: product.imageAsset != null && product.imageAsset!.isNotEmpty
-                      ? (product.imageAsset!.startsWith('http')
-                          ? Image.network(
-                              product.imageAsset!,
-                              height: 180 * scale,
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) => Icon(
-                                Icons.image_outlined,
-                                size: 80 * scale,
-                                color: AppColors.neutralGrey,
-                              ),
-                              loadingBuilder: (ctx, child, prog) {
-                                if (prog == null) return child;
-                                return SizedBox(
-                                  height: 180 * scale,
-                                  child: const Center(
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: AppColors.royalPurple,
-                                    ),
+              ),
+              padding: EdgeInsets.only(top: 20 * s, bottom: 20 * s),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Product image
+                  if (product.imageAsset != null && product.imageAsset!.isNotEmpty)
+                    (product.imageAsset!.startsWith('http') || product.imageAsset!.startsWith('https'))
+                        ? Image.network(
+                            product.imageAsset!,
+                            height: 180 * s,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.image_outlined,
+                              size: 80 * s,
+                              color: AppColors.neutralGrey,
+                            ),
+                            loadingBuilder: (ctx, child, prog) {
+                              if (prog == null) return child;
+                              return SizedBox(
+                                height: 180 * s,
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.royalPurple,
                                   ),
-                                );
-                              },
-                            )
-                          : Image.asset(
-                              product.imageAsset!,
-                              height: 180 * scale,
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) => Icon(
-                                Icons.image_outlined,
-                                size: 80 * scale,
-                                color: AppColors.neutralGrey,
-                              ),
-                            ))
-                      : Icon(
-                          Icons.image_outlined,
-                          size: 80 * scale,
-                          color: AppColors.neutralGrey,
-                        ),
-                ),
-              ),
-              // Heart icon — top-right overlay
-              Positioned(
-                top: 12 * scale,
-                right: 14 * scale,
-                child: GestureDetector(
-                  onTap: onFavoriteTap,
-                  behavior: HitTestBehavior.opaque,
-                  child: Icon(
-                    isFavorite
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                    color: isFavorite ? AppColors.vibrantPink : AppColors.black,
-                    size: 24 * scale,
+                                ),
+                              );
+                            },
+                          )
+                        : Image.asset(
+                            product.imageAsset!,
+                            height: 180 * s,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.image_outlined,
+                              size: 80 * s,
+                              color: AppColors.neutralGrey,
+                            ),
+                          )
+                  else
+                    Icon(
+                      Icons.image_outlined,
+                      size: 80 * s,
+                      color: AppColors.neutralGrey,
+                    ),
+                  
+                  // Heart save button
+                  Positioned(
+                    right: 16 * s,
+                    top: 0,
+                    child: GestureDetector(
+                      onTap: onFavoriteTap,
+                      behavior: HitTestBehavior.opaque,
+                      child: Icon(
+                        isFavorite
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        color: isFavorite ? AppColors.vibrantPink : AppColors.black,
+                        size: 26 * s,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -507,61 +507,146 @@ class _HexagonLabelRow extends StatelessWidget {
     return englishOnly.isNotEmpty ? englishOnly : all;
   }
 
+  static (IconData, Color) _getIconAndColor(String name) {
+    final lower = name.toLowerCase();
+    
+    // Allergens
+    if (lower.contains('gluten') || lower.contains('wheat')) {
+      return (Icons.grain_rounded, const Color(0xFFE5A93C)); // Amber/Orange
+    }
+    if (lower.contains('nut') || lower.contains('almond') || lower.contains('hazelnut') || lower.contains('pecan') || lower.contains('cashew')) {
+      return (Icons.cookie_rounded, const Color(0xFF8D6E63)); // Brown
+    }
+    if (lower.contains('milk') || lower.contains('lactose') || lower.contains('dairy')) {
+      return (Icons.water_drop_rounded, const Color(0xFF64B5F6)); // Light Blue
+    }
+    if (lower.contains('egg')) {
+      return (Icons.egg_rounded, const Color(0xFFFFD54F)); // Yellow
+    }
+    if (lower.contains('soy')) {
+      return (Icons.grass_rounded, const Color(0xFF81C784)); // Green
+    }
+    if (lower.contains('fish') || lower.contains('seafood') || lower.contains('shrimp')) {
+      return (Icons.set_meal_rounded, const Color(0xFF4FC3F7)); // Blue
+    }
+
+    // Certifications & Labels
+    if (lower.contains('organic') || lower.contains('bio')) {
+      return (Icons.eco_rounded, const Color(0xFF4CAF50)); // Green
+    }
+    if (lower.contains('ecocert')) {
+      return (Icons.verified_rounded, const Color(0xFF2E7D32)); // Dark Green
+    }
+    if (lower.contains('green dot') || lower.contains('recycl')) {
+      return (Icons.recycling_rounded, const Color(0xFF388E3C)); // Green
+    }
+    if (lower.contains('agriculture') || lower.contains('grower')) {
+      return (Icons.spa_rounded, const Color(0xFF81C784)); // Soft Green
+    }
+    if (lower.contains('vegan') || lower.contains('vegetarian')) {
+      return (Icons.spa_rounded, const Color(0xFF4CAF50)); // Green
+    }
+    if (lower.contains('halal') || lower.contains('kosher')) {
+      return (Icons.task_alt_rounded, const Color(0xFF009688)); // Teal
+    }
+    if (lower.contains('fair trade') || lower.contains('fairtrade')) {
+      return (Icons.handshake_rounded, const Color(0xFF00897B)); // Teal
+    }
+
+    return (Icons.verified_rounded, const Color(0xFF7B52D3)); // Purple accent
+  }
+
+  Widget _buildLabelItem(String label) {
+    final clean = _cleanLabel(label);
+    final iconInfo = _getIconAndColor(clean);
+    final iconData = iconInfo.$1;
+    final iconColor = iconInfo.$2;
+
+    return Padding(
+      padding: EdgeInsets.only(right: 14 * scale),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 58 * scale,
+            height: 58 * scale,
+            decoration: BoxDecoration(
+              color: AppColors.pureWhite,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.clearGrey,
+                width: 1.2,
+              ),
+            ),
+            child: Center(
+              child: Icon(
+                iconData,
+                color: iconColor,
+                size: 26 * scale,
+              ),
+            ),
+          ),
+          SizedBox(height: 6 * scale),
+          SizedBox(
+            width: 68 * scale,
+            child: Text(
+              clean,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 10 * scale,
+                color: AppColors.black,
+                fontWeight: FontWeight.w500,
+                height: 1.2,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (labels.isEmpty) return const SizedBox.shrink();
     final items = _filterEnglish(labels);
-    // No horizontal padding here — outer padding (16*scale) aligns with _SectionTitle
+
+    final List<String> row1;
+    final List<String> row2;
+
+    if (items.length <= 4) {
+      row1 = items;
+      row2 = [];
+    } else {
+      final half = (items.length / 2).ceil();
+      row1 = items.sublist(0, half);
+      row2 = items.sublist(half);
+    }
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16 * scale),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        child: Row(
-          children: items.map((label) {
-            return Padding(
-              padding: EdgeInsets.only(right: 14 * scale),
-              child: Column(
-                children: [
-                  Container(
-                    width: 58 * scale,
-                    height: 58 * scale,
-                    decoration: BoxDecoration(
-                      color: AppColors.pureWhite,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.clearGrey,
-                        width: 1.2,
-                      ),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.hexagon_outlined,
-                        color: AppColors.black,
-                        size: 26 * scale,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 6 * scale),
-                  SizedBox(
-                    width: 68 * scale,
-                    child: Text(
-                      _cleanLabel(label),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        fontSize: 10 * scale,
-                        color: AppColors.black,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: row1.map((label) => _buildLabelItem(label)).toList(),
+            ),
+          ),
+          if (row2.isNotEmpty) ...[
+            SizedBox(height: 12 * scale),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: row2.map((label) => _buildLabelItem(label)).toList(),
               ),
-            );
-          }).toList(),
-        ),
+            ),
+          ],
+        ],
       ),
     );
   }

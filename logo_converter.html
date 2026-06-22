@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Logo Converter</title>
+</head>
+<body>
+  <canvas id="canvas" width="1024" height="1024"></canvas>
+  <textarea id="output" style="width:100%; height:300px;"></textarea>
+  <script>
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Clear with transparency
+      ctx.clearRect(0, 0, 1024, 1024);
+      
+      // Draw white logo on transparent background
+      // The logo ratio is 242:100.
+      const width = 800;
+      const height = (100 / 242) * width;
+      const x = (1024 - width) / 2;
+      const y = (1024 - height) / 2;
+      
+      ctx.drawImage(img, x, y, width, height);
+      document.getElementById('output').value = canvas.toDataURL('image/png');
+    };
+    // Load local SVG using relative path or base64 representation
+    img.src = 'assets/images/luvco_logo_white.svg';
+  </script>
+</body>
+</html>

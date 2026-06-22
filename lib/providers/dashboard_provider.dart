@@ -1,4 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/network/product_api_service.dart';
+import '../core/network/recipe_api_service.dart';
+import '../core/network/user_api_service.dart';
 import '../models/product_model.dart';
 import '../models/recipe_model.dart';
 
@@ -22,74 +25,89 @@ class DashboardState {
   final String username;
   final List<RecommendedProduct> recommendedProducts;
   final List<RecipeModel> recentlyViewedRecipes;
+  final bool isLoading;
+  final String? error;
 
   const DashboardState({
     required this.username,
     required this.recommendedProducts,
     required this.recentlyViewedRecipes,
+    this.isLoading = false,
+    this.error,
   });
-}
 
-// ── Demo data ─────────────────────────────────────────────────────
-const _demoState = DashboardState(
-  username: 'Username',
-  recommendedProducts: [
-    RecommendedProduct(
-      product: ProductModel(
-        id: 'p1',
-        name: 'Name of the Product',
-        description: 'Other data from the product.',
-        thumbnailAsset: 'assets/images/product_image.png',
-        isSustainable: true,
-      ),
-      isSafe: true,
-      sustainabilityLabel: 'Eco-Friendly',
-      isGreenBadge: true,
-    ),
-    RecommendedProduct(
-      product: ProductModel(
-        id: 'p2',
-        name: 'Name of the Product',
-        description: 'Other data from the product.',
-        thumbnailAsset: 'assets/images/product_image.png',
-        isSustainable: true,
-      ),
-      isSafe: true,
-      sustainabilityLabel: 'Moderate Impact',
-      isGreenBadge: false,
-    ),
-  ],
-  recentlyViewedRecipes: [
-    RecipeModel(
-      id: 'rv1',
-      title: 'Name of the Recipe',
-      description: 'Other data from the recipe.',
-      imageUrl: 'assets/images/cake_image.png',
-      dietTags: ['Gluten Free', 'Label 01', 'Label 02'],
-    ),
-    RecipeModel(
-      id: 'rv2',
-      title: 'Name of the Recipe',
-      description: 'Other data from the recipe.',
-      imageUrl: 'assets/images/cake_image2.png',
-      dietTags: ['Gluten Free', 'Label 01', 'Label 02'],
-    ),
-  ],
-);
+  DashboardState copyWith({
+    String? username,
+    List<RecommendedProduct>? recommendedProducts,
+    List<RecipeModel>? recentlyViewedRecipes,
+    bool? isLoading,
+    String? error,
+  }) {
+    return DashboardState(
+      username: username ?? this.username,
+      recommendedProducts: recommendedProducts ?? this.recommendedProducts,
+      recentlyViewedRecipes: recentlyViewedRecipes ?? this.recentlyViewedRecipes,
+      isLoading: isLoading ?? this.isLoading,
+      error: error ?? this.error,
+    );
+  }
+}
 
 // ── Provider (Modern Notifier Syntax) ─────────────────────────────
 class DashboardNotifier extends Notifier<DashboardState> {
   @override
   DashboardState build() {
-    return _demoState;
+    // Schedule asynchronous loading of real data on initialization
+    Future.microtask(() => loadDashboardData());
+    return const DashboardState(
+      username: 'User',
+      recommendedProducts: [],
+      recentlyViewedRecipes: [],
+      isLoading: true,
+    );
+  }
+
+  Future<void> loadDashboardData() async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      // 1. Fetch user profile for display name
+      final user = await UserApiService.instance.getProfile();
+      final displayName = user.firstName ?? 'User';
+
+      // 2. Fetch recommended products from the API
+      final recommendedRaw = await ProductApiService.instance.getRecommendedProducts();
+      final recommendedList = recommendedRaw.map((item) {
+        final product = ProductModel.fromJson(item as Map<String, dynamic>);
+        final safetyLabel = item['safetyLabel'] as String? ?? 'Safe';
+        final sustainabilityLabel = item['sustainabilityLabel'] as String? ?? 'Eco-Friendly';
+        return RecommendedProduct(
+          product: product,
+          isSafe: safetyLabel.toLowerCase() == 'safe',
+          sustainabilityLabel: sustainabilityLabel,
+          isGreenBadge: sustainabilityLabel.toLowerCase() == 'eco-friendly',
+        );
+      }).toList();
+
+      // 3. Fetch recently viewed recipes from the API
+      final recentRecipes = await RecipeApiService.instance.getRecentlyViewedRecipes();
+
+      state = DashboardState(
+        username: displayName,
+        recommendedProducts: recommendedList,
+        recentlyViewedRecipes: recentRecipes,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
   }
 
   void updateUsername(String name) {
-    state = DashboardState(
-      username: name,
-      recommendedProducts: state.recommendedProducts,
-      recentlyViewedRecipes: state.recentlyViewedRecipes,
-    );
+    state = state.copyWith(username: name);
   }
 }
 

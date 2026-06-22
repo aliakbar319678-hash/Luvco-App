@@ -1,6 +1,6 @@
 {
-    "name": "luvco_logo",
-    "short_name": "luvco_logo",
+    "name": "Luvco",
+    "short_name": "Luvco",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

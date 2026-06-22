@@ -13,6 +13,8 @@ class ProductModel {
   final List<String> allergens;
   final List<String> ingredients;
   final bool isSaved;
+  final String sustainabilityLabel;
+  final String safetyLabel;
 
   const ProductModel({
     required this.id,
@@ -26,6 +28,8 @@ class ProductModel {
     this.allergens = const [],
     this.ingredients = const [],
     this.isSaved = false,
+    this.sustainabilityLabel = 'Eco-Friendly',
+    this.safetyLabel = 'Safe',
   });
 
   ProductModel copyWith({
@@ -40,6 +44,8 @@ class ProductModel {
     List<String>? allergens,
     List<String>? ingredients,
     bool? isSaved,
+    String? sustainabilityLabel,
+    String? safetyLabel,
   }) => ProductModel(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -52,6 +58,8 @@ class ProductModel {
     allergens: allergens ?? this.allergens,
     ingredients: ingredients ?? this.ingredients,
     isSaved: isSaved ?? this.isSaved,
+    sustainabilityLabel: sustainabilityLabel ?? this.sustainabilityLabel,
+    safetyLabel: safetyLabel ?? this.safetyLabel,
   );
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
@@ -59,11 +67,12 @@ class ProductModel {
     final name = json['name'] as String? ?? 'Unknown Product';
     final brand = json['brand'] as String? ?? 'Generic Brand';
     final imageUrl = json['imageUrl'] as String? ?? '';
-    final sustainabilityLabel = json['sustainabilityLabel'] as String? ?? '';
+    final sustainabilityLabelRaw = json['sustainabilityLabel'] as String? ?? '';
     
     // isSustainable: true if Eco-Friendly or Sustainable
-    final isSustainable = sustainabilityLabel.toLowerCase() == 'eco-friendly' ||
-                          sustainabilityLabel.toLowerCase() == 'sustainable';
+    final isSustainable = sustainabilityLabelRaw.toLowerCase() == 'eco-friendly' ||
+                          sustainabilityLabelRaw.toLowerCase() == 'sustainable' ||
+                          sustainabilityLabelRaw.toLowerCase() == 'eco friendly';
 
     final labelsList = json['labels'] != null ? List<String>.from(json['labels']) : <String>[];
     final allergensList = json['allergens'] != null ? List<String>.from(json['allergens']) : <String>[];
@@ -79,6 +88,31 @@ class ProductModel {
       }
     }
 
+    // Normalize sustainability level
+    String sustainability = 'Moderate Impact';
+    if (sustainabilityLabelRaw.isNotEmpty) {
+      if (sustainabilityLabelRaw.toLowerCase().contains('unsustainable')) {
+        sustainability = 'Unsustainable';
+      } else if (sustainabilityLabelRaw.toLowerCase().contains('eco-friendly') ||
+          sustainabilityLabelRaw.toLowerCase().contains('low') ||
+          sustainabilityLabelRaw.toLowerCase().contains('sustainable') ||
+          sustainabilityLabelRaw.toLowerCase().contains('eco friendly')) {
+        sustainability = 'Eco-Friendly';
+      }
+    } else {
+      sustainability = isSustainable ? 'Eco-Friendly' : 'Unsustainable';
+    }
+
+    // Normalize safety level
+    String safety = 'Safe';
+    final safetyLabelRaw = json['safetyLabel'] as String?;
+    if (safetyLabelRaw != null && safetyLabelRaw.isNotEmpty) {
+      if (safetyLabelRaw.toLowerCase().contains('avoid') ||
+          safetyLabelRaw.toLowerCase().contains('high')) {
+        safety = 'Avoid';
+      }
+    }
+
     return ProductModel(
       id: barcode,
       name: name,
@@ -90,6 +124,8 @@ class ProductModel {
       allergens: allergensList,
       ingredients: ingredientsList,
       isSaved: json['isFavorited'] as bool? ?? false,
+      sustainabilityLabel: sustainability,
+      safetyLabel: safety,
     );
   }
 
