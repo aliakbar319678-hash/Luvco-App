@@ -183,23 +183,35 @@ class DashboardSearchNotifier extends StateNotifier<DashboardSearchState> {
     List<DashboardSearchResult> results,
     DashboardSearchFilter filter,
   ) {
-    final sorted = List<DashboardSearchResult>.from(results);
+    var filtered = List<DashboardSearchResult>.from(results);
+    
+    // Apply sustainability level filter
+    if (filter.filter2Tags.isNotEmpty) {
+      filtered = filtered.where((r) => filter.filter2Tags.contains(r.badges.ecoLabel)).toList();
+    }
+    
+    // Apply safety level filter
+    if (filter.filter3Tags.isNotEmpty) {
+      filtered = filtered.where((r) => filter.filter3Tags.contains(r.badges.safetyLabel)).toList();
+    }
+
+    // Apply sorting
     switch (filter.sortBy) {
       case 'A-Z':
-        sorted.sort((a, b) => a.product.name.toLowerCase().compareTo(b.product.name.toLowerCase()));
+        filtered.sort((a, b) => a.product.name.toLowerCase().compareTo(b.product.name.toLowerCase()));
         break;
       case 'Z-A':
-        sorted.sort((a, b) => b.product.name.toLowerCase().compareTo(a.product.name.toLowerCase()));
+        filtered.sort((a, b) => b.product.name.toLowerCase().compareTo(a.product.name.toLowerCase()));
         break;
       case 'Eco Score':
         const order = {'Eco-Friendly': 0, 'Moderate Impact': 1, 'Unsustainable': 2};
-        sorted.sort((a, b) =>
+        filtered.sort((a, b) =>
             (order[a.badges.ecoLabel] ?? 1).compareTo(order[b.badges.ecoLabel] ?? 1));
         break;
       default: // 'Most Recent' — keep original order
         break;
     }
-    return sorted;
+    return filtered;
   }
 
   void clearSearch() {

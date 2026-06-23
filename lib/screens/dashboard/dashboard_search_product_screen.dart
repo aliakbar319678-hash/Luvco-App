@@ -1652,7 +1652,12 @@ class _BaseModal extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              child,
+              Flexible(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: child,
+                ),
+              ),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
@@ -1764,22 +1769,26 @@ class _FilterSheetState extends State<_FilterSheet> {
   final List<String> _sortOptions = ['Most Recent', 'A-Z', 'Z-A', 'Eco Score'];
 
   final List<String> _filter2Options = [
-    'Nullam Scelerisque',
-    'Nullam',
-    'Duis',
-    'Ullamcorper',
-    'Ligula Imperdiet',
+    'Eco-Friendly',
+    'Moderate Impact',
+    'Unsustainable',
   ];
   final List<String> _filter3Options = [
-    'Nullam Scelerisque',
-    'Nullam',
-    'Duis',
-    'Ullamcorper',
-    'Ligula Imperdiet',
+    'Safe',
+    'Avoid',
   ];
 
   final Set<String> _selected2 = {};
   final Set<String> _selected3 = {};
+
+  @override
+  void initState() {
+    super.initState();
+    final currentFilter = widget.ref.read(dashboardSearchProvider).filter;
+    _sortBy = currentFilter.sortBy;
+    _selected2.addAll(currentFilter.filter2Tags);
+    _selected3.addAll(currentFilter.filter3Tags);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1827,7 +1836,7 @@ class _FilterSheetState extends State<_FilterSheet> {
             ),
             const SizedBox(height: 20),
             Text(
-              'Filter 01',
+              'Sort By',
               style: GoogleFonts.inter(
                 fontSize: 13 * s,
                 fontWeight: FontWeight.w600,
@@ -1863,7 +1872,7 @@ class _FilterSheetState extends State<_FilterSheet> {
             ),
             const SizedBox(height: 20),
             Text(
-              'Filter 02',
+              'Sustainability Level',
               style: GoogleFonts.inter(
                 fontSize: 13 * s,
                 fontWeight: FontWeight.w600,
@@ -1891,7 +1900,7 @@ class _FilterSheetState extends State<_FilterSheet> {
             ),
             const SizedBox(height: 20),
             Text(
-              'Filter 03',
+              'Safety Level',
               style: GoogleFonts.inter(
                 fontSize: 13 * s,
                 fontWeight: FontWeight.w600,
