@@ -85,10 +85,7 @@ class AuthApiService {
     try {
       final response = await _dio.post(
         '/auth/verify-email',
-        data: {
-          'email': email,
-          'code': code,
-        },
+        data: {'email': email, 'code': code},
       );
       return AuthResponse.fromJson(response.data);
     } catch (e) {
@@ -100,11 +97,8 @@ class AuthApiService {
   /// Authenticates user and stores credentials upon success.
   Future<AuthResponse> login(LoginRequest request) async {
     try {
-      final response = await _dio.post(
-        '/auth/login',
-        data: request.toJson(),
-      );
-      
+      final response = await _dio.post('/auth/login', data: request.toJson());
+
       final authResponse = AuthResponse.fromJson(response.data);
       if (authResponse.success &&
           authResponse.accessToken != null &&
@@ -134,7 +128,10 @@ class AuthApiService {
         return AuthResponse.fromJson(response.data);
       }
       await TokenStorage.instance.clearTokens();
-      return const AuthResponse(success: true, message: 'Successfully logged out.');
+      return const AuthResponse(
+        success: true,
+        message: 'Successfully logged out.',
+      );
     } catch (e) {
       await TokenStorage.instance.clearTokens();
       throw handleError(e);
@@ -164,10 +161,7 @@ class AuthApiService {
     try {
       final response = await _dio.post(
         '/auth/verify-reset-code',
-        data: {
-          'email': email,
-          'code': code,
-        },
+        data: {'email': email, 'code': code},
       );
       return AuthResponse.fromJson(response.data);
     } catch (e) {
@@ -185,11 +179,7 @@ class AuthApiService {
     try {
       final response = await _dio.post(
         '/auth/reset-password',
-        data: {
-          'email': email,
-          'code': code,
-          'newPassword': newPassword,
-        },
+        data: {'email': email, 'code': code, 'newPassword': newPassword},
       );
       return AuthResponse.fromJson(response.data);
     } catch (e) {

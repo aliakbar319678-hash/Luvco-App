@@ -164,13 +164,26 @@ class ProductDetailScreen extends ConsumerWidget {
             if (state.popup == ProductDetailPopup.addToList)
               _CheckboxDialog(
                 title: 'Which shopping list do you want\nto add this product?',
-                items: state.shoppingLists,
+                items: state.shoppingLists.map((l) => _DialogItem(id: l.id, name: l.title)).toList(),
                 selected: state.selectedLists,
-                buttonLabel: 'Save On List',
+                buttonLabel: state.isSaving ? 'Saving...' : 'Save On List',
                 scale: scale,
                 size: size,
                 onToggle: notifier.toggleList,
-                onSave: notifier.saveOnList,
+                onSave: () async {
+                  final msg = await notifier.saveOnList();
+                  if (msg != null && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(msg),
+                        backgroundColor: msg.contains('Failed') || msg.contains('select')
+                            ? Colors.red
+                            : AppColors.royalPurple,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
                 onDismiss: notifier.closePopup,
               ),
 
@@ -178,13 +191,26 @@ class ProductDetailScreen extends ConsumerWidget {
             if (state.popup == ProductDetailPopup.addToRecipe)
               _CheckboxDialog(
                 title: 'Which recipe do you want to add\nthis product?',
-                items: state.recipes,
+                items: state.recipes.map((r) => _DialogItem(id: r.id, name: r.title)).toList(),
                 selected: state.selectedRecipes,
-                buttonLabel: 'Save On Recipe',
+                buttonLabel: state.isSaving ? 'Saving...' : 'Save On Recipe',
                 scale: scale,
                 size: size,
                 onToggle: notifier.toggleRecipe,
-                onSave: notifier.saveOnRecipe,
+                onSave: () async {
+                  final msg = await notifier.saveOnRecipe();
+                  if (msg != null && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(msg),
+                        backgroundColor: msg.contains('Failed') || msg.contains('select')
+                            ? Colors.red
+                            : AppColors.royalPurple,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
                 onDismiss: notifier.closePopup,
               ),
           ],
@@ -276,13 +302,26 @@ class _ProductImageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Derive labels and colors dynamically
-    final sustainLabel = product.isSustainable ? 'Sustainable' : 'Unsustainable';
-    final sustainColor = product.isSustainable
-        ? const Color(0xFF43A047)
-        : const Color(0xFFE53935);
-    const safeLabel = 'Safe';
-    const safeColor = Color(0xFF43A047);
+    // Derive labels and colors dynamically from the backend product properties
+    final sustainLabel = product.sustainabilityLabel;
+    final Color sustainColor;
+    if (sustainLabel.toLowerCase().contains('eco-friendly') ||
+        sustainLabel.toLowerCase().contains('sustainable') ||
+        sustainLabel.toLowerCase() == 'sustainable') {
+      sustainColor = const Color(0xFF4CAF50); // Green
+    } else if (sustainLabel.toLowerCase().contains('moderate')) {
+      sustainColor = const Color(0xFFFFB800); // Orange/Yellow
+    } else {
+      sustainColor = const Color(0xFFE12C2C); // Red
+    }
+
+    final safeLabel = product.safetyLabel;
+    final Color safeColor;
+    if (safeLabel.toLowerCase().contains('safe')) {
+      safeColor = const Color(0xFF4CAF50); // Green
+    } else {
+      safeColor = const Color(0xFFFFB800); // Orange/Yellow
+    }
 
     final s = scale.clamp(0.85, 1.2);
 
@@ -466,7 +505,8 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Container(
+      width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16 * scale),
       child: Text(
         title,
@@ -882,11 +922,20 @@ class _PopupAction extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// Dialog item model
+// ═══════════════════════════════════════════════════════════════
+class _DialogItem {
+  final String id;
+  final String name;
+  const _DialogItem({required this.id, required this.name});
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Checkbox Dialog  (frames 2.1.2 & 2.1.3)
 // ═══════════════════════════════════════════════════════════════
 class _CheckboxDialog extends StatelessWidget {
   final String title;
-  final List<String> items;
+  final List<_DialogItem> items;
   final List<String> selected;
   final String buttonLabel;
   final double scale;
@@ -981,54 +1030,67 @@ class _CheckboxDialog extends StatelessWidget {
                   SizedBox(height: 12 * scale),
 
                   // ── Checkbox items ──
-                  ...items.map((item) {
-                    final isChecked = selected.contains(item);
-                    return InkWell(
-                      onTap: () => onToggle(item),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 20 * scale,
-                          vertical: 12 * scale,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 22 * scale,
-                              height: 22 * scale,
-                              decoration: BoxDecoration(
-                                color: isChecked
-                                    ? AppColors.royalPurple
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(4 * scale),
-                                border: Border.all(
-                                  color: isChecked
-                                      ? AppColors.royalPurple
-                                      : AppColors.inputBorder,
-                                  width: 1.5,
+                  items.isEmpty
+                      ? Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 16 * scale),
+                          child: Text(
+                            'No items found. Please create one first.',
+                            style: GoogleFonts.inter(
+                              fontSize: 13 * scale,
+                              color: AppColors.darkGrey,
+                            ),
+                          ),
+                        )
+                      : Column(
+                          children: items.map((item) {
+                            final isChecked = selected.contains(item.id);
+                            return InkWell(
+                              onTap: () => onToggle(item.id),
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 20 * scale,
+                                  vertical: 12 * scale,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 22 * scale,
+                                      height: 22 * scale,
+                                      decoration: BoxDecoration(
+                                        color: isChecked
+                                            ? AppColors.royalPurple
+                                            : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(4 * scale),
+                                        border: Border.all(
+                                          color: isChecked
+                                              ? AppColors.royalPurple
+                                              : AppColors.inputBorder,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: isChecked
+                                          ? Icon(
+                                              Icons.check,
+                                              size: 14 * scale,
+                                              color: Colors.white,
+                                            )
+                                          : null,
+                                    ),
+                                    SizedBox(width: 12 * scale),
+                                    Text(
+                                      item.name,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14 * scale,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.black,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              child: isChecked
-                                  ? Icon(
-                                      Icons.check,
-                                      size: 14 * scale,
-                                      color: Colors.white,
-                                    )
-                                  : null,
-                            ),
-                            SizedBox(width: 12 * scale),
-                            Text(
-                              item,
-                              style: GoogleFonts.inter(
-                                fontSize: 14 * scale,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.black,
-                              ),
-                            ),
-                          ],
+                            );
+                          }).toList(),
                         ),
-                      ),
-                    );
-                  }),
 
                   SizedBox(height: 16 * scale),
 

@@ -142,28 +142,56 @@ class BarcodeScannerScreen extends ConsumerWidget {
             if (state.scanState == BarcodeScanState.addToList)
               _ListCheckboxDialog(
                 title: 'Which shopping list do you want\nto add this product?',
-                items: state.shoppingLists,
+                items: state.shoppingLists.map((l) => _DialogItem(id: l.id, name: l.title)).toList(),
                 selected: state.selectedLists,
-                buttonLabel: 'Save On List',
+                buttonLabel: state.isSaving ? 'Saving...' : 'Save On List',
                 scale: scale,
                 padding: padding,
                 onToggle: notifier.toggleList,
-                onSave: notifier.saveOnList,
+                onSave: () async {
+                  final msg = await notifier.saveOnList();
+                  if (msg != null && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(msg),
+                        backgroundColor: msg.contains('Failed')
+                            ? Colors.red
+                            : AppColors.royalPurple,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
                 onDismiss: notifier.closeDialog,
+                isSaving: state.isSaving,
               ),
 
             // ── 2.2.5 Add to Recipe dialog ──
             if (state.scanState == BarcodeScanState.addToRecipe)
               _ListCheckboxDialog(
                 title: 'Which recipe do you want to add\nthis product?',
-                items: state.recipes,
+                items: state.recipes.map((r) => _DialogItem(id: r.id, name: r.title)).toList(),
                 selected: state.selectedRecipes,
-                buttonLabel: 'Save On Recipe',
+                buttonLabel: state.isSaving ? 'Saving...' : 'Save On Recipe',
                 scale: scale,
                 padding: padding,
                 onToggle: notifier.toggleRecipe,
-                onSave: notifier.saveOnRecipe,
+                onSave: () async {
+                  final msg = await notifier.saveOnRecipe();
+                  if (msg != null && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(msg),
+                        backgroundColor: msg.contains('Failed')
+                            ? Colors.red
+                            : AppColors.royalPurple,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
                 onDismiss: notifier.closeDialog,
+                isSaving: state.isSaving,
               ),
           ],
         ),
@@ -1498,9 +1526,15 @@ class _OutlineIconBtn extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════
 // 2.2.4 & 2.2.5 — Checkbox bottom-sheet dialog
 // ═══════════════════════════════════════════════════════════════
+class _DialogItem {
+  final String id;
+  final String name;
+  const _DialogItem({required this.id, required this.name});
+}
+
 class _ListCheckboxDialog extends StatelessWidget {
   final String title;
-  final List<String> items;
+  final List<_DialogItem> items;
   final List<String> selected;
   final String buttonLabel;
   final double scale;
@@ -1508,6 +1542,7 @@ class _ListCheckboxDialog extends StatelessWidget {
   final ValueChanged<String> onToggle;
   final VoidCallback onSave;
   final VoidCallback onDismiss;
+  final bool isSaving;
 
   const _ListCheckboxDialog({
     required this.title,
@@ -1519,6 +1554,7 @@ class _ListCheckboxDialog extends StatelessWidget {
     required this.onToggle,
     required this.onSave,
     required this.onDismiss,
+    required this.isSaving,
   });
 
   @override
@@ -1577,52 +1613,64 @@ class _ListCheckboxDialog extends StatelessWidget {
                   SizedBox(height: 16 * scale),
 
                   // Checkboxes
-                  ...items.map((item) {
-                    final checked = selected.contains(item);
-                    return GestureDetector(
-                      onTap: () => onToggle(item),
-                      behavior: HitTestBehavior.opaque,
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 11 * scale),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 22 * scale,
-                              height: 22 * scale,
-                              decoration: BoxDecoration(
-                                color: checked
-                                    ? AppColors.royalPurple
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(4 * scale),
-                                border: Border.all(
-                                  color: checked
-                                      ? AppColors.royalPurple
-                                      : AppColors.inputBorder,
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: checked
-                                  ? Icon(
-                                      Icons.check,
-                                      size: 14 * scale,
-                                      color: Colors.white,
-                                    )
-                                  : null,
-                            ),
-                            SizedBox(width: 12 * scale),
-                            Text(
-                              item,
-                              style: GoogleFonts.inter(
-                                fontSize: 14 * scale,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.black,
-                              ),
-                            ),
-                          ],
+                  if (items.isEmpty)
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12 * scale),
+                      child: Text(
+                        'No items found. Create one first.',
+                        style: GoogleFonts.inter(
+                          fontSize: 13 * scale,
+                          color: AppColors.darkGrey,
                         ),
                       ),
-                    );
-                  }),
+                    )
+                  else
+                    ...items.map((item) {
+                      final checked = selected.contains(item.id);
+                      return GestureDetector(
+                        onTap: isSaving ? null : () => onToggle(item.id),
+                        behavior: HitTestBehavior.opaque,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 11 * scale),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 22 * scale,
+                                height: 22 * scale,
+                                decoration: BoxDecoration(
+                                  color: checked
+                                      ? AppColors.royalPurple
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(4 * scale),
+                                  border: Border.all(
+                                    color: checked
+                                        ? AppColors.royalPurple
+                                        : AppColors.inputBorder,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: checked
+                                    ? Icon(
+                                        Icons.check,
+                                        size: 14 * scale,
+                                        color: Colors.white,
+                                      )
+                                    : null,
+                              ),
+                              SizedBox(width: 12 * scale),
+                              Text(
+                                item.name,
+                                style: GoogleFonts.inter(
+                                  fontSize: 14 * scale,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
 
                   SizedBox(height: 20 * scale),
 
@@ -1631,7 +1679,7 @@ class _ListCheckboxDialog extends StatelessWidget {
                     width: double.infinity,
                     height: 52 * scale,
                     child: ElevatedButton(
-                      onPressed: selected.isNotEmpty ? onSave : null,
+                      onPressed: (selected.isNotEmpty && !isSaving) ? onSave : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.royalPurple,
                         disabledBackgroundColor: AppColors.lightRoyalPurple,

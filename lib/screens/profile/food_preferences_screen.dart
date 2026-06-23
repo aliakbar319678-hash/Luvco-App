@@ -73,7 +73,13 @@ class FoodPreferencesScreen extends ConsumerWidget {
                             scale: scale,
                             isDiet: isDiet,
                             provider: provider,
-                            onAddChoice: () => _openSearch(context, ref, isDiet, provider, scale),
+                            onAddChoice: () => _openSearch(
+                              context,
+                              ref,
+                              isDiet,
+                              provider,
+                              scale,
+                            ),
                             onDeleteItem: (item) =>
                                 ref
                                         .read(
@@ -87,8 +93,15 @@ class FoodPreferencesScreen extends ConsumerWidget {
                             scale: scale,
                             isDiet: isDiet,
                             provider: provider,
-                            onAddManually: () => _openAddManually(context, ref, provider, scale),
-                            onEditItem: (item) => _openEditItem(context, ref, provider, scale, item),
+                            onAddManually: () =>
+                                _openAddManually(context, ref, provider, scale),
+                            onEditItem: (item) => _openEditItem(
+                              context,
+                              ref,
+                              provider,
+                              scale,
+                              item,
+                            ),
                             onDeleteItem: (item) =>
                                 ref
                                         .read(
@@ -141,7 +154,13 @@ class FoodPreferencesScreen extends ConsumerWidget {
   }
 
   // ── Helper to open Search Bottom Sheet ──
-  void _openSearch(BuildContext context, WidgetRef ref, bool isDiet, provider, double scale) {
+  void _openSearch(
+    BuildContext context,
+    WidgetRef ref,
+    bool isDiet,
+    provider,
+    double scale,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -161,13 +180,19 @@ class FoodPreferencesScreen extends ConsumerWidget {
   }
 
   // ── Helper to open Add Manually Bottom Sheet ──
-  void _openAddManually(BuildContext context, WidgetRef ref, provider, double scale) {
+  void _openAddManually(
+    BuildContext context,
+    WidgetRef ref,
+    provider,
+    double scale,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _AddManuallyModal(
         scale: scale,
+        isDiet: isDiet,
         onClose: () => Navigator.pop(context),
         onSave: (labels) {
           ref.read(provider.notifier).addCustomItems(labels);
@@ -179,7 +204,13 @@ class FoodPreferencesScreen extends ConsumerWidget {
   }
 
   // ── Helper to open Edit Item Bottom Sheet ──
-  void _openEditItem(BuildContext context, WidgetRef ref, provider, double scale, item) {
+  void _openEditItem(
+    BuildContext context,
+    WidgetRef ref,
+    provider,
+    double scale,
+    item,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -516,7 +547,7 @@ class _CustomTabContentState extends State<_CustomTabContent> {
       children: [
         // ── Section title ──
         Text(
-          'Add Custom ${widget.isDiet ? "Food Challenges\nor Allergies" : "Food Challenges\nor Allergies"}:',
+          'Add Custom ${widget.isDiet ? "Diet Preferences" : "Food Challenges\nor Allergies"}:',
           style: GoogleFonts.inter(
             fontSize: 22 * s.clamp(0.85, 1.2),
             fontWeight: FontWeight.w700,
@@ -526,7 +557,7 @@ class _CustomTabContentState extends State<_CustomTabContent> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Search  and add for new Food Challenges or Allergies.',
+          'Search  and add for new ${widget.isDiet ? "Diet Preferences" : "Food Challenges or Allergies"}.',
           style: GoogleFonts.inter(
             fontSize: 15 * s.clamp(0.85, 1.2),
             color: AppColors.darkGrey,
@@ -548,7 +579,7 @@ class _CustomTabContentState extends State<_CustomTabContent> {
         const SizedBox(height: 16),
 
         Text(
-          'Edit your custom food\nchallenges & allergies items:',
+          'Edit your custom ${widget.isDiet ? "diet preferences" : "food\nchallenges & allergies"} items:',
           style: GoogleFonts.inter(
             fontSize: 15 * s.clamp(0.85, 1.2),
             fontWeight: FontWeight.w600,
@@ -664,10 +695,12 @@ class _SearchModalState extends ConsumerState<_SearchModal> {
         final filteredResults = _query.isEmpty
             ? <String>[]
             : allResults
-                .where((e) =>
-                    e.toLowerCase().contains(_query.toLowerCase()) &&
-                    !_selected.contains(e))
-                .toList();
+                  .where(
+                    (e) =>
+                        e.toLowerCase().contains(_query.toLowerCase()) &&
+                        !_selected.contains(e),
+                  )
+                  .toList();
 
         final canSave = _selected.isNotEmpty;
 
@@ -827,11 +860,13 @@ class _SearchModalState extends ConsumerState<_SearchModal> {
 // ═══════════════════════════════════════════════════════════════════
 class _AddManuallyModal extends StatefulWidget {
   final double scale;
+  final bool isDiet;
   final VoidCallback onClose;
   final ValueChanged<List<String>> onSave;
 
   const _AddManuallyModal({
     required this.scale,
+    required this.isDiet,
     required this.onClose,
     required this.onSave,
   });
@@ -865,155 +900,195 @@ class _AddManuallyModalState extends State<_AddManuallyModal> {
       onTap: () {},
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.fromLTRB(
-          20,
-          12,
-          20,
-          MediaQuery.of(context).viewInsets.bottom + 24,
-        ),
         decoration: const BoxDecoration(
           color: AppColors.pureWhite,
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Handle ──
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 20),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.clearGrey,
-                  borderRadius: BorderRadius.circular(2),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            12,
+            20,
+            MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Handle ──
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 20),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.clearGrey,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ),
-            // ── Header ──
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Do you want to add a custom food\nchallenges or allergies?',
-                    style: GoogleFonts.inter(
-                      fontSize: 16 * s.clamp(0.85, 1.2),
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.black,
-                      height: 1.3,
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: widget.onClose,
-                  child: const Icon(
-                    Icons.close,
-                    color: AppColors.darkGrey,
-                    size: 22,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            // ── Input fields ──
-            ..._controllers.asMap().entries.map((entry) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              // ── Header ──
+              Row(
                 children: [
-                  Text(
-                    'Other',
-                    style: GoogleFonts.inter(
-                      fontSize: 13 * s.clamp(0.85, 1.2),
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.darkGrey,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  _ManualInputField(
-                    controller: entry.value,
-                    hint: 'Enter your food challenge or allergy',
-                    scale: s,
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-              );
-            }),
-
-            // ── Add More ──
-            Center(
-              child: GestureDetector(
-                onTap: _addMore,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 24,
-                      height: 24,
-                      decoration: const BoxDecoration(
+                  Expanded(
+                    child: Text(
+                      widget.isDiet
+                          ? 'Do you want to add a custom\ndiet preference?'
+                          : 'Do you want to add a custom food\nchallenges or allergies?',
+                      style: GoogleFonts.inter(
+                        fontSize: 16 * s.clamp(0.85, 1.2),
+                        fontWeight: FontWeight.w700,
                         color: AppColors.black,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.add,
-                        color: Colors.white,
-                        size: 16,
+                        height: 1.3,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                  ),
+                  GestureDetector(
+                    onTap: widget.onClose,
+                    child: const Icon(
+                      Icons.close,
+                      color: AppColors.darkGrey,
+                      size: 22,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── Input fields ──
+              ..._controllers.asMap().entries.map((entry) {
+                final index = entry.key;
+                final controller = entry.value;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      'Add More',
+                      'Other',
                       style: GoogleFonts.inter(
                         fontSize: 13 * s.clamp(0.85, 1.2),
                         fontWeight: FontWeight.w500,
-                        color: AppColors.black,
+                        color: AppColors.darkGrey,
                       ),
                     ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _ManualInputField(
+                            controller: controller,
+                            hint: widget.isDiet
+                                ? 'Enter your diet preference'
+                                : 'Enter your food challenge or allergy',
+                            scale: s,
+                            onChanged: (_) => setState(() {}),
+                          ),
+                        ),
+                        if (_controllers.length > 1) ...[
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _controllers.removeAt(index);
+                                controller.dispose();
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.softGrey,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.inputBorder,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.close,
+                                color: AppColors.errorRed,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 12),
                   ],
-                ),
-              ),
-            ),
+                );
+              }),
 
-            const SizedBox(height: 20),
-
-            // ── Save button ──
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _canSave
-                    ? () => widget.onSave(
-                        _controllers
-                            .map((c) => c.text.trim())
-                            .where((t) => t.isNotEmpty)
-                            .toList(),
-                      )
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _canSave
-                      ? AppColors.royalPurple
-                      : AppColors.faintPink,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: Text(
-                  'Save Changes',
-                  style: GoogleFonts.inter(
-                    fontSize: 15 * s.clamp(0.85, 1.2),
-                    fontWeight: FontWeight.w600,
-                    color: _canSave
-                        ? AppColors.pureWhite
-                        : AppColors.lightRoyalPurple,
+              // ── Add More ──
+              Center(
+                child: GestureDetector(
+                  onTap: _addMore,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: const BoxDecoration(
+                          color: AppColors.black,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Add More',
+                        style: GoogleFonts.inter(
+                          fontSize: 13 * s.clamp(0.85, 1.2),
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.black,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 20),
+
+              // ── Save button ──
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _canSave
+                      ? () => widget.onSave(
+                          _controllers
+                              .map((c) => c.text.trim())
+                              .where((t) => t.isNotEmpty)
+                              .toList(),
+                        )
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _canSave
+                        ? AppColors.royalPurple
+                        : AppColors.faintPink,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    'Save Changes',
+                    style: GoogleFonts.inter(
+                      fontSize: 15 * s.clamp(0.85, 1.2),
+                      fontWeight: FontWeight.w600,
+                      color: _canSave
+                          ? AppColors.pureWhite
+                          : AppColors.lightRoyalPurple,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1063,104 +1138,106 @@ class _EditCustomItemModalState extends State<_EditCustomItemModal> {
       onTap: () {},
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.fromLTRB(
-          20,
-          12,
-          20,
-          MediaQuery.of(context).viewInsets.bottom + 24,
-        ),
         decoration: const BoxDecoration(
           color: AppColors.pureWhite,
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Handle ──
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 20),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.clearGrey,
-                  borderRadius: BorderRadius.circular(2),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            12,
+            20,
+            MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Handle ──
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 20),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.clearGrey,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ),
-            // ── Header ──
-            Row(
-              children: [
-                Expanded(
+              // ── Header ──
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Do you want to edit this custom\nitem?',
+                      style: GoogleFonts.inter(
+                        fontSize: 16 * s.clamp(0.85, 1.2),
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.black,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: widget.onClose,
+                    child: const Icon(
+                      Icons.close,
+                      color: AppColors.darkGrey,
+                      size: 22,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              Text(
+                'Other',
+                style: GoogleFonts.inter(
+                  fontSize: 13 * s.clamp(0.85, 1.2),
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.darkGrey,
+                ),
+              ),
+              const SizedBox(height: 6),
+
+              _ManualInputField(
+                controller: _ctrl,
+                hint: 'Enter item name',
+                scale: s,
+                onChanged: (_) => setState(() {}),
+                autofocus: true,
+              ),
+
+              const SizedBox(height: 20),
+
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _ctrl.text.trim().isNotEmpty
+                      ? () => widget.onSave(_ctrl.text.trim())
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.royalPurple,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
                   child: Text(
-                    'Do you want to edit this custom\nitem?',
+                    'Save Changes',
                     style: GoogleFonts.inter(
-                      fontSize: 16 * s.clamp(0.85, 1.2),
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.black,
-                      height: 1.3,
+                      fontSize: 15 * s.clamp(0.85, 1.2),
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.pureWhite,
                     ),
                   ),
                 ),
-                GestureDetector(
-                  onTap: widget.onClose,
-                  child: const Icon(
-                    Icons.close,
-                    color: AppColors.darkGrey,
-                    size: 22,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            Text(
-              'Other',
-              style: GoogleFonts.inter(
-                fontSize: 13 * s.clamp(0.85, 1.2),
-                fontWeight: FontWeight.w500,
-                color: AppColors.darkGrey,
               ),
-            ),
-            const SizedBox(height: 6),
-
-            _ManualInputField(
-              controller: _ctrl,
-              hint: 'Enter item name',
-              scale: s,
-              onChanged: (_) => setState(() {}),
-              autofocus: true,
-            ),
-
-            const SizedBox(height: 20),
-
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _ctrl.text.trim().isNotEmpty
-                    ? () => widget.onSave(_ctrl.text.trim())
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.royalPurple,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: Text(
-                  'Save Changes',
-                  style: GoogleFonts.inter(
-                    fontSize: 15 * s.clamp(0.85, 1.2),
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.pureWhite,
-                  ),
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1242,7 +1319,9 @@ class _DeleteConfirmDialog extends StatelessWidget {
                               behavior: HitTestBehavior.opaque,
                               child: Container(
                                 alignment: Alignment.center,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 child: Text(
                                   'Cancel',
                                   style: GoogleFonts.inter(
@@ -1254,14 +1333,19 @@ class _DeleteConfirmDialog extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const VerticalDivider(width: 1, color: AppColors.clearGrey),
+                          const VerticalDivider(
+                            width: 1,
+                            color: AppColors.clearGrey,
+                          ),
                           Expanded(
                             child: GestureDetector(
                               onTap: onDelete,
                               behavior: HitTestBehavior.opaque,
                               child: Container(
                                 alignment: Alignment.center,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 child: Text(
                                   'Delete',
                                   style: GoogleFonts.inter(
@@ -1693,7 +1777,11 @@ class _SelectedChip extends StatelessWidget {
           const SizedBox(width: 6),
           GestureDetector(
             onTap: onRemove,
-            child: const Icon(Icons.close, size: 14, color: AppColors.royalPurple),
+            child: const Icon(
+              Icons.close,
+              size: 14,
+              color: AppColors.royalPurple,
+            ),
           ),
         ],
       ),

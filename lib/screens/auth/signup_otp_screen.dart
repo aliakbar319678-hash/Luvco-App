@@ -75,10 +75,9 @@ class _SignupOtpScreenState extends ConsumerState<SignupOtpScreen> {
 
   void _onSubmit() {
     if (!_isComplete) return;
-    ref.read(signupOtpProvider.notifier).verifyCode(
-      email: widget.email,
-      code: _fullCode,
-    );
+    ref
+        .read(signupOtpProvider.notifier)
+        .verifyCode(email: widget.email, code: _fullCode);
   }
 
   @override
@@ -139,20 +138,14 @@ class _SignupOtpScreenState extends ConsumerState<SignupOtpScreen> {
                     const SizedBox(height: 10),
 
                     if (state.hasError)
-                      AuthErrorRow(
-                        message: state.errorMessage,
-                        centered: true,
-                      )
+                      AuthErrorRow(message: state.errorMessage, centered: true)
                     else
                       _ArrivalHint(cooldown: _cooldown),
 
                     SizedBox(height: size.height * 0.024),
 
                     // ── Resend link ──
-                    _ResendRow(
-                      canResend: _cooldown == 0,
-                      onResend: _clearAll,
-                    ),
+                    _ResendRow(canResend: _cooldown == 0, onResend: _clearAll),
 
                     SizedBox(height: size.height * 0.036),
 
@@ -308,7 +301,10 @@ class _OtpSingleBox extends StatelessWidget {
         decoration: InputDecoration(
           counterText: '',
           hintText: controller.text.isEmpty ? '-' : '',
-          hintStyle: GoogleFonts.inter(fontSize: 18, color: AppColors.clearGrey),
+          hintStyle: GoogleFonts.inter(
+            fontSize: 18,
+            color: AppColors.clearGrey,
+          ),
           filled: true,
           fillColor: AppColors.pureWhite,
           contentPadding: EdgeInsets.zero,
@@ -359,7 +355,9 @@ class _ContinueButton extends StatelessWidget {
           onPressed: isLoading ? null : onTap,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.royalPurple,
-            disabledBackgroundColor: AppColors.royalPurple.withValues(alpha: 0.5),
+            disabledBackgroundColor: AppColors.royalPurple.withValues(
+              alpha: 0.5,
+            ),
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(50),

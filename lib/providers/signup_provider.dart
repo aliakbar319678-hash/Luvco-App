@@ -17,33 +17,34 @@ final signupPrivacyAcceptedProvider = StateProvider<bool>((ref) => false);
 enum SignupStatus { idle, loading, success, error }
 
 // ── Field-level error keys ────────────────────────────────────────
-enum SignupErrorField { none, firstName, lastName, email, password }
+enum SignupErrorField { none, firstName, lastName, email, password, terms, privacy }
 
 // ── State ─────────────────────────────────────────────────────────
 class SignupState {
   final SignupStatus status;
-  final SignupErrorField errorField;
-  final String? errorMessage;
+  final Map<SignupErrorField, String> errors;
+  final String? globalErrorMessage;
 
   const SignupState({
     this.status = SignupStatus.idle,
-    this.errorField = SignupErrorField.none,
-    this.errorMessage,
+    this.errors = const {},
+    this.globalErrorMessage,
   });
 
-  bool get hasError => status == SignupStatus.error;
+  bool get hasError => status == SignupStatus.error || errors.isNotEmpty || globalErrorMessage != null;
   bool get isSuccess => status == SignupStatus.success;
 
-  bool fieldHasError(SignupErrorField field) => hasError && errorField == field;
+  bool fieldHasError(SignupErrorField field) => errors.containsKey(field);
+  String? fieldErrorMessage(SignupErrorField field) => errors[field];
 
   SignupState copyWith({
     SignupStatus? status,
-    SignupErrorField? errorField,
-    String? errorMessage,
+    Map<SignupErrorField, String>? errors,
+    String? globalErrorMessage,
   }) => SignupState(
     status: status ?? this.status,
-    errorField: errorField ?? this.errorField,
-    errorMessage: errorMessage ?? this.errorMessage,
+    errors: errors ?? this.errors,
+    globalErrorMessage: globalErrorMessage ?? this.globalErrorMessage,
   );
 }
 
@@ -53,57 +54,40 @@ class SignupNotifier extends StateNotifier<SignupState> {
   SignupNotifier(this.ref) : super(const SignupState());
 
   Future<void> signup(SignupModel model) async {
+    final newErrors = <SignupErrorField, String>{};
+
     // ── Client-side validation ──
     if (model.firstName.trim().isEmpty) {
-      state = const SignupState(
-        status: SignupStatus.error,
-        errorField: SignupErrorField.firstName,
-        errorMessage: 'Please fill out this field',
-      );
-      return;
+      newErrors[SignupErrorField.firstName] = 'Please fill out this field';
     }
 
     if (model.lastName.trim().isEmpty) {
-      state = const SignupState(
-        status: SignupStatus.error,
-        errorField: SignupErrorField.lastName,
-        errorMessage: 'Please fill out this field',
-      );
-      return;
+      newErrors[SignupErrorField.lastName] = 'Please fill out this field';
     }
 
     if (model.email.trim().isEmpty) {
-      state = const SignupState(
-        status: SignupStatus.error,
-        errorField: SignupErrorField.email,
-        errorMessage: 'Please fill out this field',
-      );
-      return;
+      newErrors[SignupErrorField.email] = 'Please fill out this field';
     }
 
     if (model.password.length < 8) {
-      state = const SignupState(
-        status: SignupStatus.error,
-        errorField: SignupErrorField.password,
-        errorMessage: 'Use 8 or more characters',
-      );
-      return;
+      newErrors[SignupErrorField.password] = 'Use 8 or more characters';
     }
 
-    if (!ref.read(signupTermsAcceptedProvider)) {
-      state = const SignupState(
-        status: SignupStatus.error,
-        errorField: SignupErrorField.none,
-        errorMessage: 'You must accept the Terms and Conditions',
-      );
-      return;
+    final termsAccepted = ref.read(signupTermsAcceptedProvider);
+    final privacyAccepted = ref.read(signupPrivacyAcceptedProvider);
+    
+    if (!termsAccepted) {
+      newErrors[SignupErrorField.terms] = 'Please accept Terms & Conditions';
+    }
+    
+    if (!privacyAccepted) {
+      newErrors[SignupErrorField.privacy] = 'Please accept Privacy Policy';
     }
 
-    if (!ref.read(signupPrivacyAcceptedProvider)) {
-      state = const SignupState(
+    if (newErrors.isNotEmpty) {
+      state = SignupState(
         status: SignupStatus.error,
-        errorField: SignupErrorField.none,
-        errorMessage: 'You must accept the Privacy Policy',
+        errors: newErrors,
       );
       return;
     }
@@ -136,8 +120,7 @@ class SignupNotifier extends StateNotifier<SignupState> {
         }
         state = SignupState(
           status: SignupStatus.error,
-          errorField: errorField,
-          errorMessage: message,
+          errors: {errorField: message},
         );
       }
     } catch (e) {
@@ -152,8 +135,7 @@ class SignupNotifier extends StateNotifier<SignupState> {
       }
       state = SignupState(
         status: SignupStatus.error,
-        errorField: errorField,
-        errorMessage: message,
+        errors: {errorField: message},
       );
     }
   }

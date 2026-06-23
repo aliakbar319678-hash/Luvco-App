@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/food_settings_provider.dart';
 import '../../widgets/food_settings_dialogs.dart';
-
+import '../../providers/onboarding_provider.dart';
 
 class FoodSettingsTab extends ConsumerStatefulWidget {
   const FoodSettingsTab({super.key});
@@ -42,8 +42,14 @@ class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
   void _openModifySheet() {
     showFoodSettingsModifySheet(
       context,
-      onModifyDiet: () => GoRouter.of(context).push('/food-diet'),
-      onModifyChallenges: () => GoRouter.of(context).push('/food-challenges'),
+      onModifyDiet: () async {
+        await GoRouter.of(context).push('/food-diet');
+        ref.read(foodSettingsProvider.notifier).loadSettings();
+      },
+      onModifyChallenges: () async {
+        await GoRouter.of(context).push('/food-challenges');
+        ref.read(foodSettingsProvider.notifier).loadSettings();
+      },
     );
   }
 
@@ -52,6 +58,14 @@ class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
     final size = MediaQuery.sizeOf(context);
     final scale = size.width / 390;
     final settings = ref.watch(foodSettingsProvider);
+    if (settings.isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.only(top: 40),
+          child: CircularProgressIndicator(color: AppColors.royalPurple),
+        ),
+      );
+    }
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: size.width * 0.058),
@@ -98,7 +112,9 @@ class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
             decoration: BoxDecoration(
               color: AppColors.pureWhite,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.clearGrey.withValues(alpha: 0.6)),
+              border: Border.all(
+                color: AppColors.clearGrey.withValues(alpha: 0.6),
+              ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.03),
@@ -121,23 +137,38 @@ class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
                   ),
                   scale: scale,
                   content: Column(
-                    children: _dietOptions
-                        .map(
-                          (option) => _SettingsListItem(
-                            label: option,
-                            isSelected:
-                                settings.dietChoices.contains(option),
-                            onTap: () => ref
-                                .read(foodSettingsProvider.notifier)
-                                .toggleDietChoice(option),
-                            scale: scale,
-                          ),
-                        )
-                        .toList(),
+                    children: [
+                      // Manually added custom diets (shown as selected)
+                      ...settings.customDiets.map(
+                        (customItem) => _SettingsListItem(
+                          label: customItem,
+                          isSelected: true,
+                          onTap: () {}, // Editable via "Add Or Edit"
+                          scale: scale,
+                        ),
+                      ),
+                      // Preset diets
+                      ...settings.dietChoices
+                          .map(
+                            (option) => _SettingsListItem(
+                              label: option,
+                              isSelected: true,
+                              onTap: () => ref
+                                  .read(foodSettingsProvider.notifier)
+                                  .toggleDietChoice(option),
+                              scale: scale,
+                            ),
+                          )
+                          .toList(),
+                    ],
                   ),
                 ),
 
-                const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFEEEEEE),
+                ),
 
                 // ── Food Challenges & Allergies accordion ──
                 _SettingsAccordionSection(
@@ -151,19 +182,28 @@ class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
                   ),
                   scale: scale,
                   content: Column(
-                    children: _challengeOptions
-                        .map(
-                          (option) => _SettingsListItem(
-                            label: option,
-                            isSelected:
-                                settings.challenges.contains(option),
-                            onTap: () => ref
-                                .read(foodSettingsProvider.notifier)
-                                .toggleChallenge(option),
-                            scale: scale,
-                          ),
-                        )
-                        .toList(),
+                    children: [
+                      // Manually added challenges (shown as selected)
+                      ...settings.customChallenges.map(
+                        (customItem) => _SettingsListItem(
+                          label: customItem,
+                          isSelected: true,
+                          onTap: () {}, // Editable via "Add Or Edit"
+                          scale: scale,
+                        ),
+                      ),
+                      // Preset challenges
+                      ...settings.challenges.map(
+                        (option) => _SettingsListItem(
+                          label: option,
+                          isSelected: true,
+                          onTap: () => ref
+                              .read(foodSettingsProvider.notifier)
+                              .toggleChallenge(option),
+                          scale: scale,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -211,8 +251,7 @@ class _SettingsListItem extends StatelessWidget {
                 label,
                 style: GoogleFonts.inter(
                   fontSize: 14 * scale.clamp(0.85, 1.2),
-                  fontWeight:
-                      isSelected ? FontWeight.w600 : FontWeight.w400,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                   color: isSelected ? AppColors.black : AppColors.darkGrey,
                 ),
               ),
@@ -248,59 +287,52 @@ class _SettingsAccordionSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-          // ── Header row: icon + title + +/× toggle ──
-          GestureDetector(
-            onTap: onToggle,
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 18,
-              ),
-              child: Row(
-                children: [
-                  // Section icon (restaurant or no_food matching Figma)
-                  Icon(icon, color: AppColors.black, size: 22),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: GoogleFonts.inter(
-                        fontSize: 15 * scale.clamp(0.85, 1.2),
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.black,
-                      ),
+        // ── Header row: icon + title + +/× toggle ──
+        GestureDetector(
+          onTap: onToggle,
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            child: Row(
+              children: [
+                // Section icon (restaurant or no_food matching Figma)
+                Icon(icon, color: AppColors.black, size: 22),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      fontSize: 15 * scale.clamp(0.85, 1.2),
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.black,
                     ),
                   ),
-                  // Toggle icon: + when collapsed, × when expanded (matches Figma)
-                  Icon(
-                    isExpanded ? Icons.close : Icons.add,
-                    color: AppColors.black,
-                    size: 22,
-                  ),
-                ],
-              ),
+                ),
+                // Toggle icon: + when collapsed, × when expanded (matches Figma)
+                Icon(
+                  isExpanded ? Icons.close : Icons.add,
+                  color: AppColors.black,
+                  size: 22,
+                ),
+              ],
             ),
           ),
+        ),
 
-          // ── Expanded content with divider ──
-          if (isExpanded) ...[
-            const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
-            Padding(
-              padding: const EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 4,
-                bottom: 16,
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                child: content,
-              ),
+        // ── Expanded content with divider ──
+        if (isExpanded) ...[
+          const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
+          Padding(
+            padding: const EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 4,
+              bottom: 16,
             ),
-          ],
+            child: SizedBox(width: double.infinity, child: content),
+          ),
         ],
+      ],
     );
   }
 }
-

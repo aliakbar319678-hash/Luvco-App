@@ -10,6 +10,8 @@ import '../../providers/recipe_detail_provider.dart';
 import '../../providers/recipe_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import 'edit_recipe_screen.dart';
+import '../../core/network/api_client.dart';
+import '../../models/product_model.dart';
 
 // ═══════════════════════════════════════════════════════════════════
 //  RECIPE DETAIL SCREEN — entry point
@@ -66,15 +68,27 @@ class RecipeDetailScreen extends ConsumerWidget {
                                 child: Column(
                                   children: [
                                     const SizedBox(height: 12),
-                                    _RecipeMetaSection(recipe: detail, scale: scale),
+                                    _RecipeMetaSection(
+                                      recipe: detail,
+                                      scale: scale,
+                                    ),
                                     const SizedBox(height: 8),
-                                    _DietChipsSection(recipe: detail, scale: scale),
+                                    _DietChipsSection(
+                                      recipe: detail,
+                                      scale: scale,
+                                    ),
                                     const SizedBox(height: 16),
                                     _RecipeTabBar(
                                       activeTab: activeTab,
                                       scale: scale,
                                       onChanged: (i) =>
-                                          ref.read(recipeDetailTabProvider.notifier).state = i,
+                                          ref
+                                                  .read(
+                                                    recipeDetailTabProvider
+                                                        .notifier,
+                                                  )
+                                                  .state =
+                                              i,
                                     ),
                                     _TabContent(
                                       recipe: detail,
@@ -102,9 +116,14 @@ class RecipeDetailScreen extends ConsumerWidget {
                         padding: padding,
                         onBack: () => context.pop(),
                         onMore: detail.isOwner
-                            ? () => ref
-                                    .read(recipeDetailMoreActionsProvider.notifier)
-                                    .state = true
+                            ? () =>
+                                  ref
+                                          .read(
+                                            recipeDetailMoreActionsProvider
+                                                .notifier,
+                                          )
+                                          .state =
+                                      true
                             : null,
                       ),
                     ),
@@ -118,31 +137,45 @@ class RecipeDetailScreen extends ConsumerWidget {
             // from the scroll body above.
             Consumer(
               builder: (context, ref, _) {
-                final showMoreActions = ref.watch(recipeDetailMoreActionsProvider);
+                final showMoreActions = ref.watch(
+                  recipeDetailMoreActionsProvider,
+                );
                 if (!showMoreActions) return const SizedBox.shrink();
                 final detail = ref.watch(recipeDetailProvider(recipe));
                 return _MoreActionsOverlay(
                   recipe: detail,
                   scale: scale,
                   onDismiss: () =>
-                      ref.read(recipeDetailMoreActionsProvider.notifier).state = false,
+                      ref.read(recipeDetailMoreActionsProvider.notifier).state =
+                          false,
                   onEdit: () {
-                    ref.read(recipeDetailMoreActionsProvider.notifier).state = false;
+                    ref.read(recipeDetailMoreActionsProvider.notifier).state =
+                        false;
                     _openEditSheet(context, ref, detail, scale);
                   },
                   onDuplicate: () {
-                    ref.read(recipeDetailMoreActionsProvider.notifier).state = false;
-                    ref.read(myRecipesProvider.notifier).duplicateRecipe(detail.id);
-                    ref.read(recipeDuplicatedSuccessProvider.notifier).state = true;
+                    ref.read(recipeDetailMoreActionsProvider.notifier).state =
+                        false;
+                    ref
+                        .read(myRecipesProvider.notifier)
+                        .duplicateRecipe(detail.id);
+                    ref.read(recipeDuplicatedSuccessProvider.notifier).state =
+                        true;
                     Future.delayed(const Duration(seconds: 2), () {
                       if (context.mounted) {
-                        ref.read(recipeDuplicatedSuccessProvider.notifier).state = false;
+                        ref
+                                .read(recipeDuplicatedSuccessProvider.notifier)
+                                .state =
+                            false;
                       }
                     });
                   },
                   onDelete: () {
-                    ref.read(recipeDetailMoreActionsProvider.notifier).state = false;
-                    ref.read(myRecipesProvider.notifier).deleteRecipe(detail.id);
+                    ref.read(recipeDetailMoreActionsProvider.notifier).state =
+                        false;
+                    ref
+                        .read(myRecipesProvider.notifier)
+                        .deleteRecipe(detail.id);
                     context.pop();
                   },
                 );
@@ -152,7 +185,9 @@ class RecipeDetailScreen extends ConsumerWidget {
             // ── Duplicate success toast — separate Consumer ─────────────
             Consumer(
               builder: (context, ref, _) {
-                final showDupSuccess = ref.watch(recipeDuplicatedSuccessProvider);
+                final showDupSuccess = ref.watch(
+                  recipeDuplicatedSuccessProvider,
+                );
                 if (!showDupSuccess) return const SizedBox.shrink();
                 return const _DuplicateSuccessOverlay();
               },
@@ -272,18 +307,22 @@ class _HeroImage extends StatelessWidget {
       width: double.infinity,
       child: recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty
           ? (recipe.imageUrl!.startsWith('http')
-              ? Image.network(
-                  recipe.imageUrl!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
-                )
-              : Image.asset(
-                  recipe.imageUrl!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
-                ))
+                ? Image.network(
+                    recipe.imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Image.asset(
+                      'assets/images/bread_pic.png',
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : Image.asset(
+                    recipe.imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Image.asset(
+                      'assets/images/bread_pic.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ))
           : Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
     );
   }
@@ -301,9 +340,7 @@ class _RecipeMetaSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 375 * scale,
-      constraints: BoxConstraints(
-        minHeight: 157 * scale,
-      ),
+      constraints: BoxConstraints(minHeight: 157 * scale),
       decoration: BoxDecoration(
         color: AppColors.pureWhite,
         borderRadius: BorderRadius.vertical(
@@ -356,7 +393,6 @@ class _RecipeMetaSection extends StatelessWidget {
           ),
 
           SizedBox(height: 24 * scale), // Gap of 24px or flexible space
-
           // ── Servings + Time row (Centered) ───────────────────────
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -381,7 +417,6 @@ class _RecipeMetaSection extends StatelessWidget {
     );
   }
 }
-
 
 /// Paints a rounded-rect dashed border
 
@@ -450,7 +485,8 @@ class _DietChipsSection extends StatelessWidget {
     final showFree = recipe.freeOfIngredients.isNotEmpty;
     if (!showDiet && !showFree) return const SizedBox.shrink();
 
-    return Padding(
+    return Container(
+      width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: 16 * scale,
         vertical: 6 * scale,
@@ -519,7 +555,9 @@ class _ChipRow extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
               child: Row(
-                children: row1.map((tag) => _OutlineChip(label: tag, scale: scale)).toList(),
+                children: row1
+                    .map((tag) => _OutlineChip(label: tag, scale: scale))
+                    .toList(),
               ),
             ),
             if (row2.isNotEmpty) ...[
@@ -528,7 +566,9 @@ class _ChipRow extends StatelessWidget {
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 child: Row(
-                  children: row2.map((tag) => _OutlineChip(label: tag, scale: scale)).toList(),
+                  children: row2
+                      .map((tag) => _OutlineChip(label: tag, scale: scale))
+                      .toList(),
                 ),
               ),
             ],
@@ -546,15 +586,21 @@ class _OutlineChip extends StatelessWidget {
 
   static (IconData, Color) _getIconAndColor(String name) {
     final lower = name.toLowerCase();
-    
+
     // Allergens
     if (lower.contains('gluten') || lower.contains('wheat')) {
       return (Icons.grain_rounded, const Color(0xFFE5A93C)); // Amber/Orange
     }
-    if (lower.contains('nut') || lower.contains('almond') || lower.contains('hazelnut') || lower.contains('pecan') || lower.contains('cashew')) {
+    if (lower.contains('nut') ||
+        lower.contains('almond') ||
+        lower.contains('hazelnut') ||
+        lower.contains('pecan') ||
+        lower.contains('cashew')) {
       return (Icons.cookie_rounded, const Color(0xFF8D6E63)); // Brown
     }
-    if (lower.contains('milk') || lower.contains('lactose') || lower.contains('dairy')) {
+    if (lower.contains('milk') ||
+        lower.contains('lactose') ||
+        lower.contains('dairy')) {
       return (Icons.water_drop_rounded, const Color(0xFF64B5F6)); // Light Blue
     }
     if (lower.contains('egg')) {
@@ -563,7 +609,9 @@ class _OutlineChip extends StatelessWidget {
     if (lower.contains('soy')) {
       return (Icons.grass_rounded, const Color(0xFF81C784)); // Green
     }
-    if (lower.contains('fish') || lower.contains('seafood') || lower.contains('shrimp')) {
+    if (lower.contains('fish') ||
+        lower.contains('seafood') ||
+        lower.contains('shrimp')) {
       return (Icons.set_meal_rounded, const Color(0xFF4FC3F7)); // Blue
     }
 
@@ -621,10 +669,7 @@ class _OutlineChip extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.pureWhite,
               shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.clearGrey,
-                width: 1.2,
-              ),
+              border: Border.all(color: AppColors.clearGrey, width: 1.2),
             ),
             child: Center(
               child: Icon(
@@ -1096,92 +1141,94 @@ class _ProductCard extends StatelessWidget {
           ),
 
           // ── Product Info Area (White Foreground Card) ──
-          Container(
-            margin: EdgeInsets.only(top: 32 * scale),
-            decoration: BoxDecoration(
-              color: AppColors.pureWhite,
-              borderRadius: BorderRadius.circular(24 * scale),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 15,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            padding: EdgeInsets.symmetric(
-              vertical: 20 * scale,
-              horizontal: 16 * scale,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Product Image
-                SizedBox(
-                  width: 64 * scale,
-                  height: 64 * scale,
-                  child: product.imageAsset != null
-                      ? Image.asset(
-                          product.imageAsset!,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => Icon(
-                            Icons.image_outlined,
-                            size: 32 * scale,
-                            color: AppColors.clearGrey,
-                          ),
-                        )
-                      : Icon(
-                          Icons.image_outlined,
-                          size: 32 * scale,
-                          color: AppColors.clearGrey,
-                        ),
-                ),
-                SizedBox(width: 16 * scale),
-                // Text Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        product.name,
-                        style: GoogleFonts.inter(
-                          fontSize: 14 * scale.clamp(0.85, 1.2),
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.black,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        product.otherData,
-                        style: GoogleFonts.inter(
-                          fontSize: 13 * scale.clamp(0.85, 1.2),
-                          color: AppColors.darkGrey,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                // Delete Button
-                if (isOwner && onDelete != null) ...[
-                  SizedBox(width: 12 * scale),
-                  GestureDetector(
-                    onTap: onDelete,
-                    behavior: HitTestBehavior.opaque,
-                    child: Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: Icon(
-                        Icons.delete_outline_rounded,
-                        size: 24 * scale.clamp(0.85, 1.2),
-                        color: AppColors.black,
-                      ),
-                    ),
+          GestureDetector(
+            onTap: () {
+              final productModel = ProductModel(
+                id: product.barcode ?? product.id,
+                name: product.name,
+                description: product.otherData,
+                thumbnailAsset: product.productImageUrl,
+                imageAsset: product.productImageUrl,
+                sustainabilityLabel: product.sustainabilityLevel,
+                safetyLabel: product.safetyLevel,
+                isSustainable: product.sustainabilityLevel.toLowerCase() == 'eco-friendly' ||
+                    product.sustainabilityLevel.toLowerCase() == 'sustainable',
+              );
+              context.push('/product-detail', extra: productModel);
+            },
+            child: Container(
+              margin: EdgeInsets.only(top: 32 * scale),
+              decoration: BoxDecoration(
+                color: AppColors.pureWhite,
+                borderRadius: BorderRadius.circular(24 * scale),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 15,
+                    offset: const Offset(0, 4),
                   ),
                 ],
-              ],
+              ),
+              padding: EdgeInsets.symmetric(
+                vertical: 20 * scale,
+                horizontal: 16 * scale,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Product Image
+                  SizedBox(
+                    width: 64 * scale,
+                    height: 64 * scale,
+                    child: _buildProductImage(product.imageAsset, scale),
+                  ),
+                  SizedBox(width: 16 * scale),
+                  // Text Info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          product.name,
+                          style: GoogleFonts.inter(
+                            fontSize: 14 * scale.clamp(0.85, 1.2),
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.black,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          product.otherData,
+                          style: GoogleFonts.inter(
+                            fontSize: 13 * scale.clamp(0.85, 1.2),
+                            color: AppColors.darkGrey,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Delete Button
+                  if (isOwner && onDelete != null) ...[
+                    SizedBox(width: 12 * scale),
+                    GestureDetector(
+                      onTap: onDelete,
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Icon(
+                          Icons.delete_outline_rounded,
+                          size: 24 * scale.clamp(0.85, 1.2),
+                          color: AppColors.black,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         ],
@@ -1379,6 +1426,57 @@ class _DuplicateSuccessOverlay extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// Helper functions for image resolution
+String? _resolveImageUrl(String? url) {
+  if (url == null || url.isEmpty) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  if (url.startsWith('assets/')) {
+    return url;
+  }
+  final baseUrl = ApiClient.instance.dio.options.baseUrl;
+  final rootUrl = baseUrl.endsWith('/api/v1')
+      ? baseUrl.substring(0, baseUrl.length - 7)
+      : baseUrl;
+  final path = url.startsWith('/') ? url : '/$url';
+  return '$rootUrl$path';
+}
+
+Widget _buildProductImage(String? path, double scale) {
+  if (path == null || path.isEmpty) {
+    return Icon(
+      Icons.image_outlined,
+      size: 32 * scale,
+      color: AppColors.clearGrey,
+    );
+  }
+
+  final resolvedPath = _resolveImageUrl(path);
+
+  if (resolvedPath != null && (resolvedPath.startsWith('http') || resolvedPath.startsWith('https'))) {
+    return Image.network(
+      resolvedPath,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => Icon(
+        Icons.image_outlined,
+        size: 32 * scale,
+        color: AppColors.clearGrey,
+      ),
+    );
+  } else {
+    return Image.asset(
+      resolvedPath ?? path,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => Icon(
+        Icons.image_outlined,
+        size: 32 * scale,
+        color: AppColors.clearGrey,
       ),
     );
   }

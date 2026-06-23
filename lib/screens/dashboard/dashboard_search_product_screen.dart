@@ -1,4 +1,5 @@
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,9 +7,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../models/recipe_model.dart';
+import '../../models/shopping_list_model.dart';
+import '../../core/network/recipe_api_service.dart';
+import '../../core/network/list_api_service.dart';
 import '../../providers/dashboard_search_provider.dart';
 import '../../providers/favorites_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
+import '../../core/network/api_client.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // Main Screen
@@ -24,6 +30,7 @@ class DashboardSearchProductScreen extends ConsumerStatefulWidget {
 class _DashboardSearchProductScreenState
     extends ConsumerState<DashboardSearchProductScreen> {
   final TextEditingController _controller = TextEditingController();
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -35,12 +42,17 @@ class _DashboardSearchProductScreenState
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
-  void _onChanged(String v) =>
+  void _onChanged(String v) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
       ref.read(dashboardSearchProvider.notifier).onSearchChanged(v);
+    });
+  }
 
   void _clear() {
     _controller.clear();
@@ -77,8 +89,12 @@ class _DashboardSearchProductScreenState
             ),
             Expanded(
               child: state.isSearching
-                  ? _ResultsBody(scale: scale, state: state)
-                  : _EmptyBody(scale: scale),
+                  ? const Center(child: CircularProgressIndicator(color: AppColors.royalPurple))
+                  : state.query.isNotEmpty && state.results.isEmpty
+                      ? Center(child: Text('No results found.', style: GoogleFonts.inter(fontSize: 14 * scale, color: AppColors.neutralGrey)))
+                      : state.query.isNotEmpty
+                          ? _ResultsBody(scale: scale, state: state)
+                          : _EmptyBody(scale: scale),
             ),
             const LuvcoBottomNavBar(),
           ],
@@ -356,8 +372,8 @@ class _ResultsBody extends ConsumerWidget {
 class _ProductCard extends ConsumerStatefulWidget {
   final DashboardSearchResult result;
   final double scale;
-  final List<String> shoppingLists;
-  final List<String> recipes;
+  final List<ShoppingListModel> shoppingLists;
+  final List<RecipeModel> recipes;
 
   const _ProductCard({
     required this.result,
@@ -431,8 +447,13 @@ class _ProductCardState extends ConsumerState<_ProductCard> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) =>
-          _AddToListModal(lists: widget.shoppingLists, scale: widget.scale),
+      builder: (_) => _AddToListModal(
+        lists: widget.shoppingLists,
+        scale: widget.scale,
+        productBarcode: widget.result.product.id,
+        productName: widget.result.product.name,
+        productImageUrl: widget.result.product.thumbnailAsset ?? '',
+      ),
     );
   }
 
@@ -441,8 +462,13 @@ class _ProductCardState extends ConsumerState<_ProductCard> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) =>
-          _AddToRecipeModal(recipes: widget.recipes, scale: widget.scale),
+      builder: (_) => _AddToRecipeModal(
+        recipes: widget.recipes,
+        scale: widget.scale,
+        productBarcode: widget.result.product.id,
+        productName: widget.result.product.name,
+        productImageUrl: widget.result.product.thumbnailAsset ?? '',
+      ),
     );
   }
 
@@ -580,14 +606,7 @@ class _ProductCardState extends ConsumerState<_ProductCard> {
                       borderRadius: BorderRadius.circular(12),
                       child: Padding(
                         padding: const EdgeInsets.all(6),
-                        child: Image.asset(
-                          widget.result.product.thumbnailAsset ?? '',
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons.image_outlined,
-                            color: AppColors.neutralGrey,
-                          ),
-                        ),
+                        child: _buildProductImage(widget.result.product.thumbnailAsset, widget.scale),
                       ),
                     ),
                   ),
@@ -794,8 +813,8 @@ class _MenuRow extends StatelessWidget {
 class _ProductDetailSheet extends ConsumerStatefulWidget {
   final DashboardSearchResult result;
   final double scale;
-  final List<String> shoppingLists;
-  final List<String> recipes;
+  final List<ShoppingListModel> shoppingLists;
+  final List<RecipeModel> recipes;
 
   const _ProductDetailSheet({
     required this.result,
@@ -817,8 +836,13 @@ class _ProductDetailSheetState extends ConsumerState<_ProductDetailSheet> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) =>
-          _AddToListModal(lists: widget.shoppingLists, scale: widget.scale),
+      builder: (_) => _AddToListModal(
+        lists: widget.shoppingLists,
+        scale: widget.scale,
+        productBarcode: widget.result.product.id,
+        productName: widget.result.product.name,
+        productImageUrl: widget.result.product.thumbnailAsset ?? '',
+      ),
     );
   }
 
@@ -828,8 +852,13 @@ class _ProductDetailSheetState extends ConsumerState<_ProductDetailSheet> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) =>
-          _AddToRecipeModal(recipes: widget.recipes, scale: widget.scale),
+      builder: (_) => _AddToRecipeModal(
+        recipes: widget.recipes,
+        scale: widget.scale,
+        productBarcode: widget.result.product.id,
+        productName: widget.result.product.name,
+        productImageUrl: widget.result.product.thumbnailAsset ?? '',
+      ),
     );
   }
 
@@ -1008,16 +1037,32 @@ class _ProductDetailSheetState extends ConsumerState<_ProductDetailSheet> {
                             children: [
                               Center(
                                 child: product.imageAsset != null && product.imageAsset!.isNotEmpty
-                                    ? Image.asset(
-                                        product.imageAsset!,
-                                        height: 180 * s,
-                                        fit: BoxFit.contain,
-                                        errorBuilder: (_, __, ___) => Icon(
-                                          Icons.image_outlined,
-                                          size: 80 * s,
-                                          color: AppColors.neutralGrey,
-                                        ),
-                                      )
+                                    ? (() {
+                                        final resolved = _resolveImageUrl(product.imageAsset);
+                                        if (resolved != null && (resolved.startsWith('http') || resolved.startsWith('https'))) {
+                                          return Image.network(
+                                            resolved,
+                                            height: 180 * s,
+                                            fit: BoxFit.contain,
+                                            errorBuilder: (_, __, ___) => Icon(
+                                              Icons.image_outlined,
+                                              size: 80 * s,
+                                              color: AppColors.neutralGrey,
+                                            ),
+                                          );
+                                        } else {
+                                          return Image.asset(
+                                            resolved ?? product.imageAsset!,
+                                            height: 180 * s,
+                                            fit: BoxFit.contain,
+                                            errorBuilder: (_, __, ___) => Icon(
+                                              Icons.image_outlined,
+                                              size: 80 * s,
+                                              color: AppColors.neutralGrey,
+                                            ),
+                                          );
+                                        }
+                                      })()
                                     : Icon(
                                         Icons.image_outlined,
                                         size: 80 * s,
@@ -1144,8 +1189,70 @@ class _CircleChip extends StatelessWidget {
   final double scale;
   const _CircleChip({required this.label, required this.scale});
 
+  /// Strip language prefix (e.g. "en:", "fr:") and clean up the text.
+  static String _cleanLabel(String raw) {
+    String cleaned = raw.replaceAll(RegExp(r'^[a-z]{2}:'), '');
+    cleaned = cleaned.replaceAll(RegExp(r'[-_]'), ' ').trim();
+    if (cleaned.isEmpty) return raw;
+    return cleaned
+        .split(' ')
+        .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w)
+        .join(' ');
+  }
+
+  static (IconData, Color) _getIconAndColor(String name) {
+    final lower = name.toLowerCase();
+    
+    // Allergens
+    if (lower.contains('gluten') || lower.contains('wheat')) {
+      return (Icons.grain_rounded, const Color(0xFFE5A93C)); // Amber/Orange
+    }
+    if (lower.contains('nut') || lower.contains('almond') || lower.contains('hazelnut') || lower.contains('pecan') || lower.contains('cashew')) {
+      return (Icons.cookie_rounded, const Color(0xFF8D6E63)); // Brown
+    }
+    if (lower.contains('milk') || lower.contains('lactose') || lower.contains('dairy')) {
+      return (Icons.water_drop_rounded, const Color(0xFF64B5F6)); // Light Blue
+    }
+    if (lower.contains('egg')) {
+      return (Icons.egg_rounded, const Color(0xFFFFD54F)); // Yellow
+    }
+    if (lower.contains('soy')) {
+      return (Icons.grass_rounded, const Color(0xFF81C784)); // Green
+    }
+    if (lower.contains('fish') || lower.contains('seafood') || lower.contains('shrimp')) {
+      return (Icons.set_meal_rounded, const Color(0xFF4FC3F7)); // Blue
+    }
+
+    // Certifications & Labels
+    if (lower.contains('organic') || lower.contains('bio')) {
+      return (Icons.eco_rounded, const Color(0xFF4CAF50)); // Green
+    }
+    if (lower.contains('ecocert')) {
+      return (Icons.verified_rounded, const Color(0xFF2E7D32)); // Dark Green
+    }
+    if (lower.contains('green dot') || lower.contains('recycl')) {
+      return (Icons.recycling_rounded, const Color(0xFF388E3C)); // Green
+    }
+    if (lower.contains('agriculture') || lower.contains('grower')) {
+      return (Icons.spa_rounded, const Color(0xFF81C784)); // Soft Green
+    }
+    if (lower.contains('vegan') || lower.contains('vegetarian')) {
+      return (Icons.spa_rounded, const Color(0xFF4CAF50)); // Green
+    }
+    if (lower.contains('halal') || lower.contains('kosher')) {
+      return (Icons.task_alt_rounded, const Color(0xFF009688)); // Teal
+    }
+    if (lower.contains('fair trade') || lower.contains('fairtrade')) {
+      return (Icons.handshake_rounded, const Color(0xFF00897B)); // Teal
+    }
+
+    return (Icons.verified_rounded, const Color(0xFF7B52D3)); // Purple accent
+  }
+
   @override
   Widget build(BuildContext context) {
+    final cleanLabel = _cleanLabel(label);
+    final iconInfo = _getIconAndColor(cleanLabel);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1159,20 +1266,25 @@ class _CircleChip extends StatelessWidget {
           ),
           child: Center(
             child: Icon(
-              Icons.hexagon_outlined,
+              iconInfo.$1,
               size: 28 * scale,
-              color: AppColors.neutralGrey,
+              color: iconInfo.$2,
             ),
           ),
         ),
         SizedBox(height: 5 * scale),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: GoogleFonts.inter(
-            fontSize: 11 * scale,
-            fontWeight: FontWeight.w500,
-            color: AppColors.darkGrey,
+        SizedBox(
+          width: 70 * scale,
+          child: Text(
+            cleanLabel,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 10 * scale,
+              fontWeight: FontWeight.w500,
+              color: AppColors.darkGrey,
+            ),
           ),
         ),
       ],
@@ -1274,22 +1386,71 @@ class _OutlineActionButton extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 // Add to Shopping List Modal (2.0.5)
 // ─────────────────────────────────────────────────────────────────
-class _AddToListModal extends StatefulWidget {
-  final List<String> lists;
+class _AddToListModal extends ConsumerStatefulWidget {
+  final List<ShoppingListModel> lists;
   final double scale;
-  const _AddToListModal({required this.lists, required this.scale});
+  final String productBarcode;
+  final String productName;
+  final String productImageUrl;
+
+  const _AddToListModal({
+    required this.lists,
+    required this.scale,
+    required this.productBarcode,
+    required this.productName,
+    required this.productImageUrl,
+  });
 
   @override
-  State<_AddToListModal> createState() => _AddToListModalState();
+  ConsumerState<_AddToListModal> createState() => _AddToListModalState();
 }
 
-class _AddToListModalState extends State<_AddToListModal> {
+class _AddToListModalState extends ConsumerState<_AddToListModal> {
   late final List<bool> _checked;
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    _checked = List.generate(widget.lists.length, (i) => i == 0);
+    _checked = List.generate(widget.lists.length, (_) => false);
+  }
+
+  Future<void> _onSave() async {
+    // Collect selected list IDs
+    final selectedLists = <String>[];
+    for (int i = 0; i < widget.lists.length; i++) {
+      if (_checked[i]) selectedLists.add(widget.lists[i].id);
+    }
+    if (selectedLists.isEmpty) return;
+
+    setState(() => _isSaving = true);
+    int successCount = 0;
+    for (final listId in selectedLists) {
+      try {
+        await ListApiService.instance.addItem(
+          listId,
+          barcode: widget.productBarcode,
+          productName: widget.productName,
+          productImageUrl: widget.productImageUrl,
+          quantity: 1,
+        );
+        successCount++;
+      } catch (_) {}
+    }
+    if (!mounted) return;
+    setState(() => _isSaving = false);
+    Navigator.pop(context);
+    if (successCount > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(successCount == 1
+              ? 'Product added to shopping list!'
+              : 'Product added to $successCount lists!'),
+          backgroundColor: AppColors.royalPurple,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -1298,18 +1459,29 @@ class _AddToListModalState extends State<_AddToListModal> {
     return _BaseModal(
       scale: s,
       title: 'Which shopping list do you want\nto add this product?',
-      saveLabel: 'Save On List',
-      onSave: () => Navigator.pop(context),
-      child: Column(
-        children: List.generate(widget.lists.length, (i) {
-          return _CheckRow(
-            label: widget.lists[i],
-            checked: _checked[i],
-            scale: s,
-            onChanged: (v) => setState(() => _checked[i] = v),
-          );
-        }),
-      ),
+      saveLabel: _isSaving ? 'Saving...' : 'Save On List',
+      onSave: _isSaving ? null : _onSave,
+      child: widget.lists.isEmpty
+          ? Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                'No shopping lists found. Create a list first.',
+                style: GoogleFonts.inter(
+                  fontSize: 13 * s,
+                  color: AppColors.darkGrey,
+                ),
+              ),
+            )
+          : Column(
+              children: List.generate(widget.lists.length, (i) {
+                return _CheckRow(
+                  label: widget.lists[i].title,
+                  checked: _checked[i],
+                  scale: s,
+                  onChanged: (v) => setState(() => _checked[i] = v),
+                );
+              }),
+            ),
     );
   }
 }
@@ -1317,22 +1489,72 @@ class _AddToListModalState extends State<_AddToListModal> {
 // ─────────────────────────────────────────────────────────────────
 // Add to Recipe Modal (2.0.6)
 // ─────────────────────────────────────────────────────────────────
-class _AddToRecipeModal extends StatefulWidget {
-  final List<String> recipes;
+class _AddToRecipeModal extends ConsumerStatefulWidget {
+  final List<RecipeModel> recipes;
   final double scale;
-  const _AddToRecipeModal({required this.recipes, required this.scale});
+  final String productBarcode;
+  final String productName;
+  final String productImageUrl;
+
+  const _AddToRecipeModal({
+    required this.recipes,
+    required this.scale,
+    required this.productBarcode,
+    required this.productName,
+    required this.productImageUrl,
+  });
 
   @override
-  State<_AddToRecipeModal> createState() => _AddToRecipeModalState();
+  ConsumerState<_AddToRecipeModal> createState() => _AddToRecipeModalState();
 }
 
-class _AddToRecipeModalState extends State<_AddToRecipeModal> {
+class _AddToRecipeModalState extends ConsumerState<_AddToRecipeModal> {
   late final List<bool> _checked;
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    _checked = List.generate(widget.recipes.length, (i) => i == 0);
+    _checked = List.generate(widget.recipes.length, (_) => false);
+  }
+
+  Future<void> _onSave() async {
+    final selectedRecipes = <RecipeModel>[];
+    for (int i = 0; i < widget.recipes.length; i++) {
+      if (_checked[i]) selectedRecipes.add(widget.recipes[i]);
+    }
+    if (selectedRecipes.isEmpty) return;
+
+    setState(() => _isSaving = true);
+    int successCount = 0;
+    for (final recipe in selectedRecipes) {
+      try {
+        await RecipeApiService.instance.addLinkedProduct(recipe.id, {
+          'barcode': widget.productBarcode,
+          'productName': widget.productName,
+          'productImageUrl': widget.productImageUrl,
+          'quantity': 1,
+          'position': 1,
+        });
+        successCount++;
+      } catch (_) {}
+    }
+    if (!mounted) return;
+    setState(() => _isSaving = false);
+    Navigator.pop(context);
+    if (successCount > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            successCount == 1
+                ? 'Product added to recipe successfully!'
+                : 'Product added to $successCount recipes!',
+          ),
+          backgroundColor: AppColors.royalPurple,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -1341,18 +1563,29 @@ class _AddToRecipeModalState extends State<_AddToRecipeModal> {
     return _BaseModal(
       scale: s,
       title: 'Which recipe do you want to add\nthis product?',
-      saveLabel: 'Save On Recipe',
-      onSave: () => Navigator.pop(context),
-      child: Column(
-        children: List.generate(widget.recipes.length, (i) {
-          return _CheckRow(
-            label: widget.recipes[i],
-            checked: _checked[i],
-            scale: s,
-            onChanged: (v) => setState(() => _checked[i] = v),
-          );
-        }),
-      ),
+      saveLabel: _isSaving ? 'Saving...' : 'Save On Recipe',
+      onSave: _isSaving ? null : _onSave,
+      child: widget.recipes.isEmpty
+          ? Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                'No recipes found. Create a recipe first.',
+                style: GoogleFonts.inter(
+                  fontSize: 13 * s,
+                  color: AppColors.darkGrey,
+                ),
+              ),
+            )
+          : Column(
+              children: List.generate(widget.recipes.length, (i) {
+                return _CheckRow(
+                  label: widget.recipes[i].title,
+                  checked: _checked[i],
+                  scale: s,
+                  onChanged: (v) => setState(() => _checked[i] = v),
+                );
+              }),
+            ),
     );
   }
 }
@@ -1364,7 +1597,7 @@ class _BaseModal extends StatelessWidget {
   final double scale;
   final String title;
   final String saveLabel;
-  final VoidCallback onSave;
+  final VoidCallback? onSave;
   final Widget child;
 
   const _BaseModal({
@@ -1767,6 +2000,54 @@ class _FilterChip extends StatelessWidget {
             color: selected ? AppColors.royalPurple : AppColors.darkGrey,
           ),
         ),
+      ),
+    );
+  }
+}
+
+// Helper functions for image resolution
+String? _resolveImageUrl(String? url) {
+  if (url == null || url.isEmpty) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  if (url.startsWith('assets/')) {
+    return url;
+  }
+  final baseUrl = ApiClient.instance.dio.options.baseUrl;
+  final rootUrl = baseUrl.endsWith('/api/v1')
+      ? baseUrl.substring(0, baseUrl.length - 7)
+      : baseUrl;
+  final path = url.startsWith('/') ? url : '/$url';
+  return '$rootUrl$path';
+}
+
+Widget _buildProductImage(String? path, double scale) {
+  if (path == null || path.isEmpty) {
+    return const Icon(
+      Icons.image_outlined,
+      color: AppColors.neutralGrey,
+    );
+  }
+
+  final resolvedPath = _resolveImageUrl(path);
+
+  if (resolvedPath != null && (resolvedPath.startsWith('http') || resolvedPath.startsWith('https'))) {
+    return Image.network(
+      resolvedPath,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => const Icon(
+        Icons.image_outlined,
+        color: AppColors.neutralGrey,
+      ),
+    );
+  } else {
+    return Image.asset(
+      resolvedPath ?? path,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => const Icon(
+        Icons.image_outlined,
+        color: AppColors.neutralGrey,
       ),
     );
   }

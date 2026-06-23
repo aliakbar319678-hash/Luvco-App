@@ -6,6 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:custom_pop_up_menu/custom_pop_up_menu.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../models/recipe_model.dart';
+import '../../core/network/list_api_service.dart';
+import '../../core/network/recipe_api_service.dart';
 import '../../providers/favorites_provider.dart';
 import '../../providers/shopping_list_detail_provider.dart';
 import '../../providers/shopping_list_provider.dart';
@@ -18,10 +21,14 @@ class FavoritesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(favoritesProvider);
+    final sortOption = ref.watch(favoritesSortProvider);
     final size = MediaQuery.sizeOf(context);
     final scale = size.width / 390;
 
-    final items = state.items;
+    var items = state.items.toList();
+    if (sortOption == FavoritesSortOption.nameAZ) {
+      items.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    }
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(statusBarColor: Colors.transparent),
@@ -332,7 +339,12 @@ class _FavoriteCardState extends ConsumerState<_FavoriteCard> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _AddToListSheet(scale: widget.scale),
+      builder: (_) => _AddToListSheet(
+        scale: widget.scale,
+        productBarcode: widget.item.barcode ?? '',
+        productName: widget.item.name,
+        productImageUrl: widget.item.thumbnailAsset ?? '',
+      ),
     );
   }
 
@@ -341,7 +353,12 @@ class _FavoriteCardState extends ConsumerState<_FavoriteCard> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _AddToRecipeSheet(scale: widget.scale),
+      builder: (_) => _AddToRecipeSheet(
+        scale: widget.scale,
+        productBarcode: widget.item.barcode ?? '',
+        productName: widget.item.name,
+        productImageUrl: widget.item.thumbnailAsset ?? '',
+      ),
     );
   }
 
@@ -518,19 +535,64 @@ class _MenuItem extends StatelessWidget {
 // ── Add to Shopping List Sheet ────────────────────────────────────
 class _AddToListSheet extends ConsumerStatefulWidget {
   final double scale;
-  const _AddToListSheet({required this.scale});
+  final String productBarcode;
+  final String productName;
+  final String productImageUrl;
+
+  const _AddToListSheet({
+    required this.scale,
+    required this.productBarcode,
+    required this.productName,
+    required this.productImageUrl,
+  });
 
   @override
   ConsumerState<_AddToListSheet> createState() => _AddToListSheetState();
 }
 
 class _AddToListSheetState extends ConsumerState<_AddToListSheet> {
-  final Set<String> _selected = {'list1'};
+  final Set<String> _selected = {};
+  bool _isSaving = false;
+
+  Future<void> _onSave() async {
+    if (_selected.isEmpty) return;
+    setState(() => _isSaving = true);
+    int successCount = 0;
+    for (final listId in _selected) {
+      try {
+        await ListApiService.instance.addItem(
+          listId,
+          barcode: widget.productBarcode,
+          productName: widget.productName,
+          productImageUrl: widget.productImageUrl,
+          quantity: 1,
+        );
+        successCount++;
+      } catch (_) {}
+    }
+    if (!mounted) return;
+    setState(() => _isSaving = false);
+    Navigator.pop(context);
+    if (successCount > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(successCount == 1
+              ? 'Product added to shopping list!'
+              : 'Product added to $successCount lists!'),
+          backgroundColor: AppColors.royalPurple,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final lists = ref.watch(shoppingListProvider);
     return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.7,
+      ),
       decoration: const BoxDecoration(
         color: AppColors.pureWhite,
         borderRadius: BorderRadius.only(
@@ -543,33 +605,45 @@ class _AddToListSheetState extends ConsumerState<_AddToListSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              const SizedBox(width: 24),
-              Expanded(
-                child: Text('Which shopping list do you want\nto add this product?', textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(fontSize: 16 * widget.scale, fontWeight: FontWeight.w700, color: AppColors.black)),
-              ),
               GestureDetector(onTap: () => Navigator.pop(context), child: const Icon(Icons.close_rounded, color: AppColors.black, size: 24)),
             ],
           ),
           const SizedBox(height: 16),
-          ...lists.asMap().entries.map((e) {
-            final id = e.value.id;
-            return _CheckRow(
-              label: e.value.title.isEmpty ? 'Shopping List 0${e.key + 1}' : 'Shopping List 0${e.key + 1}',
-              checked: _selected.contains(id),
-              onChanged: (v) => setState(() => v! ? _selected.add(id) : _selected.remove(id)),
-            );
-          }),
+          Flexible(
+            child: lists.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Text('No shopping lists found. Create one first.'),
+                  )
+                : ListView(
+                    shrinkWrap: true,
+                    children: lists.map((list) {
+                      return _CheckRow(
+                        label: list.title,
+                        checked: _selected.contains(list.id),
+                        onChanged: (v) => setState(() => v! ? _selected.add(list.id) : _selected.remove(list.id)),
+                      );
+                    }).toList(),
+                  ),
+          ),
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.royalPurple, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))),
-              child: Text('Save On List', style: GoogleFonts.inter(fontSize: 15 * widget.scale, fontWeight: FontWeight.w600, color: AppColors.pureWhite)),
+              onPressed: _isSaving || _selected.isEmpty ? null : _onSave,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.royalPurple,
+                disabledBackgroundColor: AppColors.royalPurple.withValues(alpha: 0.4),
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+              ),
+              child: Text(
+                _isSaving ? 'Saving...' : 'Save On List',
+                style: GoogleFonts.inter(fontSize: 15 * widget.scale, fontWeight: FontWeight.w600, color: AppColors.pureWhite),
+              ),
             ),
           ),
           const SizedBox(height: 10),
@@ -579,26 +653,83 @@ class _AddToListSheetState extends ConsumerState<_AddToListSheet> {
   }
 }
 
-// ── Add to Recipe Sheet ───────────────────────────────────────────
+// ── Add to Recipe Sheet ─────────────────────────────────────────────────
 class _AddToRecipeSheet extends ConsumerStatefulWidget {
   final double scale;
-  const _AddToRecipeSheet({required this.scale});
+  final String productBarcode;
+  final String productName;
+  final String productImageUrl;
+
+  const _AddToRecipeSheet({
+    required this.scale,
+    required this.productBarcode,
+    required this.productName,
+    required this.productImageUrl,
+  });
 
   @override
   ConsumerState<_AddToRecipeSheet> createState() => _AddToRecipeSheetState();
 }
 
 class _AddToRecipeSheetState extends ConsumerState<_AddToRecipeSheet> {
-  final Set<String> _selected = {'r1'};
-  final _recipes = const [
-    {'id': 'r1', 'name': 'Recipe 01'},
-    {'id': 'r2', 'name': 'Recipe 02'},
-    {'id': 'r3', 'name': 'Recipe 03'},
-  ];
+  final Set<String> _selected = {};
+  List<RecipeModel> _recipes = [];
+  bool _isLoading = true;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecipes();
+  }
+
+  Future<void> _loadRecipes() async {
+    try {
+      final recipes = await RecipeApiService.instance.getRecipes('my-recipes');
+      if (mounted) setState(() { _recipes = recipes; _isLoading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _onSave() async {
+    if (_selected.isEmpty) return;
+    setState(() => _isSaving = true);
+    int successCount = 0;
+    for (final recipeId in _selected) {
+      try {
+        await RecipeApiService.instance.addLinkedProduct(recipeId, {
+          'barcode': widget.productBarcode,
+          'productName': widget.productName,
+          'productImageUrl': widget.productImageUrl,
+          'quantity': 1,
+          'position': 1,
+        });
+        successCount++;
+      } catch (_) {}
+    }
+    if (!mounted) return;
+    setState(() => _isSaving = false);
+    Navigator.pop(context);
+    if (successCount > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(successCount == 1
+              ? 'Product added to recipe!'
+              : 'Product added to $successCount recipes!'),
+          backgroundColor: AppColors.royalPurple,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.7,
+      ),
       decoration: const BoxDecoration(
         color: AppColors.pureWhite,
         borderRadius: BorderRadius.only(
@@ -611,30 +742,50 @@ class _AddToRecipeSheetState extends ConsumerState<_AddToRecipeSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              const SizedBox(width: 24),
-              Expanded(
-                child: Text('Which recipe do you want to add\nthis product?', textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(fontSize: 16 * widget.scale, fontWeight: FontWeight.w700, color: AppColors.black)),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: const Icon(Icons.close_rounded, color: AppColors.black, size: 24),
               ),
-              GestureDetector(onTap: () => Navigator.pop(context), child: const Icon(Icons.close_rounded, color: AppColors.black, size: 24)),
             ],
           ),
           const SizedBox(height: 16),
-          ..._recipes.map((r) => _CheckRow(
-            label: r['name']!,
-            checked: _selected.contains(r['id']),
-            onChanged: (v) => setState(() => v! ? _selected.add(r['id']!) : _selected.remove(r['id']!)),
-          )),
+          Flexible(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: AppColors.royalPurple))
+                : _recipes.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Text('No recipes found. Create one first.'),
+                      )
+                    : ListView(
+                        shrinkWrap: true,
+                        children: _recipes.map((recipe) {
+                          return _CheckRow(
+                            label: recipe.title,
+                            checked: _selected.contains(recipe.id),
+                            onChanged: (v) => setState(() => v! ? _selected.add(recipe.id) : _selected.remove(recipe.id)),
+                          );
+                        }).toList(),
+                      ),
+          ),
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.royalPurple, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))),
-              child: Text('Save On Recipe', style: GoogleFonts.inter(fontSize: 15 * widget.scale, fontWeight: FontWeight.w600, color: AppColors.pureWhite)),
+              onPressed: _isSaving || _selected.isEmpty ? null : _onSave,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.royalPurple,
+                disabledBackgroundColor: AppColors.royalPurple.withValues(alpha: 0.4),
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+              ),
+              child: Text(
+                _isSaving ? 'Saving...' : 'Save On Recipe',
+                style: GoogleFonts.inter(fontSize: 15 * widget.scale, fontWeight: FontWeight.w600, color: AppColors.pureWhite),
+              ),
             ),
           ),
           const SizedBox(height: 10),

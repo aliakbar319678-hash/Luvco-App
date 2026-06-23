@@ -66,6 +66,9 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
     _descCtrl = TextEditingController(text: r?.description ?? '');
     _ingredientsTextCtrl = TextEditingController();
     _instructionsTextCtrl = TextEditingController();
+    
+    _ingredientsTextCtrl.addListener(_onPrepTextChanged);
+    _instructionsTextCtrl.addListener(_onPrepTextChanged);
 
     _timeOfPrep = r?.timeOfPreparation ?? 60;
     _servings = r?.servings ?? 2;
@@ -78,9 +81,15 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
   void dispose() {
     _nameCtrl.dispose();
     _descCtrl.dispose();
+    _ingredientsTextCtrl.removeListener(_onPrepTextChanged);
     _ingredientsTextCtrl.dispose();
+    _instructionsTextCtrl.removeListener(_onPrepTextChanged);
     _instructionsTextCtrl.dispose();
     super.dispose();
+  }
+
+  void _onPrepTextChanged() {
+    if (mounted) setState(() {});
   }
 
   void _toggleDiet(String tag) {
@@ -182,6 +191,7 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
       // 1. Delete all existing ingredients
       for (final ing in detail.ingredientsList) {
         await RecipeApiService.instance.removeIngredient(r.id, ing.id);
+        await Future.delayed(const Duration(milliseconds: 150));
       }
 
       // 2. Parse and add new ingredients
@@ -191,12 +201,14 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
         final trimmed = line.replaceAll(RegExp(r'^[•\-\*\s]+'), '').trim();
         if (trimmed.isNotEmpty) {
           await RecipeApiService.instance.addIngredient(r.id, trimmed, ingPos++);
+          await Future.delayed(const Duration(milliseconds: 150));
         }
       }
 
       // 3. Delete all existing instructions
       for (final inst in detail.instructionsList) {
         await RecipeApiService.instance.removeInstructionStep(r.id, inst.id);
+        await Future.delayed(const Duration(milliseconds: 150));
       }
 
       // 4. Parse and add new instructions
@@ -206,6 +218,7 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
         final trimmed = line.replaceAll(RegExp(r'^\d+[\.\s\-]+'), '').trim();
         if (trimmed.isNotEmpty) {
           await RecipeApiService.instance.addInstructionStep(r.id, trimmed, instPos++);
+          await Future.delayed(const Duration(milliseconds: 150));
         }
       }
 
@@ -422,16 +435,17 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
 
     final detail = ref.watch(recipeDetailProvider(RecipeDetailModel(core: widget.recipe!)));
 
+    final origIngText = detail.ingredientsList.map((e) => e.description).join('\n');
+    int stepNum = 1;
+    final origInstText = detail.instructionsList.map((e) => '${stepNum++}. ${e.text}').join('\n');
+
     if (!_prepInitialized && (detail.ingredientsList.isNotEmpty || detail.instructionsList.isNotEmpty)) {
-      final ingText = detail.ingredientsList.map((e) => e.description).join('\n');
-      _ingredientsTextCtrl.text = ingText;
-
-      int stepNum = 1;
-      final instText = detail.instructionsList.map((e) => '${stepNum++}. ${e.text}').join('\n');
-      _instructionsTextCtrl.text = instText;
-
+      _ingredientsTextCtrl.text = origIngText;
+      _instructionsTextCtrl.text = origInstText;
       _prepInitialized = true;
     }
+
+    final hasChanges = _ingredientsTextCtrl.text != origIngText || _instructionsTextCtrl.text != origInstText;
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -533,7 +547,7 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
             child: ElevatedButton(
               onPressed: _savePreparation,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.faintPink,
+                backgroundColor: hasChanges ? AppColors.royalPurple : AppColors.faintPink,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -544,7 +558,7 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 15 * scale.clamp(0.85, 1.2),
                   fontWeight: FontWeight.w600,
-                  color: AppColors.royalPurple,
+                  color: hasChanges ? AppColors.pureWhite : AppColors.royalPurple,
                 ),
               ),
             ),

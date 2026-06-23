@@ -1,7 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/product_model.dart';
+import '../models/shopping_list_model.dart';
+import '../models/recipe_model.dart';
 import '../core/network/product_api_service.dart';
+import '../core/network/list_api_service.dart';
+import '../core/network/recipe_api_service.dart';
 import 'favorites_provider.dart';
 
 // ─────────────────────────────────────────────────
@@ -24,26 +28,23 @@ class BarcodeScannerState {
   final BarcodeScanState scanState;
   final ProductModel? scannedProduct;
   final bool isFavorite;
-  final List<String> shoppingLists;
+  final List<ShoppingListModel> shoppingLists;
   final List<String> selectedLists;
-  final List<String> recipes;
+  final List<RecipeModel> recipes;
   final List<String> selectedRecipes;
   final String? lastScannedBarcode; // track to avoid duplicate fetches
+  final bool isSaving;
 
   const BarcodeScannerState({
     this.scanState = BarcodeScanState.cameraPermission,
     this.scannedProduct,
     this.isFavorite = false,
-    this.shoppingLists = const [
-      'Shopping List 01',
-      'Shopping List 02',
-      'Shopping List 03',
-      'Shopping List 04',
-    ],
+    this.shoppingLists = const [],
     this.selectedLists = const [],
-    this.recipes = const ['Recipe 01', 'Recipe 02', 'Recipe 03'],
+    this.recipes = const [],
     this.selectedRecipes = const [],
     this.lastScannedBarcode,
+    this.isSaving = false,
   });
 
   BarcodeScannerState copyWith({
@@ -51,12 +52,13 @@ class BarcodeScannerState {
     ProductModel? scannedProduct,
     bool clearProduct = false,
     bool? isFavorite,
-    List<String>? shoppingLists,
+    List<ShoppingListModel>? shoppingLists,
     List<String>? selectedLists,
-    List<String>? recipes,
+    List<RecipeModel>? recipes,
     List<String>? selectedRecipes,
     String? lastScannedBarcode,
     bool clearLastBarcode = false,
+    bool? isSaving,
   }) =>
       BarcodeScannerState(
         scanState: scanState ?? this.scanState,
@@ -70,6 +72,7 @@ class BarcodeScannerState {
         lastScannedBarcode: clearLastBarcode
             ? null
             : lastScannedBarcode ?? this.lastScannedBarcode,
+        isSaving: isSaving ?? this.isSaving,
       );
 }
 
@@ -79,7 +82,20 @@ class BarcodeScannerState {
 class BarcodeScannerNotifier extends StateNotifier<BarcodeScannerState> {
   final Ref _ref;
 
-  BarcodeScannerNotifier(this._ref) : super(const BarcodeScannerState());
+  BarcodeScannerNotifier(this._ref) : super(const BarcodeScannerState()) {
+    _loadListsAndRecipes();
+  }
+
+  Future<void> _loadListsAndRecipes() async {
+    try {
+      final lists = await ListApiService.instance.getLists();
+      final recs = await RecipeApiService.instance.getRecipes('my-recipes');
+      state = state.copyWith(
+        shoppingLists: lists,
+        recipes: recs,
+      );
+    } catch (_) {}
+  }
 
   void allowCamera() =>
       state = state.copyWith(scanState: BarcodeScanState.scanning);
@@ -196,27 +212,85 @@ class BarcodeScannerNotifier extends StateNotifier<BarcodeScannerState> {
   void closeDialog() =>
       state = state.copyWith(scanState: BarcodeScanState.cardOpen);
 
-  void toggleList(String list) {
+  void toggleList(String listId) {
     final updated = List<String>.from(state.selectedLists);
-    updated.contains(list) ? updated.remove(list) : updated.add(list);
+    updated.contains(listId) ? updated.remove(listId) : updated.add(listId);
     state = state.copyWith(selectedLists: updated);
   }
 
-  void toggleRecipe(String recipe) {
+  void toggleRecipe(String recipeId) {
     final updated = List<String>.from(state.selectedRecipes);
-    updated.contains(recipe) ? updated.remove(recipe) : updated.add(recipe);
+    updated.contains(recipeId) ? updated.remove(recipeId) : updated.add(recipeId);
     state = state.copyWith(selectedRecipes: updated);
   }
 
-  void saveOnList() => state = state.copyWith(
-        scanState: BarcodeScanState.cardOpen,
-        selectedLists: [],
-      );
+  Future<String?> saveOnList() async {
+    final product = state.scannedProduct;
+    if (product == null) return 'No product scanned';
+    if (state.selectedLists.isEmpty) return 'Please select at least one list';
 
-  void saveOnRecipe() => state = state.copyWith(
-        scanState: BarcodeScanState.cardOpen,
-        selectedRecipes: [],
-      );
+    state = state.copyWith(isSaving: true);
+    int successCount = 0;
+    for (final listId in state.selectedLists) {
+      try {
+        await ListApiService.instance.addItem(
+          listId,
+          barcode: product.id,
+          productName: product.name,
+          productImageUrl: product.thumbnailAsset ?? '',
+          quantity: 1,
+        );
+        successCount++;
+      } catch (_) {}
+    }
+
+    state = state.copyWith(
+      scanState: BarcodeScanState.cardOpen,
+      selectedLists: [],
+      isSaving: false,
+    );
+
+    if (successCount > 0) {
+      return successCount == 1
+          ? 'Product added to shopping list!'
+          : 'Product added to $successCount lists!';
+    }
+    return 'Failed to add product';
+  }
+
+  Future<String?> saveOnRecipe() async {
+    final product = state.scannedProduct;
+    if (product == null) return 'No product scanned';
+    if (state.selectedRecipes.isEmpty) return 'Please select at least one recipe';
+
+    state = state.copyWith(isSaving: true);
+    int successCount = 0;
+    for (final recipeId in state.selectedRecipes) {
+      try {
+        await RecipeApiService.instance.addLinkedProduct(recipeId, {
+          'barcode': product.id,
+          'productName': product.name,
+          'productImageUrl': product.thumbnailAsset ?? '',
+          'quantity': 1,
+          'position': 1,
+        });
+        successCount++;
+      } catch (_) {}
+    }
+
+    state = state.copyWith(
+      scanState: BarcodeScanState.cardOpen,
+      selectedRecipes: [],
+      isSaving: false,
+    );
+
+    if (successCount > 0) {
+      return successCount == 1
+          ? 'Product added to recipe successfully!'
+          : 'Product added to $successCount recipes!';
+    }
+    return 'Failed to add product to recipe';
+  }
 
   void reset() => state = const BarcodeScannerState();
 }

@@ -35,7 +35,6 @@ class SignupScreen extends ConsumerWidget {
       SignupErrorField.password,
     );
 
-    // ── Listen for success → show confirmation dialog (0.3.5) ──
     ref.listen<SignupState>(signupProvider, (previous, next) {
       if (next.isSuccess) {
         _showAccountConfirmationDialog(context, ref);
@@ -108,7 +107,7 @@ class SignupScreen extends ConsumerWidget {
                       },
                     ),
                     if (fieldError(SignupErrorField.firstName))
-                      AuthErrorRow(message: signupState.errorMessage),
+                      AuthErrorRow(message: signupState.fieldErrorMessage(SignupErrorField.firstName) ?? ''),
 
                     SizedBox(height: size.height * 0.020),
 
@@ -123,7 +122,7 @@ class SignupScreen extends ConsumerWidget {
                       },
                     ),
                     if (fieldError(SignupErrorField.lastName))
-                      AuthErrorRow(message: signupState.errorMessage),
+                      AuthErrorRow(message: signupState.fieldErrorMessage(SignupErrorField.lastName) ?? ''),
 
                     SizedBox(height: size.height * 0.020),
 
@@ -139,7 +138,7 @@ class SignupScreen extends ConsumerWidget {
                       },
                     ),
                     if (fieldError(SignupErrorField.email))
-                      AuthErrorRow(message: signupState.errorMessage),
+                      AuthErrorRow(message: signupState.fieldErrorMessage(SignupErrorField.email) ?? ''),
 
                     SizedBox(height: size.height * 0.020),
 
@@ -202,7 +201,7 @@ class SignupScreen extends ConsumerWidget {
 
                     // ── Password error message (below hint, replaces hint on error) ──
                     if (passwordHasError)
-                      AuthErrorRow(message: signupState.errorMessage),
+                      AuthErrorRow(message: signupState.fieldErrorMessage(SignupErrorField.password) ?? ''),
 
                     SizedBox(height: size.height * 0.026),
 
@@ -213,7 +212,13 @@ class SignupScreen extends ConsumerWidget {
                       onChanged: (v) =>
                           ref.read(signupTermsAcceptedProvider.notifier).state =
                               v ?? false,
+                      onLabelTap: () => context.push('/terms'),
                     ),
+                    if (fieldError(SignupErrorField.terms))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, left: 30),
+                        child: AuthErrorRow(message: signupState.fieldErrorMessage(SignupErrorField.terms) ?? ''),
+                      ),
 
                     const SizedBox(height: 12),
 
@@ -226,7 +231,13 @@ class SignupScreen extends ConsumerWidget {
                                   .read(signupPrivacyAcceptedProvider.notifier)
                                   .state =
                               v ?? false,
+                      onLabelTap: () => context.push('/privacy'),
                     ),
+                    if (fieldError(SignupErrorField.privacy))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, left: 30),
+                        child: AuthErrorRow(message: signupState.fieldErrorMessage(SignupErrorField.privacy) ?? ''),
+                      ),
 
                     SizedBox(height: size.height * 0.036),
 
@@ -235,21 +246,13 @@ class SignupScreen extends ConsumerWidget {
                       label: 'Create Account',
                       isLoading: isLoading,
                       onTap: () {
-                        if (termsAccepted && privacyAccepted) {
-                          final model = SignupModel(
-                            firstName: ref.read(signupFirstNameProvider),
-                            lastName: ref.read(signupLastNameProvider),
-                            email: ref.read(signupEmailProvider),
-                            password: ref.read(signupPasswordProvider),
-                          );
-                          ref.read(signupProvider.notifier).signup(model);
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please accept Terms & Conditions and Privacy Policy before continuing.'),
-                            ),
-                          );
-                        }
+                        final model = SignupModel(
+                          firstName: ref.read(signupFirstNameProvider),
+                          lastName: ref.read(signupLastNameProvider),
+                          email: ref.read(signupEmailProvider),
+                          password: ref.read(signupPasswordProvider),
+                        );
+                        ref.read(signupProvider.notifier).signup(model);
                       },
                     ),
 
@@ -324,11 +327,13 @@ class _CheckboxRow extends StatelessWidget {
   final bool value;
   final String label;
   final ValueChanged<bool?> onChanged;
+  final VoidCallback? onLabelTap;
 
   const _CheckboxRow({
     required this.value,
     required this.label,
     required this.onChanged,
+    this.onLabelTap,
   });
 
   @override
@@ -351,24 +356,17 @@ class _CheckboxRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
+        // Label tap → open document screen (NOT toggle checkbox)
         GestureDetector(
-          onTap: () {
-            // Open corresponding document screen based on label
-            if (label.toLowerCase().contains('terms')) {
-              context.go('/terms');
-            } else if (label.toLowerCase().contains('privacy')) {
-              context.go('/privacy');
-            }
-            // Also toggle checkbox as before
-            onChanged(!value);
-          },
+          onTap: onLabelTap,
           child: Text(
             label,
             style: GoogleFonts.inter(
               fontSize: 13,
               fontWeight: FontWeight.w400,
-              color: AppColors.darkGrey,
+              color: AppColors.royalPurple,
               decoration: TextDecoration.underline,
+              decorationColor: AppColors.royalPurple,
             ),
           ),
         ),

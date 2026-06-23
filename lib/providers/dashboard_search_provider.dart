@@ -1,7 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/product_model.dart';
+import '../models/recipe_model.dart';
+import '../models/shopping_list_model.dart';
 import 'favorites_provider.dart';
 import '../core/network/product_api_service.dart';
+import '../core/network/recipe_api_service.dart';
+import '../core/network/list_api_service.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // Filter state
@@ -73,16 +77,16 @@ class DashboardSearchState {
   final bool isSearching;
   final List<DashboardSearchResult> results;
   final DashboardSearchFilter filter;
-  final List<String> shoppingLists;
-  final List<String> recipes;
+  final List<ShoppingListModel> shoppingLists;
+  final List<RecipeModel> recipes;
 
   const DashboardSearchState({
     this.query = '',
     this.isSearching = false,
     this.results = const [],
     this.filter = const DashboardSearchFilter(),
-    this.shoppingLists = const ['Shopping List 01', 'Shopping List 02', 'Shopping List 03', 'Shopping List 04'],
-    this.recipes = const ['Recipe 01', 'Recipe 02', 'Recipe 03'],
+    this.shoppingLists = const [],
+    this.recipes = const [],
   });
 
   DashboardSearchState copyWith({
@@ -90,8 +94,8 @@ class DashboardSearchState {
     bool? isSearching,
     List<DashboardSearchResult>? results,
     DashboardSearchFilter? filter,
-    List<String>? shoppingLists,
-    List<String>? recipes,
+    List<ShoppingListModel>? shoppingLists,
+    List<RecipeModel>? recipes,
   }) =>
       DashboardSearchState(
         query: query ?? this.query,
@@ -111,7 +115,31 @@ class DashboardSearchState {
 class DashboardSearchNotifier extends StateNotifier<DashboardSearchState> {
   final Ref _ref;
 
-  DashboardSearchNotifier(this._ref) : super(const DashboardSearchState());
+  DashboardSearchNotifier(this._ref) : super(const DashboardSearchState()) {
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    await Future.wait([_loadRecipes(), _loadShoppingLists()]);
+  }
+
+  Future<void> _loadRecipes() async {
+    try {
+      final recipes = await RecipeApiService.instance.getRecipes('my-recipes');
+      state = state.copyWith(recipes: recipes);
+    } catch (_) {
+      // Keep empty list if loading fails
+    }
+  }
+
+  Future<void> _loadShoppingLists() async {
+    try {
+      final lists = await ListApiService.instance.getLists();
+      state = state.copyWith(shoppingLists: lists);
+    } catch (_) {
+      // Keep empty list if loading fails
+    }
+  }
 
   Future<void> onSearchChanged(String query) async {
     if (query.trim().isEmpty) {
@@ -119,7 +147,7 @@ class DashboardSearchNotifier extends StateNotifier<DashboardSearchState> {
       return;
     }
     
-    state = state.copyWith(query: query, isSearching: true);
+    state = state.copyWith(query: query, isSearching: true, results: []);
     
     try {
       final products = await ProductApiService.instance.searchProducts(query);
@@ -140,12 +168,38 @@ class DashboardSearchNotifier extends StateNotifier<DashboardSearchState> {
         );
       }).toList();
       
-      state = state.copyWith(results: results);
+      state = state.copyWith(
+        results: _applySortFilter(results, state.filter),
+        isSearching: false,
+      );
     } catch (e) {
       if (state.query == query) {
-        state = state.copyWith(results: []);
+        state = state.copyWith(results: [], isSearching: false);
       }
     }
+  }
+
+  List<DashboardSearchResult> _applySortFilter(
+    List<DashboardSearchResult> results,
+    DashboardSearchFilter filter,
+  ) {
+    final sorted = List<DashboardSearchResult>.from(results);
+    switch (filter.sortBy) {
+      case 'A-Z':
+        sorted.sort((a, b) => a.product.name.toLowerCase().compareTo(b.product.name.toLowerCase()));
+        break;
+      case 'Z-A':
+        sorted.sort((a, b) => b.product.name.toLowerCase().compareTo(a.product.name.toLowerCase()));
+        break;
+      case 'Eco Score':
+        const order = {'Eco-Friendly': 0, 'Moderate Impact': 1, 'Unsustainable': 2};
+        sorted.sort((a, b) =>
+            (order[a.badges.ecoLabel] ?? 1).compareTo(order[b.badges.ecoLabel] ?? 1));
+        break;
+      default: // 'Most Recent' — keep original order
+        break;
+    }
+    return sorted;
   }
 
   void clearSearch() {
@@ -186,7 +240,8 @@ class DashboardSearchNotifier extends StateNotifier<DashboardSearchState> {
   }
 
   void updateFilter(DashboardSearchFilter filter) {
-    state = state.copyWith(filter: filter);
+    final sorted = _applySortFilter(state.results, filter);
+    state = state.copyWith(filter: filter, results: sorted);
   }
 
   void reset() => state = const DashboardSearchState();

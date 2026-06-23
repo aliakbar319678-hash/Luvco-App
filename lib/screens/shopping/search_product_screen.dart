@@ -19,7 +19,8 @@ class SearchProductScreen extends ConsumerStatefulWidget {
   const SearchProductScreen({super.key, required this.listId});
 
   @override
-  ConsumerState<SearchProductScreen> createState() => _SearchProductScreenState();
+  ConsumerState<SearchProductScreen> createState() =>
+      _SearchProductScreenState();
 }
 
 class _SearchProductScreenState extends ConsumerState<SearchProductScreen> {
@@ -40,10 +41,17 @@ class _SearchProductScreenState extends ConsumerState<SearchProductScreen> {
     final size = MediaQuery.sizeOf(context);
     final scale = size.width / 390;
     final lists = ref.watch(shoppingListProvider);
-    final listTitle = lists.firstWhere(
-      (l) => l.id == widget.listId,
-      orElse: () => const ShoppingListModel(id: '', title: 'Name\'s List', description: '', itemCount: 0),
-    ).title;
+    final listTitle = lists
+        .firstWhere(
+          (l) => l.id == widget.listId,
+          orElse: () => const ShoppingListModel(
+            id: '',
+            title: 'Name\'s List',
+            description: '',
+            itemCount: 0,
+          ),
+        )
+        .title;
 
     final searchState = ref.watch(searchProductProvider);
     final isSearching = searchState.query.isNotEmpty;
@@ -160,7 +168,11 @@ class _SearchBar extends StatelessWidget {
   final ValueChanged<String> onChanged;
   final double scale;
 
-  const _SearchBar({required this.controller, required this.onChanged, required this.scale});
+  const _SearchBar({
+    required this.controller,
+    required this.onChanged,
+    required this.scale,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +180,10 @@ class _SearchBar extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.pureWhite,
         borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: AppColors.royalPurple.withValues(alpha: 0.5), width: 1.5),
+        border: Border.all(
+          color: AppColors.royalPurple.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
       ),
       child: TextField(
         controller: controller,
@@ -177,15 +192,26 @@ class _SearchBar extends StatelessWidget {
         style: GoogleFonts.inter(fontSize: 14 * scale, color: AppColors.black),
         decoration: InputDecoration(
           hintText: 'Product Name',
-          hintStyle: GoogleFonts.inter(fontSize: 14 * scale, color: AppColors.royalPurple.withValues(alpha: 0.6)),
-          prefixIcon: Icon(Icons.search_rounded, color: AppColors.royalPurple, size: 22 * scale),
+          hintStyle: GoogleFonts.inter(
+            fontSize: 14 * scale,
+            color: AppColors.royalPurple.withValues(alpha: 0.6),
+          ),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            color: AppColors.royalPurple,
+            size: 22 * scale,
+          ),
           suffixIcon: controller.text.isNotEmpty
               ? GestureDetector(
                   onTap: () {
                     controller.clear();
                     onChanged('');
                   },
-                  child: Icon(Icons.close_rounded, color: AppColors.neutralGrey, size: 20 * scale),
+                  child: Icon(
+                    Icons.close_rounded,
+                    color: AppColors.neutralGrey,
+                    size: 20 * scale,
+                  ),
                 )
               : const SizedBox.shrink(),
           border: InputBorder.none,
@@ -250,7 +276,9 @@ class _SearchResults extends ConsumerWidget {
           barcode: product.id,
         ),
         badge1Label: isSustainable ? 'Eco-Friendly' : 'Unsustainable',
-        badge1Color: isSustainable ? const Color(0xFF43A047) : const Color(0xFFE53935),
+        badge1Color: isSustainable
+            ? const Color(0xFF43A047)
+            : const Color(0xFFE53935),
         badge1Icon: Icons.eco_outlined,
         badge2Label: 'Safe',
         badge2Color: const Color(0xFF43A047),
@@ -275,7 +303,11 @@ class _SearchResults extends ConsumerWidget {
               ),
               Row(
                 children: [
-                  Icon(Icons.tune_rounded, size: 18 * scale, color: AppColors.darkGrey),
+                  Icon(
+                    Icons.tune_rounded,
+                    size: 18 * scale,
+                    color: AppColors.darkGrey,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     'Filter',
@@ -298,7 +330,10 @@ class _SearchResults extends ConsumerWidget {
                   ),
                 )
               : ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                   physics: const BouncingScrollPhysics(),
                   itemCount: results.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 16),
@@ -372,7 +407,9 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
         });
         return Dialog(
           backgroundColor: AppColors.pureWhite,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
             child: Column(
@@ -382,9 +419,16 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFF43A047), width: 3),
+                    border: Border.all(
+                      color: const Color(0xFF43A047),
+                      width: 3,
+                    ),
                   ),
-                  child: const Icon(Icons.check_rounded, color: Color(0xFF43A047), size: 40),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: Color(0xFF43A047),
+                    size: 40,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -464,7 +508,7 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
                     ),
                   ),
                 ],
-              )
+              ),
             ],
           ),
         ),
@@ -473,12 +517,16 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
   }
 
   void _doAddProduct() {
-    ref.read(shoppingListDetailProvider(widget.listId).notifier).addItem(widget.data.item);
+    ref
+        .read(shoppingListDetailProvider(widget.listId).notifier)
+        .addItem(widget.data.item);
     _showAddSuccess();
   }
 
   void _handleAddProduct() {
-    final currentItems = ref.read(shoppingListDetailProvider(widget.listId)).items;
+    final currentItems = ref
+        .read(shoppingListDetailProvider(widget.listId))
+        .items;
     final exists = currentItems.any((i) => i.name == widget.data.item.name);
     if (exists) {
       _showConflictDialog();
@@ -526,12 +574,18 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
                           topRight: Radius.circular(16 * widget.scale),
                         ),
                       ),
-                      padding: EdgeInsets.only(top: 8 * widget.scale, bottom: 12 * widget.scale),
+                      padding: EdgeInsets.only(
+                        top: 8 * widget.scale,
+                        bottom: 12 * widget.scale,
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(widget.data.badge1Icon,
-                              color: Colors.white, size: 12 * widget.scale),
+                          Icon(
+                            widget.data.badge1Icon,
+                            color: Colors.white,
+                            size: 12 * widget.scale,
+                          ),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
@@ -559,12 +613,18 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
                           topRight: Radius.circular(16 * widget.scale),
                         ),
                       ),
-                      padding: EdgeInsets.only(top: 8 * widget.scale, bottom: 12 * widget.scale),
+                      padding: EdgeInsets.only(
+                        top: 8 * widget.scale,
+                        bottom: 12 * widget.scale,
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(widget.data.badge2Icon,
-                              color: Colors.white, size: 12 * widget.scale),
+                          Icon(
+                            widget.data.badge2Icon,
+                            color: Colors.white,
+                            size: 12 * widget.scale,
+                          ),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
@@ -611,31 +671,38 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
                       height: 56 * widget.scale,
                       decoration: BoxDecoration(
                         color: AppColors.softGrey,
-                        borderRadius:
-                            BorderRadius.circular(10 * widget.scale),
+                        borderRadius: BorderRadius.circular(10 * widget.scale),
                       ),
                       child: widget.data.item.thumbnailAsset != null
                           ? ClipRRect(
-                              borderRadius:
-                                  BorderRadius.circular(10 * widget.scale),
-                              child: widget.data.item.thumbnailAsset!.startsWith('http')
+                              borderRadius: BorderRadius.circular(
+                                10 * widget.scale,
+                              ),
+                              child:
+                                  widget.data.item.thumbnailAsset!.startsWith(
+                                    'http',
+                                  )
                                   ? Image.network(
                                       widget.data.item.thumbnailAsset!,
                                       fit: BoxFit.cover,
                                       errorBuilder: (_, __, ___) => const Icon(
-                                          Icons.image,
-                                          color: AppColors.neutralGrey),
+                                        Icons.image,
+                                        color: AppColors.neutralGrey,
+                                      ),
                                     )
                                   : Image.asset(
                                       widget.data.item.thumbnailAsset!,
                                       fit: BoxFit.cover,
                                       errorBuilder: (_, __, ___) => const Icon(
-                                          Icons.image,
-                                          color: AppColors.neutralGrey),
+                                        Icons.image,
+                                        color: AppColors.neutralGrey,
+                                      ),
                                     ),
                             )
-                          : const Icon(Icons.image,
-                              color: AppColors.neutralGrey),
+                          : const Icon(
+                              Icons.image,
+                              color: AppColors.neutralGrey,
+                            ),
                     ),
                     SizedBox(width: 12 * widget.scale),
 
@@ -678,19 +745,20 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
                       verticalMargin: -10,
                       horizontalMargin: 10,
                       menuBuilder: () => ClipRRect(
-                        borderRadius:
-                            BorderRadius.circular(12 * widget.scale),
+                        borderRadius: BorderRadius.circular(12 * widget.scale),
                         child: Container(
                           width: 210 * widget.scale,
                           decoration: BoxDecoration(
                             color: AppColors.pureWhite,
-                            borderRadius:
-                                BorderRadius.circular(12 * widget.scale),
+                            borderRadius: BorderRadius.circular(
+                              12 * widget.scale,
+                            ),
                             boxShadow: [
                               BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.15),
-                                  blurRadius: 18,
-                                  offset: const Offset(0, 6)),
+                                color: Colors.black.withValues(alpha: 0.15),
+                                blurRadius: 18,
+                                offset: const Offset(0, 6),
+                              ),
                             ],
                           ),
                           child: Column(
@@ -705,9 +773,10 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
                                 },
                               ),
                               const Divider(
-                                  height: 1,
-                                  thickness: 1,
-                                  color: Color(0xFFEEEEEE)),
+                                height: 1,
+                                thickness: 1,
+                                color: Color(0xFFEEEEEE),
+                              ),
                               _MenuOption(
                                 label: 'Add to this shopping list',
                                 icon: Icons.shopping_bag_outlined,
@@ -722,9 +791,11 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
                       ),
                       child: Padding(
                         padding: EdgeInsets.all(6.0 * widget.scale),
-                        child: Icon(Icons.more_horiz,
-                            color: AppColors.darkGrey,
-                            size: 22 * widget.scale),
+                        child: Icon(
+                          Icons.more_horiz,
+                          color: AppColors.darkGrey,
+                          size: 22 * widget.scale,
+                        ),
                       ),
                     ),
                   ],
@@ -743,7 +814,11 @@ class _MenuOption extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _MenuOption({required this.label, required this.icon, required this.onTap});
+  const _MenuOption({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {

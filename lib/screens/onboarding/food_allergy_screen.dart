@@ -107,7 +107,9 @@ class FoodAllergyScreen extends ConsumerWidget {
                               GestureDetector(
                                 onTap: () =>
                                     ref
-                                            .read(showManualInputProvider.notifier)
+                                            .read(
+                                              showManualInputProvider.notifier,
+                                            )
                                             .state =
                                         true,
                                 child: Row(
@@ -166,10 +168,25 @@ class FoodAllergyScreen extends ConsumerWidget {
                                   ref
                                       .read(onboardingProvider.notifier)
                                       .addManualAllergy(val);
+                                  ref
+                                          .read(
+                                            showManualInputProvider.notifier,
+                                          )
+                                          .state =
+                                      false;
                                 },
                               ),
 
-                              // ── Already added manual allergies ──
+                              SizedBox(height: size.height * 0.020),
+                            ],
+
+                            // ── Already added manual allergies ──
+                            if (manualAllergies.isNotEmpty) ...[
+                              SizedBox(
+                                height: showManualInput
+                                    ? 0
+                                    : size.height * 0.016,
+                              ),
                               ...manualAllergies.map(
                                 (item) => _ManualAllergyTag(
                                   label: item,
@@ -178,8 +195,6 @@ class FoodAllergyScreen extends ConsumerWidget {
                                       .removeManualAllergy(item),
                                 ),
                               ),
-
-                              SizedBox(height: size.height * 0.020),
                             ],
 
                             SizedBox(height: size.height * 0.020),
