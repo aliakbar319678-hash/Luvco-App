@@ -301,23 +301,34 @@ class _SearchResults extends ConsumerWidget {
                   color: AppColors.black,
                 ),
               ),
-              Row(
-                children: [
-                  Icon(
-                    Icons.tune_rounded,
-                    size: 18 * scale,
-                    color: AppColors.darkGrey,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Filter',
-                    style: GoogleFonts.inter(
-                      fontSize: 13 * scale,
-                      fontWeight: FontWeight.w500,
+              GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => _FilterSheet(scale: scale, ref: ref),
+                  );
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.tune_rounded,
+                      size: 18 * scale,
                       color: AppColors.darkGrey,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 4),
+                    Text(
+                      'Filter',
+                      style: GoogleFonts.inter(
+                        fontSize: 13 * scale,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.darkGrey,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -842,6 +853,268 @@ class _MenuOption extends StatelessWidget {
             const SizedBox(width: 12),
             Icon(icon, size: 20, color: AppColors.black),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Filter Sheet
+// ─────────────────────────────────────────────────────────────────
+class _FilterSheet extends StatefulWidget {
+  final double scale;
+  final WidgetRef ref;
+  const _FilterSheet({required this.scale, required this.ref});
+
+  @override
+  State<_FilterSheet> createState() => _FilterSheetState();
+}
+
+class _FilterSheetState extends State<_FilterSheet> {
+  String _sortBy = 'Most Recent';
+  final List<String> _sortOptions = ['Most Recent', 'A-Z', 'Z-A', 'Eco Score'];
+
+  final List<String> _filter2Options = [
+    'Eco-Friendly',
+    'Moderate Impact',
+    'Unsustainable',
+  ];
+  final List<String> _filter3Options = [
+    'Safe',
+    'Avoid',
+  ];
+
+  final Set<String> _selected2 = {};
+  final Set<String> _selected3 = {};
+
+  @override
+  void initState() {
+    super.initState();
+    final currentFilter = widget.ref.read(searchProductProvider).filter;
+    _sortBy = currentFilter.sortBy;
+    _selected2.addAll(currentFilter.filter2Tags);
+    _selected3.addAll(currentFilter.filter3Tags);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.scale.clamp(0.85, 1.2);
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.pureWhite,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Filter Preferences',
+                  style: GoogleFonts.inter(
+                    fontSize: 17 * s,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.black,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: const BoxDecoration(
+                      color: AppColors.softGrey,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 18 * s,
+                      color: AppColors.darkGrey,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Sort By',
+              style: GoogleFonts.inter(
+                fontSize: 13 * s,
+                fontWeight: FontWeight.w600,
+                color: AppColors.darkGrey,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.clearGrey, width: 1.5),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _sortBy,
+                  isExpanded: true,
+                  icon: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: AppColors.darkGrey,
+                    size: 22 * s,
+                  ),
+                  style: GoogleFonts.inter(
+                    fontSize: 14 * s,
+                    color: AppColors.black,
+                  ),
+                  items: _sortOptions
+                      .map((o) => DropdownMenuItem(value: o, child: Text(o)))
+                      .toList(),
+                  onChanged: (v) => setState(() => _sortBy = v ?? _sortBy),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Sustainability Level',
+              style: GoogleFonts.inter(
+                fontSize: 13 * s,
+                fontWeight: FontWeight.w600,
+                color: AppColors.darkGrey,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _filter2Options
+                  .map(
+                    (tag) => _FilterChip(
+                      label: tag,
+                      selected: _selected2.contains(tag),
+                      scale: s,
+                      onTap: () => setState(
+                        () => _selected2.contains(tag)
+                            ? _selected2.remove(tag)
+                            : _selected2.add(tag),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Safety Level',
+              style: GoogleFonts.inter(
+                fontSize: 13 * s,
+                fontWeight: FontWeight.w600,
+                color: AppColors.darkGrey,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _filter3Options
+                  .map(
+                    (tag) => _FilterChip(
+                      label: tag,
+                      selected: _selected3.contains(tag),
+                      scale: s,
+                      onTap: () => setState(
+                        () => _selected3.contains(tag)
+                            ? _selected3.remove(tag)
+                            : _selected3.add(tag),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 52 * s,
+              child: ElevatedButton(
+                onPressed: () {
+                  widget.ref
+                      .read(searchProductProvider.notifier)
+                      .updateFilter(
+                        SearchProductFilter(
+                          sortBy: _sortBy,
+                          filter2Tags: _selected2.toList(),
+                          filter3Tags: _selected3.toList(),
+                        ),
+                      );
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.royalPurple,
+                  disabledBackgroundColor: AppColors.royalPurple.withValues(
+                    alpha: 0.3,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  'Show Results',
+                  style: GoogleFonts.inter(
+                    fontSize: 15 * s,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.pureWhite,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final double scale;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.scale,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.royalPurple.withValues(alpha: 0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? AppColors.royalPurple : AppColors.clearGrey,
+            width: 1.5,
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 12 * scale,
+            fontWeight: FontWeight.w500,
+            color: selected ? AppColors.royalPurple : AppColors.darkGrey,
+          ),
         ),
       ),
     );

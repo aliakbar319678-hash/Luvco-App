@@ -69,7 +69,7 @@ class ApiClient {
   // For Android emulator use 10.0.2.2, for iOS simulator use localhost.
   // For physical devices, use your computer's local network IP (e.g. 192.168.1.x)
   // OR use 127.0.0.1 if using adb reverse tcp:3000 tcp:3000
-  String _baseUrl = 'http://127.0.0.1:3000/api/v1';
+  String _baseUrl = 'http://192.168.1.22:3000/api/v1';
 
   /// Updates the Base URL for the client.
   void setBaseUrl(String url) {

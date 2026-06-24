@@ -331,13 +331,13 @@ class _HeroImage extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════
 //  RECIPE META CARD — card with dashed border, matches Figma
 // ═══════════════════════════════════════════════════════════════════
-class _RecipeMetaSection extends StatelessWidget {
+class _RecipeMetaSection extends ConsumerWidget {
   final RecipeDetailModel recipe;
   final double scale;
   const _RecipeMetaSection({required this.recipe, required this.scale});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       width: 375 * scale,
       constraints: BoxConstraints(minHeight: 157 * scale),
@@ -387,6 +387,20 @@ class _RecipeMetaSection extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  ref
+                      .read(recipeDetailProvider(recipe).notifier)
+                      .toggleBookmark();
+                },
+                icon: Icon(
+                  recipe.isSaved
+                      ? Icons.bookmark_rounded
+                      : Icons.bookmark_border_rounded,
+                  color: AppColors.vibrantPink,
+                  size: 28 * scale,
                 ),
               ),
             ],

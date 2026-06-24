@@ -1135,17 +1135,38 @@ class _ImageWithBadges extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Derive labels and colors dynamically from the backend product properties
+    final sustainLabel = product.sustainabilityLabel;
+    final Color sustainColor;
+    if (sustainLabel.toLowerCase().contains('eco-friendly') ||
+        sustainLabel.toLowerCase().contains('sustainable') ||
+        sustainLabel.toLowerCase() == 'sustainable') {
+      sustainColor = const Color(0xFF4CAF50); // Green
+    } else if (sustainLabel.toLowerCase().contains('moderate')) {
+      sustainColor = const Color(0xFFFFB800); // Orange/Yellow
+    } else {
+      sustainColor = const Color(0xFFE12C2C); // Red
+    }
+
+    final safeLabel = product.safetyLabel;
+    final Color safeColor;
+    if (safeLabel.toLowerCase().contains('safe')) {
+      safeColor = const Color(0xFF4CAF50); // Green
+    } else {
+      safeColor = const Color(0xFFFFB800); // Orange/Yellow
+    }
+
     return Column(
       children: [
         // ── Status tabs — flush at top, separate from white card ──────
         IntrinsicHeight(
           child: Row(
             children: [
-              // Unsustainable (red)
+              // Sustainability badge (dynamic color and label from backend)
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE53935),
+                    color: sustainColor,
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(20 * scale),
                       topRight: Radius.circular(16 * scale),
@@ -1164,23 +1185,26 @@ class _ImageWithBadges extends StatelessWidget {
                         size: 15 * scale,
                       ),
                       SizedBox(width: 5 * scale),
-                      Text(
-                        'Unsustainable',
-                        style: GoogleFonts.inter(
-                          fontSize: 12 * scale,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                      Flexible(
+                        child: Text(
+                          sustainLabel,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 12 * scale,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-              // Safe (green)
+              // Safety badge (dynamic color and label from backend)
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF43A047),
+                    color: safeColor,
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(16 * scale),
                       topRight: Radius.circular(20 * scale),
@@ -1199,12 +1223,15 @@ class _ImageWithBadges extends StatelessWidget {
                         size: 15 * scale,
                       ),
                       SizedBox(width: 5 * scale),
-                      Text(
-                        'Safe',
-                        style: GoogleFonts.inter(
-                          fontSize: 12 * scale,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                      Flexible(
+                        child: Text(
+                          safeLabel,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 12 * scale,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ],
@@ -1569,6 +1596,9 @@ class _ListCheckboxDialog extends StatelessWidget {
             onTap: () {},
             child: Container(
               width: double.infinity,
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height * 0.6,
+              ),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(
@@ -1625,52 +1655,62 @@ class _ListCheckboxDialog extends StatelessWidget {
                       ),
                     )
                   else
-                    ...items.map((item) {
-                      final checked = selected.contains(item.id);
-                      return GestureDetector(
-                        onTap: isSaving ? null : () => onToggle(item.id),
-                        behavior: HitTestBehavior.opaque,
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 11 * scale),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 22 * scale,
-                                height: 22 * scale,
-                                decoration: BoxDecoration(
-                                  color: checked
-                                      ? AppColors.royalPurple
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(4 * scale),
-                                  border: Border.all(
-                                    color: checked
-                                        ? AppColors.royalPurple
-                                        : AppColors.inputBorder,
-                                    width: 1.5,
-                                  ),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: items.map((item) {
+                            final checked = selected.contains(item.id);
+                            return GestureDetector(
+                              onTap: isSaving ? null : () => onToggle(item.id),
+                              behavior: HitTestBehavior.opaque,
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(vertical: 11 * scale),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 22 * scale,
+                                      height: 22 * scale,
+                                      decoration: BoxDecoration(
+                                        color: checked
+                                            ? AppColors.royalPurple
+                                            : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(4 * scale),
+                                        border: Border.all(
+                                          color: checked
+                                              ? AppColors.royalPurple
+                                              : AppColors.inputBorder,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: checked
+                                          ? Icon(
+                                              Icons.check,
+                                              size: 14 * scale,
+                                              color: Colors.white,
+                                            )
+                                          : null,
+                                    ),
+                                    SizedBox(width: 12 * scale),
+                                    Expanded(
+                                      child: Text(
+                                        item.name,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 14 * scale,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.black,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                child: checked
-                                    ? Icon(
-                                        Icons.check,
-                                        size: 14 * scale,
-                                        color: Colors.white,
-                                      )
-                                    : null,
                               ),
-                              SizedBox(width: 12 * scale),
-                              Text(
-                                item.name,
-                                style: GoogleFonts.inter(
-                                  fontSize: 14 * scale,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.black,
-                                ),
-                              ),
-                            ],
-                          ),
+                            );
+                          }).toList(),
                         ),
-                      );
-                    }),
+                      ),
+                    ),
 
                   SizedBox(height: 20 * scale),
 

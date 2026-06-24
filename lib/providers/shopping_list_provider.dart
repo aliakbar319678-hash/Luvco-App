@@ -37,17 +37,28 @@ class ShoppingListNotifier extends StateNotifier<List<ShoppingListModel>> {
     state = [...state, list];
   }
 
-  // ── Edit existing list ───────────────────────────────────────
-  void editList(String id, String newTitle, String newDescription) {
-    state = state.map((list) {
-      if (list.id == id) {
-        return list.copyWith(title: newTitle, description: newDescription);
-      }
-      return list;
-    }).toList();
+  // ── Edit existing list (title/description) ───────────────────────
+  Future<void> editList(String listId, String title, String description) async {
+    try {
+      final updated = await ListApiService.instance.editList(listId, title: title, description: description);
+      // replace the matching list in state
+      state = state.map((list) => list.id == listId ? updated : list).toList();
+    } catch (e) {
+      // handle error silently or log
+    }
   }
 
-  // ── Duplicate list ───────────────────────────────────────────
+
+
+  // ── Delete existing list ───────────────────────────────────────
+  Future<void> deleteList(String listId) async {
+    try {
+      await ListApiService.instance.deleteList(listId);
+      state = state.where((list) => list.id != listId).toList();
+    } catch (e) {
+      // handle error silently or log
+    }
+  }
   Future<void> duplicateList(String id) async {
     try {
       final newList = await ListApiService.instance.duplicateList(id);
@@ -58,14 +69,14 @@ class ShoppingListNotifier extends StateNotifier<List<ShoppingListModel>> {
     }
   }
 
-  // ── Delete list ──────────────────────────────────────────────
-  Future<void> deleteList(String id) async {
-    try {
-      await ListApiService.instance.deleteList(id);
-      state = state.where((l) => l.id != id).toList();
-    } catch (e) {
-      // Handle error
-    }
+  // Update list item count when items change in detail view
+  void setItemCount(String listId, int count) {
+    state = state.map((list) {
+      if (list.id == listId) {
+        return list.copyWith(itemCount: count);
+      }
+      return list;
+    }).toList();
   }
 }
 

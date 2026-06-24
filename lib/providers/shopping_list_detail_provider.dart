@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/shopping_list_provider.dart';
 import '../core/network/list_api_service.dart';
 
 // ── A single product item inside a shopping list ─────────────────
@@ -80,34 +81,40 @@ class ShoppingListItem {
 class ShoppingListDetailState {
   final String listId;
   final List<ShoppingListItem> items;
+  final bool isLoading;
 
   const ShoppingListDetailState({
     required this.listId,
     required this.items,
+    this.isLoading = false,
   });
 
   ShoppingListDetailState copyWith({
     String? listId,
     List<ShoppingListItem>? items,
+    bool? isLoading,
   }) =>
       ShoppingListDetailState(
         listId: listId ?? this.listId,
         items: items ?? this.items,
+        isLoading: isLoading ?? this.isLoading,
       );
 }
 
-class ShoppingListDetailNotifier
-    extends StateNotifier<ShoppingListDetailState> {
+class ShoppingListDetailNotifier extends StateNotifier<ShoppingListDetailState> {
+  final Ref ref;
   final String listId;
 
-  ShoppingListDetailNotifier(this.listId)
+  ShoppingListDetailNotifier(this.ref, this.listId)
       : super(ShoppingListDetailState(
           listId: listId,
           items: const [],
+          isLoading: true,
         )) {
     loadItems();
   }
 
+  // After loading items, update the parent list count
   Future<void> loadItems() async {
     try {
       final data = await ListApiService.instance.getList(listId);
@@ -115,9 +122,15 @@ class ShoppingListDetailNotifier
         final listItems = (data['items'] as List)
             .map((e) => ShoppingListItem.fromJson(e as Map<String, dynamic>))
             .toList();
-        state = state.copyWith(items: listItems);
+        state = state.copyWith(items: listItems, isLoading: false);
+        // Update count in shopping list provider
+        ref.read(shoppingListProvider.notifier).setItemCount(listId, listItems.length);
+      } else {
+        state = state.copyWith(isLoading: false);
+        ref.read(shoppingListProvider.notifier).setItemCount(listId, 0);
       }
     } catch (e) {
+      state = state.copyWith(isLoading: false);
       // Failed silently or logged
     }
   }
@@ -129,13 +142,12 @@ class ShoppingListDetailNotifier
     final newChecked = !item.isChecked;
 
     // Optimistic UI update
-    state = state.copyWith(
-      items: state.items.map((i) {
-        if (i.id == id) return i.copyWith(isChecked: newChecked);
-        return i;
-      }).toList(),
-    );
-
+    final updatedItems = state.items.map((i) {
+      if (i.id == id) return i.copyWith(isChecked: newChecked);
+      return i;
+    }).toList();
+    state = state.copyWith(items: updatedItems);
+    // No count change for checked state
     try {
       await ListApiService.instance.editItem(
         listId,
@@ -144,24 +156,25 @@ class ShoppingListDetailNotifier
       );
     } catch (e) {
       // Revert on failure
-      state = state.copyWith(
-        items: state.items.map((i) {
-          if (i.id == id) return i.copyWith(isChecked: item.isChecked);
-          return i;
-        }).toList(),
-      );
+      state = state.copyWith(items: state.items.map((i) {
+        if (i.id == id) return i.copyWith(isChecked: item.isChecked);
+        return i;
+      }).toList());
     }
   }
 
   Future<void> removeItem(String id) async {
     final originalItems = state.items;
-    state = state.copyWith(items: state.items.where((i) => i.id != id).toList());
-
+    final updatedItems = state.items.where((i) => i.id != id).toList();
+    state = state.copyWith(items: updatedItems);
+    // Update count in parent provider
+    ref.read(shoppingListProvider.notifier).setItemCount(listId, updatedItems.length);
     try {
       await ListApiService.instance.removeItem(listId, id);
     } catch (e) {
       // Revert on failure
       state = state.copyWith(items: originalItems);
+      ref.read(shoppingListProvider.notifier).setItemCount(listId, originalItems.length);
     }
   }
 
@@ -176,7 +189,10 @@ class ShoppingListDetailNotifier
         unit: item.unit,
       );
       final newItem = ShoppingListItem.fromJson(data);
-      state = state.copyWith(items: [...state.items, newItem]);
+      final updatedItems = [...state.items, newItem];
+      state = state.copyWith(items: updatedItems);
+      // Update count in parent provider
+      ref.read(shoppingListProvider.notifier).setItemCount(listId, updatedItems.length);
     } catch (e) {
       // Failed silently
     }
@@ -186,5 +202,5 @@ class ShoppingListDetailNotifier
 // Family provider — one notifier per list ID
 final shoppingListDetailProvider = StateNotifierProvider.family<
     ShoppingListDetailNotifier, ShoppingListDetailState, String>(
-  (ref, listId) => ShoppingListDetailNotifier(listId),
+  (ref, listId) => ShoppingListDetailNotifier(ref, listId),
 );

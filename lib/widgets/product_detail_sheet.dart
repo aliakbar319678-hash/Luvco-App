@@ -475,8 +475,76 @@ class _InfoSection extends StatelessWidget {
     required this.padding,
   });
 
+  /// Strip language prefix (e.g. "en:", "fr:") and clean up the text.
+  static String _cleanLabel(String raw) {
+    String cleaned = raw.replaceAll(RegExp(r'^[a-z]{2}:'), '');
+    cleaned = cleaned.replaceAll(RegExp(r'[-_]'), ' ').trim();
+    if (cleaned.isEmpty) return raw;
+    return cleaned
+        .split(' ')
+        .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w)
+        .join(' ');
+  }
+
+  /// Map label/allergen name to a specific icon asset.
+  static String _getIconAsset(String label, bool isAllergen) {
+    final lower = label.toLowerCase().trim();
+    if (isAllergen) {
+      if (lower.contains('milk') || lower.contains('dairy') || lower.contains('lactose')) {
+        return 'assets/icons/milk_icon.png';
+      }
+      if (lower.contains('gluten') || lower.contains('wheat') || lower.contains('soy') || lower.contains('nut') || lower.contains('peanut') || lower.contains('almond')) {
+        return 'assets/icons/tabler-icon-leaf.png';
+      }
+      return 'assets/icons/microscope_icon.png';
+    } else {
+      if (lower.contains('halal') || lower.contains('kosher')) {
+        return 'assets/icons/circle_check.png';
+      }
+      if (lower.contains('organic') || lower.contains('bio') || lower.contains('vegan') || lower.contains('vegetarian') || lower.contains('eco')) {
+        return 'assets/icons/tabler-icon-leaf.png';
+      }
+      if (lower.contains('additive') || lower.contains('preservative') || lower.contains('artificial')) {
+        return 'assets/icons/microscope_icon.png';
+      }
+      return 'assets/icons/circle_check.png';
+    }
+  }
+
+  /// Map label/allergen name to a custom color tint for the icon.
+  static Color _getIconColor(String label, bool isAllergen) {
+    final lower = label.toLowerCase().trim();
+    if (isAllergen) {
+      if (lower.contains('milk') || lower.contains('dairy') || lower.contains('lactose')) {
+        return const Color(0xFF64B5F6); // Light Blue for milk
+      }
+      if (lower.contains('gluten') || lower.contains('wheat') || lower.contains('soy') || lower.contains('nut') || lower.contains('peanut') || lower.contains('almond')) {
+        return const Color(0xFF4CAF50); // Green for plant allergens
+      }
+      return AppColors.black;
+    } else {
+      if (lower.contains('halal') || lower.contains('kosher')) {
+        return const Color(0xFF009688); // Teal for halal/kosher
+      }
+      if (lower.contains('organic') || lower.contains('bio') || lower.contains('vegan') || lower.contains('vegetarian') || lower.contains('eco')) {
+        return const Color(0xFF4CAF50); // Green for organic/vegan
+      }
+      if (lower.contains('additive') || lower.contains('preservative') || lower.contains('artificial')) {
+        return const Color(0xFFE5A93C); // Amber/Orange for additives
+      }
+      return AppColors.black;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Clean and filter empty items
+    final validItems = items.where((item) => item.trim().isNotEmpty).toList();
+    if (validItems.isEmpty) return const SizedBox.shrink();
+
+    final isAllergen = title.toLowerCase().contains('allergen');
+    final s = scale.clamp(0.85, 1.2);
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: padding),
       child: Column(
@@ -485,50 +553,62 @@ class _InfoSection extends StatelessWidget {
           Text(
             title,
             style: GoogleFonts.inter(
-              fontSize: 14 * scale.clamp(0.85, 1.2),
+              fontSize: 14 * s,
               fontWeight: FontWeight.w700,
               color: AppColors.black,
             ),
           ),
           const SizedBox(height: 10),
-          Row(
-            children: items
-                .take(4)
-                .map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 44 * scale.clamp(0.85, 1.2),
-                          height: 44 * scale.clamp(0.85, 1.2),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.softGrey,
-                            border: Border.all(color: AppColors.clearGrey),
-                          ),
-                          alignment: Alignment.center,
-                          child: Image.asset(
-                            'assets/icons/create_icon.png',
-                            width: 22 * scale.clamp(0.85, 1.2),
-                            height: 22 * scale.clamp(0.85, 1.2),
-                            color: AppColors.black,
-                            errorBuilder: (_, __, ___) => const SizedBox(),
-                          ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: validItems
+                  .take(4)
+                  .map(
+                    (item) {
+                      final clean = _cleanLabel(item);
+                      final iconAsset = _getIconAsset(clean, isAllergen);
+                      final iconColor = _getIconColor(clean, isAllergen);
+
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 44 * s,
+                              height: 44 * s,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.softGrey,
+                                border: Border.all(color: AppColors.clearGrey),
+                              ),
+                              alignment: Alignment.center,
+                              child: Image.asset(
+                                iconAsset,
+                                width: 22 * s,
+                                height: 22 * s,
+                                color: iconColor,
+                                errorBuilder: (_, __, ___) => const SizedBox(),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              clean,
+                              style: GoogleFonts.inter(
+                                fontSize: 10 * s,
+                                color: AppColors.darkGrey,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          item,
-                          style: GoogleFonts.inter(
-                            fontSize: 10 * scale.clamp(0.85, 1.2),
-                            color: AppColors.darkGrey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-                .toList(),
+                      );
+                    },
+                  )
+                  .toList(),
+            ),
           ),
         ],
       ),

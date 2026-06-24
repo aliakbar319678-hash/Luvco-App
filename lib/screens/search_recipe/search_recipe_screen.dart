@@ -4,11 +4,35 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/network/preference_api_service.dart';
 import '../../models/recipe_model.dart';
 import '../../models/recipe_detail_model.dart';
 import '../../providers/search_recipe_provider.dart';
-
 import '../../widgets/bottom_nav_bar.dart';
+
+// ── Provider to load user preferences for filters ─────────────────
+final _recipeFilterPrefsProvider = FutureProvider<Map<String, List<String>>>((ref) async {
+  try {
+    final prefs = await PreferenceApiService.instance.getPreferences();
+    final dietTypes = ((prefs['dietTypes'] as List?) ?? []).map((e) => e.toString()).toList();
+    final allergyTags = ((prefs['allergyTags'] as List?) ?? []).map((e) => e.toString()).toList();
+    final customDiets = ((prefs['customDiets'] as List?) ?? [])
+        .map((e) => (e as Map<String, dynamic>)['name']?.toString() ?? '')
+        .where((s) => s.isNotEmpty)
+        .toList();
+    final customAllergies = ((prefs['customAllergies'] as List?) ?? [])
+        .map((e) => (e as Map<String, dynamic>)['name']?.toString() ?? '')
+        .where((s) => s.isNotEmpty)
+        .toList();
+    return {
+      'dietTypes': [...dietTypes, ...customDiets],
+      'allergyTags': [...allergyTags, ...customAllergies],
+    };
+  } catch (_) {
+    return {'dietTypes': [], 'allergyTags': []};
+  }
+});
+
 
 // ═══════════════════════════════════════════════════════════════
 // Search Recipe Screen  (frames 2.0.8 → 2.0.12)
@@ -83,7 +107,11 @@ class _SearchRecipeScreenState extends ConsumerState<SearchRecipeScreen> {
                           scale: scale,
                           size: size,
                           onItemTap: notifier.openQuickView,
-                          onMoreTap: notifier.showMoreActionsFor,
+                          onMoreTap: (recipeId) {
+                            final recipe = state.results.firstWhere((r) => r.id == recipeId);
+                            final detail = _recipeToDetail(recipe);
+                            context.push('/recipe-detail', extra: detail);
+                          },
                         )
                       : SingleChildScrollView(
                           padding: EdgeInsets.only(
@@ -766,12 +794,12 @@ class _QuickViewModal extends StatelessWidget {
                                 flex: 145,
                                 child: SizedBox(
                                   width: double.infinity,
-                                  child: recipe.imageUrl != null
-                                      ? Image.asset(
-                                          recipe.imageUrl!,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) =>
-                                              Container(
+                                  child: recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty
+                                      ? (recipe.imageUrl!.startsWith('http')
+                                          ? Image.network(
+                                              recipe.imageUrl!,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) => Container(
                                                 color: AppColors.softGrey,
                                                 child: Icon(
                                                   Icons.image_outlined,
@@ -779,7 +807,19 @@ class _QuickViewModal extends StatelessWidget {
                                                   size: 36 * scale,
                                                 ),
                                               ),
-                                        )
+                                            )
+                                          : Image.asset(
+                                              recipe.imageUrl!,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) => Container(
+                                                color: AppColors.softGrey,
+                                                child: Icon(
+                                                  Icons.image_outlined,
+                                                  color: AppColors.clearGrey,
+                                                  size: 36 * scale,
+                                                ),
+                                              ),
+                                            ))
                                       : Container(
                                           color: AppColors.softGrey,
                                           child: Icon(
@@ -1258,20 +1298,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   late SearchRecipeFilter _localFilter;
 
   static const _sortOptions = ['Most Recent', 'Oldest', 'A-Z', 'Z-A'];
-  static const _filter2Options = [
-    'Nullam Scelerisque',
-    'Nullam',
-    'Duis',
-    'Ullamcorper',
-    'Ligula Imperdiet',
-  ];
-  static const _filter3Options = [
-    'Nullam Scelerisque',
-    'Nullam',
-    'Duis',
-    'Ullamcorper',
-    'Ligula Imperdiet',
-  ];
 
   @override
   void initState() {
@@ -1325,9 +1351,9 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
 
           SizedBox(height: 18 * s),
 
-          // Filter 01 — Sort dropdown
+          // Sort dropdown
           Text(
-            'Filter 01',
+            'Sort By',
             style: GoogleFonts.inter(
               fontSize: 13 * s,
               fontWeight: FontWeight.w600,
@@ -1345,50 +1371,85 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
 
           SizedBox(height: 16 * s),
 
-          // Filter 02 — Tag chips
-          Text(
-            'Filter 02',
-            style: GoogleFonts.inter(
-              fontSize: 13 * s,
-              fontWeight: FontWeight.w600,
-              color: AppColors.black,
-            ),
-          ),
-          SizedBox(height: 8 * s),
-          _TagChips(
-            options: _filter2Options,
-            selected: _localFilter.filter2Tags,
-            scale: s,
-            onToggle: (tag) {
-              final list = List<String>.from(_localFilter.filter2Tags);
-              list.contains(tag) ? list.remove(tag) : list.add(tag);
-              setState(
-                () => _localFilter = _localFilter.copyWith(filter2Tags: list),
+          // Diet Types — from backend preferences
+          Consumer(
+            builder: (ctx, ref, _) {
+              final prefsAsync = ref.watch(_recipeFilterPrefsProvider);
+              return prefsAsync.when(
+                data: (prefs) {
+                  final dietOptions = prefs['dietTypes'] ?? [];
+                  if (dietOptions.isEmpty) return const SizedBox.shrink();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Diet Types',
+                        style: GoogleFonts.inter(
+                          fontSize: 13 * s,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.black,
+                        ),
+                      ),
+                      SizedBox(height: 8 * s),
+                      _TagChips(
+                        options: dietOptions,
+                        selected: _localFilter.filter2Tags,
+                        scale: s,
+                        onToggle: (tag) {
+                          final list = List<String>.from(_localFilter.filter2Tags);
+                          list.contains(tag) ? list.remove(tag) : list.add(tag);
+                          setState(() => _localFilter = _localFilter.copyWith(filter2Tags: list));
+                        },
+                      ),
+                      SizedBox(height: 16 * s),
+                    ],
+                  );
+                },
+                loading: () => Padding(
+                  padding: EdgeInsets.only(bottom: 16 * s),
+                  child: const Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.royalPurple)),
+                ),
+                error: (_, __) => const SizedBox.shrink(),
               );
             },
           ),
 
-          SizedBox(height: 16 * s),
-
-          // Filter 03 — Tag chips
-          Text(
-            'Filter 03',
-            style: GoogleFonts.inter(
-              fontSize: 13 * s,
-              fontWeight: FontWeight.w600,
-              color: AppColors.black,
-            ),
-          ),
-          SizedBox(height: 8 * s),
-          _TagChips(
-            options: _filter3Options,
-            selected: _localFilter.filter3Tags,
-            scale: s,
-            onToggle: (tag) {
-              final list = List<String>.from(_localFilter.filter3Tags);
-              list.contains(tag) ? list.remove(tag) : list.add(tag);
-              setState(
-                () => _localFilter = _localFilter.copyWith(filter3Tags: list),
+          // Allergen Filters — from backend preferences
+          Consumer(
+            builder: (ctx, ref, _) {
+              final prefsAsync = ref.watch(_recipeFilterPrefsProvider);
+              return prefsAsync.when(
+                data: (prefs) {
+                  final allergyOptions = prefs['allergyTags'] ?? [];
+                  if (allergyOptions.isEmpty) return const SizedBox.shrink();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Free Of Ingredients',
+                        style: GoogleFonts.inter(
+                          fontSize: 13 * s,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.black,
+                        ),
+                      ),
+                      SizedBox(height: 8 * s),
+                      _TagChips(
+                        options: allergyOptions,
+                        selected: _localFilter.filter3Tags,
+                        scale: s,
+                        onToggle: (tag) {
+                          final list = List<String>.from(_localFilter.filter3Tags);
+                          list.contains(tag) ? list.remove(tag) : list.add(tag);
+                          setState(() => _localFilter = _localFilter.copyWith(filter3Tags: list));
+                        },
+                      ),
+                      SizedBox(height: 16 * s),
+                    ],
+                  );
+                },
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
               );
             },
           ),

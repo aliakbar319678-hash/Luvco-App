@@ -46,9 +46,15 @@ class ShoppingListDetailScreen extends ConsumerWidget {
 
             // ── Scrollable content ──
             Expanded(
-              child: items.isEmpty
-                  ? _EmptyBody(list: list)
-                  : _ProductsBody(list: list, items: items, listId: listId),
+              child: detailState.isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.vibrantPink,
+                      ),
+                    )
+                  : items.isEmpty
+                      ? _EmptyBody(list: list)
+                      : _ProductsBody(list: list, items: items, listId: listId),
             ),
 
             // ── Bottom Nav ──

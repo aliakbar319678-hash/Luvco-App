@@ -1,26 +1,32 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/shopping_list_detail_provider.dart';
 import '../core/network/favorite_api_service.dart';
+import '../models/product_model.dart';
+import '../core/network/product_api_service.dart';
 
 // ── Favorites State ────────────────────────────────────────────────
 class FavoritesState {
   final List<ShoppingListItem> items;
+  final Map<String, ProductModel> productDetails;
   final bool isLoading;
   final String? errorMessage;
 
   const FavoritesState({
     this.items = const [],
+    this.productDetails = const {},
     this.isLoading = false,
     this.errorMessage,
   });
 
   FavoritesState copyWith({
     List<ShoppingListItem>? items,
+    Map<String, ProductModel>? productDetails,
     bool? isLoading,
     String? errorMessage,
   }) =>
       FavoritesState(
         items: items ?? this.items,
+        productDetails: productDetails ?? this.productDetails,
         isLoading: isLoading ?? this.isLoading,
         errorMessage: errorMessage,
       );
@@ -52,7 +58,23 @@ class FavoritesNotifier extends StateNotifier<FavoritesState> {
         );
       }).toList();
 
-      state = state.copyWith(items: items, isLoading: false);
+      // Fetch product details in parallel
+      final detailsMap = <String, ProductModel>{};
+      final futures = items.map((item) async {
+        if (item.barcode != null && item.barcode!.isNotEmpty) {
+          try {
+            final detail = await ProductApiService.instance.lookupProduct(item.barcode!);
+            detailsMap[item.barcode!] = detail;
+          } catch (_) {}
+        }
+      }).toList();
+      await Future.wait(futures);
+
+      state = state.copyWith(
+        items: items,
+        productDetails: detailsMap,
+        isLoading: false,
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:custom_pop_up_menu/custom_pop_up_menu.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/network/preference_api_service.dart';
 import '../../models/recipe_model.dart';
 import '../../core/network/list_api_service.dart';
 import '../../core/network/recipe_api_service.dart';
@@ -14,6 +15,35 @@ import '../../providers/shopping_list_detail_provider.dart';
 import '../../providers/shopping_list_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import '../shopping/product_detail_sheet.dart';
+import '../../models/product_model.dart';
+
+// ── Provider to load user preferences for favorites filtering ─────────
+final _favoritePrefsProvider = FutureProvider<Map<String, List<String>>>((ref) async {
+  try {
+    final prefs = await PreferenceApiService.instance.getPreferences();
+    final dietTypes = ((prefs['dietTypes'] as List?) ?? []).map((e) => e.toString()).toList();
+    final allergyTags = ((prefs['allergyTags'] as List?) ?? []).map((e) => e.toString()).toList();
+    final customDiets = ((prefs['customDiets'] as List?) ?? [])
+        .map((e) => (e as Map<String, dynamic>)['name']?.toString() ?? '')
+        .where((s) => s.isNotEmpty)
+        .toList();
+    final customAllergies = ((prefs['customAllergies'] as List?) ?? [])
+        .map((e) => (e as Map<String, dynamic>)['name']?.toString() ?? '')
+        .where((s) => s.isNotEmpty)
+        .toList();
+    return {
+      'dietTypes': [...dietTypes, ...customDiets],
+      'allergyTags': [...allergyTags, ...customAllergies],
+    };
+  } catch (_) {
+    return {'dietTypes': [], 'allergyTags': []};
+  }
+});
+
+// ── Global providers for selected filters in favorites ────────────────
+final favoritesSelectedDietsProvider = StateProvider<Set<String>>((_) => {});
+final favoritesSelectedAllergensProvider = StateProvider<Set<String>>((_) => {});
+
 
 class FavoritesScreen extends ConsumerWidget {
   const FavoritesScreen({super.key});
@@ -22,13 +52,55 @@ class FavoritesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(favoritesProvider);
     final sortOption = ref.watch(favoritesSortProvider);
+    final selectedDiets = ref.watch(favoritesSelectedDietsProvider);
+    final selectedAllergens = ref.watch(favoritesSelectedAllergensProvider);
     final size = MediaQuery.sizeOf(context);
     final scale = size.width / 390;
 
     var items = state.items.toList();
+
+    // Apply filtering based on fetched product details
+    if (selectedDiets.isNotEmpty || selectedAllergens.isNotEmpty) {
+      items = items.where((item) {
+        final detail = state.productDetails[item.barcode];
+        if (detail == null) return false;
+
+        // Check diet tags: product must match all selected diets
+        if (selectedDiets.isNotEmpty) {
+          final matchesDiets = selectedDiets.every((diet) {
+            final dietLower = diet.toLowerCase();
+            return detail.labels.any((l) {
+              final labelLower = l.toLowerCase();
+              return labelLower == dietLower || 
+                     labelLower == 'en:$dietLower' || 
+                     labelLower.contains(dietLower);
+            });
+          });
+          if (!matchesDiets) return false;
+        }
+
+        // Check allergen tags: product must NOT contain any selected allergens (Free of)
+        if (selectedAllergens.isNotEmpty) {
+          final containsAllergen = selectedAllergens.any((allergen) {
+            final allergenLower = allergen.toLowerCase();
+            return detail.allergens.any((a) {
+              final allergenInProductLower = a.toLowerCase();
+              return allergenInProductLower == allergenLower || 
+                     allergenInProductLower == 'en:$allergenLower' || 
+                     allergenInProductLower.contains(allergenLower);
+            });
+          });
+          if (containsAllergen) return false;
+        }
+
+        return true;
+      }).toList();
+    }
+
     if (sortOption == FavoritesSortOption.nameAZ) {
       items.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     }
+
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(statusBarColor: Colors.transparent),
@@ -228,76 +300,200 @@ class _SubHeader extends StatelessWidget {
   }
 }
 
-// ── Filter Bottom Sheet ────────────────────────────────────────────
-class _FilterSheet extends ConsumerWidget {
+// ── Filter Bottom Sheet ────────────────────────────────────────────────
+class _FilterSheet extends ConsumerStatefulWidget {
   const _FilterSheet();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_FilterSheet> createState() => _FilterSheetState();
+}
+
+class _FilterSheetState extends ConsumerState<_FilterSheet> {
+  Set<String> _selectedDiets = {};
+  Set<String> _selectedAllergens = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDiets = Set<String>.from(ref.read(favoritesSelectedDietsProvider));
+    _selectedAllergens = Set<String>.from(ref.read(favoritesSelectedAllergensProvider));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final sort = ref.watch(favoritesSortProvider);
+    final prefsAsync = ref.watch(_favoritePrefsProvider);
 
     return Container(
+      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.75),
       decoration: const BoxDecoration(
         color: AppColors.pureWhite,
         borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
       ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Filter Preferences', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.black)),
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: const Icon(Icons.close_rounded, color: AppColors.black),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text('Filter 01', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.black)),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColors.clearGrey),
-              borderRadius: BorderRadius.circular(12),
+      padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.paddingOf(context).bottom + 20),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Filter Preferences', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.black)),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: const Icon(Icons.close_rounded, color: AppColors.black),
+                ),
+              ],
             ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<FavoritesSortOption>(
-                value: sort,
-                isExpanded: true,
-                items: const [
-                  DropdownMenuItem(value: FavoritesSortOption.mostRecent, child: Text('Most Recent')),
-                  DropdownMenuItem(value: FavoritesSortOption.nameAZ, child: Text('Name A-Z')),
-                ],
-                onChanged: (v) {
-                  if (v != null) ref.read(favoritesSortProvider.notifier).state = v;
+            const SizedBox(height: 20),
+            // Sort
+            Text('Sort By', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.black)),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.clearGrey),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<FavoritesSortOption>(
+                  value: sort,
+                  isExpanded: true,
+                  items: const [
+                    DropdownMenuItem(value: FavoritesSortOption.mostRecent, child: Text('Most Recent')),
+                    DropdownMenuItem(value: FavoritesSortOption.nameAZ, child: Text('Name A-Z')),
+                  ],
+                  onChanged: (v) {
+                    if (v != null) ref.read(favoritesSortProvider.notifier).state = v;
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Diet Types from backend
+            prefsAsync.when(
+              data: (prefs) {
+                final dietOptions = prefs['dietTypes'] ?? [];
+                if (dietOptions.isEmpty) return const SizedBox.shrink();
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Diet Types', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.black)),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: dietOptions.map((tag) {
+                        final sel = _selectedDiets.contains(tag);
+                        return GestureDetector(
+                          onTap: () => setState(() => sel ? _selectedDiets.remove(tag) : _selectedDiets.add(tag)),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: sel ? AppColors.softLavender : AppColors.pureWhite,
+                              border: Border.all(color: sel ? AppColors.royalPurple : AppColors.inputBorder),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              tag,
+                              style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
+                                  color: sel ? AppColors.royalPurple : AppColors.darkGrey),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                );
+              },
+              loading: () => const Padding(
+                padding: EdgeInsets.only(bottom: 16),
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.royalPurple)),
+              ),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+            // Allergens from backend
+            prefsAsync.when(
+              data: (prefs) {
+                final allergyOptions = prefs['allergyTags'] ?? [];
+                if (allergyOptions.isEmpty) return const SizedBox.shrink();
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Free Of Ingredients', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.black)),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: allergyOptions.map((tag) {
+                        final sel = _selectedAllergens.contains(tag);
+                        return GestureDetector(
+                          onTap: () => setState(() => sel ? _selectedAllergens.remove(tag) : _selectedAllergens.add(tag)),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: sel ? AppColors.softLavender : AppColors.pureWhite,
+                              border: Border.all(color: sel ? AppColors.royalPurple : AppColors.inputBorder),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              tag,
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
+                                color: sel ? AppColors.royalPurple : AppColors.darkGrey,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: () {
+                  ref.read(favoritesSelectedDietsProvider.notifier).state = _selectedDiets;
+                  ref.read(favoritesSelectedAllergensProvider.notifier).state = _selectedAllergens;
+                  Navigator.pop(context);
                 },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: (_selectedDiets.isNotEmpty || _selectedAllergens.isNotEmpty)
+                      ? AppColors.vibrantPink
+                      : AppColors.clearGrey,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+                ),
+                child: Text(
+                  'Show Results',
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: (_selectedDiets.isNotEmpty || _selectedAllergens.isNotEmpty)
+                        ? AppColors.pureWhite
+                        : AppColors.darkGrey,
+                  ),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.clearGrey,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
-              ),
-              child: Text('Show Results', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.darkGrey)),
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
+
 }
 
 // ── Favorite Product Card ──────────────────────────────────────────

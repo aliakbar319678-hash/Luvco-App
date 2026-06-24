@@ -59,6 +59,23 @@ class ListApiService {
     }
   }
 
+  /// PATCH /lists/{id}
+  /// Edit an existing shopping list's title and/or description
+  Future<ShoppingListModel> editList(String id, {String? title, String? description}) async {
+    try {
+      final payload = <String, dynamic>{};
+      if (title != null) payload['title'] = title;
+      if (description != null) payload['description'] = description;
+      final response = await _dio.patch('/lists/$id', data: payload);
+      if (response.data['success'] == true && response.data['list'] != null) {
+        return ShoppingListModel.fromJson(response.data['list'] as Map<String, dynamic>);
+      }
+      throw Exception(response.data['message'] ?? 'Failed to edit shopping list');
+    } catch (e) {
+      throw handleError(e);
+    }
+  }
+
   /// DELETE /lists/{id}
   /// Delete a shopping list and cascade-delete all its items
   Future<void> deleteList(String id) async {
