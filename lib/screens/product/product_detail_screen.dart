@@ -95,33 +95,33 @@ class ProductDetailScreen extends ConsumerWidget {
 
                         SizedBox(height: 24 * scale),
 
-                        // ── Labels and Certifications (hidden if empty) ──
-                        if (state.product.labels.isNotEmpty) ...[
-                          _SectionTitle(
-                            title: 'Labels and Certifications',
-                            scale: scale,
-                          ),
-                          SizedBox(height: 12 * scale),
-                          _HexagonLabelRow(
-                            labels: state.product.labels,
-                            scale: scale,
-                          ),
-                          SizedBox(height: 24 * scale),
-                        ],
+                        // ── Labels and Certifications ──
+                        _SectionTitle(
+                          title: 'Labels and Certifications',
+                          scale: scale,
+                        ),
+                        SizedBox(height: 12 * scale),
+                        _HexagonLabelRow(
+                          labels: state.product.labels.isNotEmpty
+                              ? state.product.labels
+                              : const ['None Listed'],
+                          scale: scale,
+                        ),
+                        SizedBox(height: 24 * scale),
 
-                        // ── Possible allergens (hidden if empty) ──
-                        if (state.product.allergens.isNotEmpty) ...[
-                          _SectionTitle(
-                            title: 'Possible allergens',
-                            scale: scale,
-                          ),
-                          SizedBox(height: 12 * scale),
-                          _HexagonLabelRow(
-                            labels: state.product.allergens,
-                            scale: scale,
-                          ),
-                          SizedBox(height: 24 * scale),
-                        ],
+                        // ── Possible allergens ──
+                        _SectionTitle(
+                          title: 'Possible allergens',
+                          scale: scale,
+                        ),
+                        SizedBox(height: 12 * scale),
+                        _HexagonLabelRow(
+                          labels: state.product.allergens.isNotEmpty
+                              ? state.product.allergens
+                              : const ['No Allergens Listed'],
+                          scale: scale,
+                        ),
+                        SizedBox(height: 24 * scale),
 
                         // ── Ingredients list (hidden if empty) ──
                         if (state.product.ingredients.isNotEmpty) ...[
@@ -550,6 +550,14 @@ class _HexagonLabelRow extends StatelessWidget {
   static (IconData, Color) _getIconAndColor(String name) {
     final lower = name.toLowerCase();
     
+    // Placeholder fallbacks
+    if (lower.contains('no allergens')) {
+      return (Icons.health_and_safety_rounded, const Color(0xFF4CAF50)); // Green for safe / no allergens
+    }
+    if (lower.contains('none listed')) {
+      return (Icons.info_outline_rounded, const Color(0xFF9E9E9E)); // Grey info for none listed
+    }
+
     // Allergens
     if (lower.contains('gluten') || lower.contains('wheat')) {
       return (Icons.grain_rounded, const Color(0xFFE5A93C)); // Amber/Orange

@@ -1103,13 +1103,13 @@ class _ProductDetailSheetState extends ConsumerState<_ProductDetailSheet> {
                 const SizedBox(height: 20),
                 _ChipSection(
                   title: 'Labels and Certifications',
-                  items: product.labels,
+                  items: product.labels.isNotEmpty ? product.labels : const ['None Listed'],
                   scale: s,
                 ),
                 const SizedBox(height: 16),
                 _ChipSection(
                   title: 'Possible allergens',
-                  items: product.allergens,
+                  items: product.allergens.isNotEmpty ? product.allergens : const ['No Allergens Listed'],
                   scale: s,
                 ),
                 const SizedBox(height: 20),
@@ -1203,6 +1203,14 @@ class _CircleChip extends StatelessWidget {
   static (IconData, Color) _getIconAndColor(String name) {
     final lower = name.toLowerCase();
     
+    // Placeholder fallbacks
+    if (lower.contains('no allergens')) {
+      return (Icons.health_and_safety_rounded, const Color(0xFF4CAF50)); // Green for safe / no allergens
+    }
+    if (lower.contains('none listed')) {
+      return (Icons.info_outline_rounded, const Color(0xFF9E9E9E)); // Grey info for none listed
+    }
+
     // Allergens
     if (lower.contains('gluten') || lower.contains('wheat')) {
       return (Icons.grain_rounded, const Color(0xFFE5A93C)); // Amber/Orange
