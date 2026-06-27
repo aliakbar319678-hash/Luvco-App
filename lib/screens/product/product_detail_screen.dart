@@ -969,6 +969,9 @@ class _CheckboxDialog extends StatelessWidget {
             onTap: () {},
             child: Container(
               width: double.infinity,
+              constraints: BoxConstraints(
+                maxHeight: size.height * 0.75,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.pureWhite,
                 // Only top corners rounded — bottom sheet style
@@ -1041,55 +1044,63 @@ class _CheckboxDialog extends StatelessWidget {
                             ),
                           ),
                         )
-                      : Column(
-                          children: items.map((item) {
-                            final isChecked = selected.contains(item.id);
-                            return InkWell(
-                              onTap: () => onToggle(item.id),
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 20 * scale,
-                                  vertical: 12 * scale,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 22 * scale,
-                                      height: 22 * scale,
-                                      decoration: BoxDecoration(
-                                        color: isChecked
-                                            ? AppColors.royalPurple
-                                            : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(4 * scale),
-                                        border: Border.all(
-                                          color: isChecked
-                                              ? AppColors.royalPurple
-                                              : AppColors.inputBorder,
-                                          width: 1.5,
+                      : Flexible(
+                          child: SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: items.map((item) {
+                                final isChecked = selected.contains(item.id);
+                                return InkWell(
+                                  onTap: () => onToggle(item.id),
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 20 * scale,
+                                      vertical: 12 * scale,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 22 * scale,
+                                          height: 22 * scale,
+                                          decoration: BoxDecoration(
+                                            color: isChecked
+                                                ? AppColors.royalPurple
+                                                : Colors.transparent,
+                                            borderRadius: BorderRadius.circular(4 * scale),
+                                            border: Border.all(
+                                              color: isChecked
+                                                  ? AppColors.royalPurple
+                                                  : AppColors.inputBorder,
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                          child: isChecked
+                                              ? Icon(
+                                                  Icons.check,
+                                                  size: 14 * scale,
+                                                  color: Colors.white,
+                                                )
+                                              : null,
                                         ),
-                                      ),
-                                      child: isChecked
-                                          ? Icon(
-                                              Icons.check,
-                                              size: 14 * scale,
-                                              color: Colors.white,
-                                            )
-                                          : null,
+                                        SizedBox(width: 12 * scale),
+                                        Expanded(
+                                          child: Text(
+                                            item.name,
+                                            style: GoogleFonts.inter(
+                                              fontSize: 14 * scale,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppColors.black,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    SizedBox(width: 12 * scale),
-                                    Text(
-                                      item.name,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 14 * scale,
-                                        fontWeight: FontWeight.w500,
-                                        color: AppColors.black,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
                         ),
 
                   SizedBox(height: 16 * scale),

@@ -63,27 +63,35 @@ class ProductModel {
   );
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
-    final barcode = json['barcode'] as String? ?? json['id'] as String? ?? '';
-    final name = json['name'] as String? ?? 'Unknown Product';
-    final brand = json['brand'] as String? ?? 'Generic Brand';
-    final imageUrl = json['imageUrl'] as String? ?? '';
-    final sustainabilityLabelRaw = json['sustainabilityLabel'] as String? ?? '';
+    final barcode = (json['barcode'] ?? json['id'] ?? '').toString();
+    final name = (json['name'] ?? 'Unknown Product').toString();
+    final brand = (json['brand'] ?? 'Generic Brand').toString();
+    final imageUrl = (json['imageUrl'] ?? '').toString();
+    final sustainabilityLabelRaw = (json['sustainabilityLabel'] ?? '').toString();
     
     // isSustainable: true if Eco-Friendly or Sustainable
     final isSustainable = sustainabilityLabelRaw.toLowerCase() == 'eco-friendly' ||
                           sustainabilityLabelRaw.toLowerCase() == 'sustainable' ||
                           sustainabilityLabelRaw.toLowerCase() == 'eco friendly';
 
-    final labelsList = json['labels'] != null ? List<String>.from(json['labels']) : <String>[];
-    final allergensList = json['allergens'] != null ? List<String>.from(json['allergens']) : <String>[];
+    final labelsList = json['labels'] != null && json['labels'] is List
+        ? (json['labels'] as List).map((e) => e?.toString() ?? '').where((e) => e.isNotEmpty).toList()
+        : <String>[];
+        
+    final allergensList = json['allergens'] != null && json['allergens'] is List
+        ? (json['allergens'] as List).map((e) => e?.toString() ?? '').where((e) => e.isNotEmpty).toList()
+        : <String>[];
     
     final ingredientsList = <String>[];
     if (json['ingredients'] != null && json['ingredients'] is List) {
       for (final ing in json['ingredients']) {
-        if (ing is Map && ing['text'] != null) {
-          ingredientsList.add(ing['text'] as String);
-        } else if (ing is String) {
-          ingredientsList.add(ing);
+        if (ing is Map) {
+          final text = ing['text'];
+          if (text != null) {
+            ingredientsList.add(text.toString());
+          }
+        } else if (ing != null) {
+          ingredientsList.add(ing.toString());
         }
       }
     }
@@ -105,13 +113,16 @@ class ProductModel {
 
     // Normalize safety level
     String safety = 'Safe';
-    final safetyLabelRaw = json['safetyLabel'] as String?;
+    final safetyLabelRaw = json['safetyLabel']?.toString();
     if (safetyLabelRaw != null && safetyLabelRaw.isNotEmpty) {
       if (safetyLabelRaw.toLowerCase().contains('avoid') ||
           safetyLabelRaw.toLowerCase().contains('high')) {
         safety = 'Avoid';
       }
     }
+
+    final isFavoritedRaw = json['isFavorited'];
+    final isSaved = isFavoritedRaw is bool ? isFavoritedRaw : (isFavoritedRaw?.toString().toLowerCase() == 'true');
 
     return ProductModel(
       id: barcode,
@@ -123,7 +134,7 @@ class ProductModel {
       labels: labelsList,
       allergens: allergensList,
       ingredients: ingredientsList,
-      isSaved: json['isFavorited'] as bool? ?? false,
+      isSaved: isSaved,
       sustainabilityLabel: sustainability,
       safetyLabel: safety,
     );

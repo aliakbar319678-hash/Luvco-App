@@ -43,7 +43,7 @@ class ApiClient {
                   // Retry the original request with the new token
                   final options = error.requestOptions;
                   options.headers['Authorization'] = 'Bearer $newAccessToken';
-                  
+
                   // Clone request and perform again
                   final response = await _dio.fetch(options);
                   return handler.resolve(response);
@@ -69,7 +69,7 @@ class ApiClient {
   // For Android emulator use 10.0.2.2, for iOS simulator use localhost.
   // For physical devices, use your computer's local network IP (e.g. 192.168.1.x)
   // OR use 127.0.0.1 if using adb reverse tcp:3000 tcp:3000
-  String _baseUrl = 'http://192.168.1.22:3000/api/v1';
+  String _baseUrl = 'http://127.0.0.1:3000/api/v1';
 
   /// Updates the Base URL for the client.
   void setBaseUrl(String url) {
@@ -90,12 +90,12 @@ class ApiClient {
           },
         ),
       );
-      
+
       final response = await refreshDio.post(
         '/auth/refresh-token',
         data: {'refreshToken': refreshToken},
       );
-      
+
       if (response.statusCode == 200 && response.data != null) {
         final success = response.data['success'] as bool? ?? false;
         if (success) {

@@ -15,6 +15,7 @@ import 'modify_password_screen.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/network/auth_api_service.dart';
 import '../../core/network/user_api_service.dart';
+import '../../providers/session_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // Account Settings Screen — frame 1.6.0 → 1.6.23
@@ -385,7 +386,7 @@ class _ProfileAvatar extends StatelessWidget {
 // Matches frame 1.6.0 exactly — white card, rows with icon + label
 // + chevron right, each separated by a thin divider line
 // ─────────────────────────────────────────────────────────────────
-class _AccountMenuList extends StatelessWidget {
+class _AccountMenuList extends ConsumerWidget {
   final double scale;
   final Size size;
 
@@ -425,7 +426,7 @@ class _AccountMenuList extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: size.width * 0.058),
       child: Column(
@@ -452,7 +453,7 @@ class _AccountMenuList extends StatelessWidget {
                     _AccountMenuRow(
                       item: item,
                       scale: scale,
-                      onTap: () => _handleTap(context, item.label),
+                      onTap: () => _handleTap(context, ref, item.label),
                     ),
                     if (!isLast)
                       Divider(
@@ -491,7 +492,7 @@ class _AccountMenuList extends StatelessWidget {
                 showChevron: false,
               ),
               scale: scale,
-              onTap: () => _handleTap(context, 'Log Out'),
+              onTap: () => _handleTap(context, ref, 'Log Out'),
             ),
           ),
         ],
@@ -499,7 +500,7 @@ class _AccountMenuList extends StatelessWidget {
     );
   }
 
-  void _handleTap(BuildContext context, String label) {
+  Future<void> _handleTap(BuildContext context, WidgetRef ref, String label) async {
     if (label == 'Name') {
       Navigator.of(
         context,
@@ -517,14 +518,14 @@ class _AccountMenuList extends StatelessWidget {
         context,
       ).push(MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
     } else if (label == 'Delete Account') {
-      _showDeleteAccountConfirmDialog(context);
+      _showDeleteAccountConfirmDialog(context, ref);
     } else if (label == 'Log Out') {
-      AuthApiService.instance.logout();
-      context.go('/login');
+      await logoutAndClearProviders(ref);
+      if (context.mounted) context.go('/login');
     }
   }
 
-  void _showDeleteAccountConfirmDialog(BuildContext context) {
+  void _showDeleteAccountConfirmDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (dialogCtx) => Dialog(
@@ -575,7 +576,7 @@ class _AccountMenuList extends StatelessWidget {
                       Navigator.pop(dialogCtx);
                       try {
                         await UserApiService.instance.deleteAccount();
-                        AuthApiService.instance.logout();
+                        await logoutAndClearProviders(ref);
                         if (context.mounted) {
                           context.go('/login');
                         }

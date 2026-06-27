@@ -87,7 +87,16 @@ class AuthApiService {
         '/auth/verify-email',
         data: {'email': email, 'code': code},
       );
-      return AuthResponse.fromJson(response.data);
+      final authResponse = AuthResponse.fromJson(response.data);
+      if (authResponse.success &&
+          authResponse.accessToken != null &&
+          authResponse.refreshToken != null) {
+        await TokenStorage.instance.saveTokens(
+          accessToken: authResponse.accessToken!,
+          refreshToken: authResponse.refreshToken!,
+        );
+      }
+      return authResponse;
     } catch (e) {
       throw handleError(e);
     }
