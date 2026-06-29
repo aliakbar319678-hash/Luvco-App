@@ -17,6 +17,7 @@ import '../../widgets/fab_menu_dialog.dart';
 import '../../providers/account_settings_provider.dart';
 import '../../providers/new_recipe_provider.dart';
 import '../../providers/user_profile_provider.dart';
+import '../../providers/recipe_provider.dart';
 
 class UserProfileScreen extends ConsumerWidget {
   const UserProfileScreen({super.key});
@@ -51,9 +52,19 @@ class UserProfileScreen extends ConsumerWidget {
 
                 // ── Scrollable body ──
                 Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Column(
+                  child: RefreshIndicator(
+                    color: AppColors.vibrantPink,
+                    onRefresh: () async {
+                      ref.invalidate(shoppingListProvider);
+                      ref.invalidate(myRecipesProvider);
+                      ref.invalidate(savedRecipesProvider);
+                      await Future.delayed(const Duration(milliseconds: 500));
+                    },
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
+                      ),
+                      child: Column(
                       children: [
                         const SizedBox(height: 16),
 
@@ -98,6 +109,7 @@ class UserProfileScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
+              ),
 
                 // ── Bottom nav ──
                 const LuvcoBottomNavBar(),
@@ -567,8 +579,13 @@ class _EmptyState extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          GestureDetector(
-            onTap: () => context.push('/new-shopping-list'),
+          TextButton(
+            onPressed: () => context.push('/new-shopping-list'),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
             child: Text(
               'Create New Shopping List',
               style: GoogleFonts.inter(

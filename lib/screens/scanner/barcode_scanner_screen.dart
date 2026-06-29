@@ -155,43 +155,13 @@ class BarcodeScannerScreen extends ConsumerWidget {
                 onSave: () async {
                   final msg = await notifier.saveOnList();
                   if (msg != null && context.mounted) {
-                    showDialog(
-                      context: context,
-                      builder: (context) => Dialog(
-                        backgroundColor: AppColors.pureWhite,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(20.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                msg.contains('Failed') ? Icons.error_outline : Icons.check_circle_outline,
-                                color: msg.contains('Failed') ? Colors.red : AppColors.royalPurple,
-                                size: 48,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                msg,
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.black,
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              ElevatedButton(
-                                onPressed: () => Navigator.pop(context),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.royalPurple,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                ),
-                                child: Text('OK', style: GoogleFonts.inter(color: Colors.white)),
-                              ),
-                            ],
-                          ),
-                        ),
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(msg),
+                        backgroundColor: msg.contains('Failed')
+                            ? Colors.red
+                            : Colors.green, // Changed to distinct color
+                        behavior: SnackBarBehavior.floating,
                       ),
                     );
                   }
@@ -213,43 +183,13 @@ class BarcodeScannerScreen extends ConsumerWidget {
                 onSave: () async {
                   final msg = await notifier.saveOnRecipe();
                   if (msg != null && context.mounted) {
-                    showDialog(
-                      context: context,
-                      builder: (context) => Dialog(
-                        backgroundColor: AppColors.pureWhite,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(20.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                msg.contains('Failed') ? Icons.error_outline : Icons.check_circle_outline,
-                                color: msg.contains('Failed') ? Colors.red : AppColors.royalPurple,
-                                size: 48,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                msg,
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.black,
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              ElevatedButton(
-                                onPressed: () => Navigator.pop(context),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.royalPurple,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                ),
-                                child: Text('OK', style: GoogleFonts.inter(color: Colors.white)),
-                              ),
-                            ],
-                          ),
-                        ),
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(msg),
+                        backgroundColor: msg.contains('Failed')
+                            ? Colors.red
+                            : Colors.green, // Changed to distinct color
+                        behavior: SnackBarBehavior.floating,
                       ),
                     );
                   }
