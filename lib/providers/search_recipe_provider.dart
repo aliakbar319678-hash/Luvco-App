@@ -170,7 +170,7 @@ class SearchRecipeNotifier extends StateNotifier<SearchRecipeState> {
   }
 
   void clearSearch() {
-    state = const SearchRecipeState();
+    state = const SearchRecipeState(isFetching: false);
   }
 
   void openQuickView(RecipeModel recipe) {

@@ -3,6 +3,7 @@ class RecipeModel {
   final String title;
   final String description;
   final String? imageUrl;
+  final String ownerName; // Full name of the recipe creator
   final List<String> dietTags;
   final int timeOfPreparation; // minutes
   final int servings;
@@ -17,6 +18,7 @@ class RecipeModel {
     required this.title,
     required this.description,
     this.imageUrl,
+    this.ownerName = '',
     this.dietTags = const [],
     this.timeOfPreparation = 30,
     this.servings = 2,
@@ -32,6 +34,7 @@ class RecipeModel {
     String? title,
     String? description,
     String? imageUrl,
+    String? ownerName,
     List<String>? dietTags,
     int? timeOfPreparation,
     int? servings,
@@ -45,6 +48,7 @@ class RecipeModel {
     title: title ?? this.title,
     description: description ?? this.description,
     imageUrl: imageUrl ?? this.imageUrl,
+    ownerName: ownerName ?? this.ownerName,
     dietTags: dietTags ?? this.dietTags,
     timeOfPreparation: timeOfPreparation ?? this.timeOfPreparation,
     servings: servings ?? this.servings,
@@ -59,11 +63,23 @@ class RecipeModel {
     final parsedDietTags = (json['dietTags'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
     final parsedFreeOfTags = (json['freeOfTags'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
 
+    // Parse owner name directly or from nested owner object
+    String ownerName = json['ownerName'] as String? ?? '';
+    if (ownerName.isEmpty) {
+      final ownerJson = json['owner'] as Map<String, dynamic>?;
+      if (ownerJson != null) {
+        final first = ownerJson['firstName'] as String? ?? '';
+        final last = ownerJson['lastName'] as String? ?? '';
+        ownerName = '$first $last'.trim();
+      }
+    }
+
     return RecipeModel(
       id: json['id'] as String,
       title: json['title'] as String? ?? '',
       description: json['description'] as String? ?? '',
       imageUrl: json['coverImageUrl'] as String?,
+      ownerName: ownerName,
       dietTags: parsedDietTags,
       timeOfPreparation: json['prepTimeMinutes'] as int? ?? 30,
       servings: json['servings'] as int? ?? 2,
@@ -81,6 +97,7 @@ class RecipeModel {
       'title': title,
       'description': description,
       'coverImageUrl': imageUrl,
+      'ownerName': ownerName,
       'dietTags': dietTags,
       'prepTimeMinutes': timeOfPreparation,
       'servings': servings,

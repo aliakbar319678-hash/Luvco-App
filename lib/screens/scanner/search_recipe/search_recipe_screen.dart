@@ -624,13 +624,23 @@ class _RecipeCard extends ConsumerWidget {
                     ],
                   ),
                   SizedBox(height: 2 * scale),
-                  Text(
-                    recipe.description,
-                    style: GoogleFonts.inter(
-                      fontSize: 12 * scale,
-                      color: AppColors.darkGrey,
+                  if (recipe.ownerName.isNotEmpty)
+                    Text(
+                      'by ${recipe.ownerName}',
+                      style: GoogleFonts.inter(
+                        fontSize: 12 * scale,
+                        color: AppColors.darkGrey,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    )
+                  else if (recipe.description.isNotEmpty)
+                    Text(
+                      recipe.description,
+                      style: GoogleFonts.inter(
+                        fontSize: 12 * scale,
+                        color: AppColors.darkGrey,
+                      ),
                     ),
-                  ),
                   SizedBox(height: 6 * scale),
                   Wrap(
                     spacing: 6 * scale,
