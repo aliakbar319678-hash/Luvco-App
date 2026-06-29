@@ -79,7 +79,7 @@ class RecipeDetailNotifier extends StateNotifier<RecipeDetailModel> {
         await RecipeApiService.instance.saveRecipe(detail.id);
       }
       if (mounted) {
-        _ref.read(savedRecipesProvider.notifier).loadRecipes();
+        _ref.invalidate(savedRecipesProvider);
       }
     } catch (e) {
       // Revert on failure

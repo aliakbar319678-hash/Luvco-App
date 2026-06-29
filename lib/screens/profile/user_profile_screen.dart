@@ -568,7 +568,7 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 12),
 
           GestureDetector(
-            onTap: () {},
+            onTap: () => context.push('/new-shopping-list'),
             child: Text(
               'Create New Shopping List',
               style: GoogleFonts.inter(

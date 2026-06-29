@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/recipe_model.dart';
 import '../core/network/recipe_api_service.dart';
+import 'recipe_provider.dart';
 
 // ─────────────────────────────────────────────────
 // Filter State
@@ -224,6 +225,7 @@ class SearchRecipeNotifier extends StateNotifier<SearchRecipeState> {
       } else {
         await RecipeApiService.instance.saveRecipe(recipeId);
       }
+      ref.invalidate(savedRecipesProvider);
     } catch (e) {
       // Revert on failure
       _allRecipes[index] = recipe.copyWith(isSaved: wasSaved);
