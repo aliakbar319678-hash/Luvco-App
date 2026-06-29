@@ -10,6 +10,7 @@ class LuvcoTextField extends StatelessWidget {
   final ValueChanged<String> onChanged;
   final Widget? suffixIcon;
   final bool hasError;
+  final TextEditingController? controller;
 
   const LuvcoTextField({
     super.key,
@@ -20,6 +21,7 @@ class LuvcoTextField extends StatelessWidget {
     this.obscureText = false,
     this.suffixIcon,
     this.hasError = false,
+    this.controller,
   });
 
   @override
@@ -61,6 +63,7 @@ class LuvcoTextField extends StatelessWidget {
         SizedBox(
           height: fieldHeight,
           child: TextField(
+            controller: controller,
             onChanged: onChanged,
             obscureText: obscureText,
             keyboardType: keyboardType,

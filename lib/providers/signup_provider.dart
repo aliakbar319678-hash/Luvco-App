@@ -69,7 +69,9 @@ class SignupNotifier extends StateNotifier<SignupState> {
       newErrors[SignupErrorField.email] = 'Please fill out this field';
     }
 
-    if (model.password.length < 8) {
+    if (model.password.isEmpty) {
+      newErrors[SignupErrorField.password] = 'Please fill out this field';
+    } else if (model.password.length < 8) {
       newErrors[SignupErrorField.password] = 'Use 8 or more characters';
     }
 

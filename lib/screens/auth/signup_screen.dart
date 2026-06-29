@@ -18,11 +18,40 @@ final signupPasswordTypingProvider = StateProvider<bool>((ref) => false);
 // Provider to hold a debouncing timer for typing detection
 final signupPasswordTypingTimerProvider = StateProvider<Timer?>((ref) => null);
 
-class SignupScreen extends ConsumerWidget {
+class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
+}
+
+class _SignupScreenState extends ConsumerState<SignupScreen> {
+  late final TextEditingController _firstNameController;
+  late final TextEditingController _lastNameController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _passwordController;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize controllers with current provider values in case of returning to screen
+    _firstNameController = TextEditingController(text: ref.read(signupFirstNameProvider));
+    _lastNameController = TextEditingController(text: ref.read(signupLastNameProvider));
+    _emailController = TextEditingController(text: ref.read(signupEmailProvider));
+    _passwordController = TextEditingController(text: ref.read(signupPasswordProvider));
+  }
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
 
     final signupState = ref.watch(signupProvider);
@@ -98,6 +127,7 @@ class SignupScreen extends ConsumerWidget {
 
                     // ── First Name ──
                     LuvcoTextField(
+                      controller: _firstNameController,
                       label: 'First Name*',
                       hintText: 'Enter your first name',
                       hasError: fieldError(SignupErrorField.firstName),
@@ -113,6 +143,7 @@ class SignupScreen extends ConsumerWidget {
 
                     // ── Last Name ──
                     LuvcoTextField(
+                      controller: _lastNameController,
                       label: 'Last Name*',
                       hintText: 'Enter your last name',
                       hasError: fieldError(SignupErrorField.lastName),
@@ -128,6 +159,7 @@ class SignupScreen extends ConsumerWidget {
 
                     // ── Email ──
                     LuvcoTextField(
+                      controller: _emailController,
                       label: 'Email*',
                       hintText: 'Enter your email',
                       keyboardType: TextInputType.emailAddress,
@@ -144,6 +176,7 @@ class SignupScreen extends ConsumerWidget {
 
                     // ── Password ──
                     LuvcoTextField(
+                      controller: _passwordController,
                       label: 'Password*',
                       hintText: 'Enter your password',
                       obscureText: obscure,
@@ -212,7 +245,10 @@ class SignupScreen extends ConsumerWidget {
                       onChanged: (v) =>
                           ref.read(signupTermsAcceptedProvider.notifier).state =
                               v ?? false,
-                      onLabelTap: () => context.push('/terms'),
+                      onLabelTap: () {
+                        FocusScope.of(context).unfocus();
+                        context.push('/terms');
+                      },
                     ),
                     if (fieldError(SignupErrorField.terms))
                       Padding(
@@ -231,7 +267,10 @@ class SignupScreen extends ConsumerWidget {
                                   .read(signupPrivacyAcceptedProvider.notifier)
                                   .state =
                               v ?? false,
-                      onLabelTap: () => context.push('/privacy'),
+                      onLabelTap: () {
+                        FocusScope.of(context).unfocus();
+                        context.push('/privacy');
+                      },
                     ),
                     if (fieldError(SignupErrorField.privacy))
                       Padding(
