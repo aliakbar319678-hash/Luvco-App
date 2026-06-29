@@ -83,7 +83,8 @@ class SearchRecipeState {
 // Notifier
 // ─────────────────────────────────────────────────
 class SearchRecipeNotifier extends StateNotifier<SearchRecipeState> {
-  SearchRecipeNotifier() : super(const SearchRecipeState()) {
+  final Ref ref;
+  SearchRecipeNotifier(this.ref) : super(const SearchRecipeState()) {
     fetchRecipes();
   }
 
@@ -256,7 +257,7 @@ class SearchRecipeNotifier extends StateNotifier<SearchRecipeState> {
 
 final searchRecipeProvider =
     StateNotifierProvider.autoDispose<SearchRecipeNotifier, SearchRecipeState>(
-      (_) => SearchRecipeNotifier(),
+      (ref) => SearchRecipeNotifier(ref),
     );
 
 // Filter sheet open/close
