@@ -3,12 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/network/preference_api_service.dart';
-import '../../models/recipe_model.dart';
-import '../../models/recipe_detail_model.dart';
-import '../../providers/search_recipe_provider.dart';
-import '../../widgets/bottom_nav_bar.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/network/preference_api_service.dart';
+import '../../../models/recipe_model.dart';
+import '../../../models/recipe_detail_model.dart';
+import '../../../providers/search_recipe_provider.dart';
+import '../../../widgets/bottom_nav_bar.dart';
 
 // ── Provider to load user preferences for filters ─────────────────
 final _recipeFilterPrefsProvider = FutureProvider<Map<String, List<String>>>((ref) async {
@@ -99,26 +99,33 @@ class _SearchRecipeScreenState extends ConsumerState<SearchRecipeScreen> {
                       _showFilterSheet(context, ref, scale, size),
                 ),
 
+                _ResultsHeader(
+                  scale: scale,
+                  onFilterTap: () => _showFilterSheet(context, ref, scale, size),
+                ),
+
                 // ── Body ──
                 Expanded(
-                  child: state.isSearching
-                      ? _ResultsList(
-                          results: state.results,
-                          scale: scale,
-                          size: size,
-                          onItemTap: notifier.openQuickView,
-                          onMoreTap: (recipeId) {
-                            final recipe = state.results.firstWhere((r) => r.id == recipeId);
-                            final detail = _recipeToDetail(recipe);
-                            context.push('/recipe-detail', extra: detail);
-                          },
-                        )
-                      : SingleChildScrollView(
-                          padding: EdgeInsets.only(
-                            bottom: padding.bottom + 100,
-                          ),
-                          child: _EmptyState(scale: scale),
-                        ),
+                  child: state.isFetching
+                      ? const Center(child: CircularProgressIndicator(color: AppColors.royalPurple))
+                      : state.isSearching
+                          ? _ResultsList(
+                              results: state.results,
+                              scale: scale,
+                              size: size,
+                              onItemTap: notifier.openQuickView,
+                              onMoreTap: (recipeId) {
+                                final recipe = state.results.firstWhere((r) => r.id == recipeId);
+                                final detail = _recipeToDetail(recipe);
+                                context.push('/recipe-detail', extra: detail);
+                              },
+                            )
+                          : SingleChildScrollView(
+                              padding: EdgeInsets.only(
+                                bottom: padding.bottom + 100,
+                              ),
+                              child: _EmptyState(scale: scale),
+                            ),
                 ),
               ],
             ),
@@ -333,30 +340,6 @@ class _SearchHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              if (query.isNotEmpty) ...[
-                SizedBox(width: 12 * scale),
-                GestureDetector(
-                  onTap: onFilterTap,
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.tune,
-                        size: 18 * scale,
-                        color: AppColors.black,
-                      ),
-                      SizedBox(width: 4 * scale),
-                      Text(
-                        'Filter',
-                        style: GoogleFonts.inter(
-                          fontSize: 13 * scale,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
             ],
           ),
         ),
@@ -433,25 +416,6 @@ class _ResultsList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── "Results" label + Filter icon row ────────────────────
-        Container(
-          color: AppColors.pageBackground,
-          padding: EdgeInsets.fromLTRB(16 * scale, 0, 16 * scale, 10 * scale),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Results',
-                style: GoogleFonts.inter(
-                  fontSize: 16 * scale,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.black,
-                ),
-              ),
-            ],
-          ),
-        ),
-
         // ── Scrollable cards ─────────────────────────────────────
         Expanded(
           child: ListView.separated(
@@ -473,6 +437,59 @@ class _ResultsList extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ResultsHeader extends StatelessWidget {
+  final double scale;
+  final VoidCallback onFilterTap;
+
+  const _ResultsHeader({
+    required this.scale,
+    required this.onFilterTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.pageBackground,
+      padding: EdgeInsets.fromLTRB(20 * scale, 12 * scale, 20 * scale, 10 * scale),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Results',
+            style: GoogleFonts.inter(
+              fontSize: 16 * scale,
+              fontWeight: FontWeight.w700,
+              color: AppColors.black,
+            ),
+          ),
+          GestureDetector(
+            onTap: onFilterTap,
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                Icon(
+                  Icons.tune,
+                  size: 18 * scale,
+                  color: AppColors.black,
+                ),
+                SizedBox(width: 4 * scale),
+                Text(
+                  'Filter',
+                  style: GoogleFonts.inter(
+                    fontSize: 13 * scale,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -985,11 +1002,7 @@ class _QuickTagSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Always exactly 4 slots
-    final display = List.generate(
-      4,
-      (i) => i < tags.length ? tags[i] : 'Label',
-    );
+    if (tags.isEmpty) return const SizedBox.shrink();
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16 * scale),
@@ -1005,9 +1018,10 @@ class _QuickTagSection extends StatelessWidget {
             ),
           ),
           SizedBox(height: 10 * scale),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: display
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            children: tags
                 .map((tag) => _QuickPillTag(label: tag, scale: scale))
                 .toList(),
           ),

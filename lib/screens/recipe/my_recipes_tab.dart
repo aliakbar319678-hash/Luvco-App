@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../models/recipe_model.dart';
 import '../../models/recipe_detail_model.dart';
 import '../../providers/recipe_provider.dart';
+import '../../providers/food_preferences_provider.dart';
 import '../../widgets/recipe_card.dart';
 import '../../widgets/recipe_dialogs.dart';
 import 'edit_recipe_screen.dart';
@@ -55,7 +56,7 @@ class MyRecipesTab extends ConsumerWidget {
               actionLabel: 'Create New Recipe',
               scale: scale,
               size: size,
-              onAction: () => _openEditRecipe(context, null),
+              onAction: () => context.push('/new-recipe'),
             )
           else if (viewMode == RecipeViewMode.grid)
             _RecipeGridView(recipes: myFiltered, ref: ref, isMyRecipes: true)
@@ -96,7 +97,7 @@ class MyRecipesTab extends ConsumerWidget {
               actionLabel: 'Look For Recipes',
               scale: scale,
               size: size,
-              onAction: () {},
+              onAction: () => context.push('/search-recipe'),
             )
           else if (viewMode == RecipeViewMode.grid)
             _RecipeGridView(recipes: savedFiltered, ref: ref, isMyRecipes: false)
@@ -450,7 +451,7 @@ class _RecipeListViewSection extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 // Filter Row & Chips
 // ─────────────────────────────────────────────────────────────────
-class _FilterRow extends StatelessWidget {
+class _FilterRow extends ConsumerWidget {
   final double scale;
   final RecipeFilterState filterState;
   final VoidCallback onFilterIconTap;
@@ -464,7 +465,13 @@ class _FilterRow extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tagsAsync = ref.watch(onboardingTagsProvider);
+    final dietTags = tagsAsync.maybeWhen(
+      data: (tags) => tags['diets'] ?? <String>[],
+      orElse: () => <String>[],
+    );
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
@@ -481,20 +488,20 @@ class _FilterRow extends StatelessWidget {
             scale: scale,
             onTap: () => onTagToggle('See All'),
           ),
-          SizedBox(width: 8 * scale),
-          _FilterChip(
-            label: 'Gluten Free',
-            isSelected: filterState.dietFilters.contains('Gluten Free'),
-            scale: scale,
-            onTap: () => onTagToggle('Gluten Free'),
-          ),
-          SizedBox(width: 8 * scale),
-          _FilterChip(
-            label: 'Dairy-Free',
-            isSelected: filterState.dietFilters.contains('Dairy-Free'),
-            scale: scale,
-            onTap: () => onTagToggle('Dairy-Free'),
-          ),
+          ...dietTags.map((tag) {
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(width: 8 * scale),
+                _FilterChip(
+                  label: tag,
+                  isSelected: filterState.dietFilters.contains(tag),
+                  scale: scale,
+                  onTap: () => onTagToggle(tag),
+                ),
+              ],
+            );
+          }),
         ],
       ),
     );

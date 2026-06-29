@@ -57,6 +57,26 @@ class SignupOtpNotifier extends StateNotifier<SignupOtpState> {
     }
   }
 
+  Future<void> resendCode({required String email}) async {
+    state = state.copyWith(status: SignupOtpStatus.loading);
+    try {
+      final res = await AuthApiService.instance.resendVerification(email);
+      if (res.success) {
+        state = state.copyWith(status: SignupOtpStatus.idle);
+      } else {
+        state = state.copyWith(
+          status: SignupOtpStatus.error,
+          errorMessage: res.message ?? 'Failed to resend code',
+        );
+      }
+    } catch (e) {
+      state = state.copyWith(
+        status: SignupOtpStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
   void reset() => state = const SignupOtpState();
 }
 

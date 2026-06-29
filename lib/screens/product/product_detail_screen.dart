@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:luvco_logo/widgets/label_circle.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -101,25 +102,14 @@ class ProductDetailScreen extends ConsumerWidget {
                           scale: scale,
                         ),
                         SizedBox(height: 12 * scale),
-                        _HexagonLabelRow(
-                          labels: state.product.labels.isNotEmpty
-                              ? state.product.labels
-                              : const ['None Listed'],
-                          scale: scale,
-                        ),
-                        SizedBox(height: 24 * scale),
-
-                        // ── Possible allergens ──
-                        _SectionTitle(
-                          title: 'Possible allergens',
-                          scale: scale,
-                        ),
-                        SizedBox(height: 12 * scale),
-                        _HexagonLabelRow(
-                          labels: state.product.allergens.isNotEmpty
-                              ? state.product.allergens
-                              : const ['No Allergens Listed'],
-                          scale: scale,
+                        Wrap(
+                          spacing: 12 * scale,
+                          runSpacing: 12 * scale,
+                          children: (state.product.labels.isNotEmpty
+                                  ? state.product.labels
+                                  : const ['None Listed'])
+                              .map((l) => LabelCircle(label: l, scale: scale))
+                              .toList(),
                         ),
                         SizedBox(height: 24 * scale),
 
@@ -151,6 +141,7 @@ class ProductDetailScreen extends ConsumerWidget {
             if (state.popup == ProductDetailPopup.moreActions)
               _MoreActionsPopup(
                 scale: scale,
+                isFavorite: state.isFavorite,
                 onDismiss: notifier.closePopup,
                 onAddToList: notifier.showAddToList,
                 onAddToRecipe: notifier.showAddToRecipe,
@@ -520,185 +511,6 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Hexagon label row  (Labels + Allergens)
-// ═══════════════════════════════════════════════════════════════
-class _HexagonLabelRow extends StatelessWidget {
-  final List<String> labels;
-  final double scale;
-  const _HexagonLabelRow({required this.labels, required this.scale});
-
-  /// Strip language prefix (e.g. "en:", "fr:") and clean up the text.
-  static String _cleanLabel(String raw) {
-    String cleaned = raw.replaceAll(RegExp(r'^[a-z]{2}:'), '');
-    cleaned = cleaned.replaceAll(RegExp(r'[-_]'), ' ').trim();
-    if (cleaned.isEmpty) return raw;
-    return cleaned
-        .split(' ')
-        .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w)
-        .join(' ');
-  }
-
-  /// Keep only English (no prefix or "en:" prefix) labels.
-  static List<String> _filterEnglish(List<String> all) {
-    final englishOnly = all
-        .where((l) => !RegExp(r'^[a-z]{2}:').hasMatch(l) || l.startsWith('en:'))
-        .toList();
-    return englishOnly.isNotEmpty ? englishOnly : all;
-  }
-
-  static (IconData, Color) _getIconAndColor(String name) {
-    final lower = name.toLowerCase();
-    
-    // Placeholder fallbacks
-    if (lower.contains('no allergens')) {
-      return (Icons.health_and_safety_rounded, const Color(0xFF4CAF50)); // Green for safe / no allergens
-    }
-    if (lower.contains('none listed')) {
-      return (Icons.info_outline_rounded, const Color(0xFF9E9E9E)); // Grey info for none listed
-    }
-
-    // Allergens
-    if (lower.contains('gluten') || lower.contains('wheat')) {
-      return (Icons.grain_rounded, const Color(0xFFE5A93C)); // Amber/Orange
-    }
-    if (lower.contains('nut') || lower.contains('almond') || lower.contains('hazelnut') || lower.contains('pecan') || lower.contains('cashew')) {
-      return (Icons.cookie_rounded, const Color(0xFF8D6E63)); // Brown
-    }
-    if (lower.contains('milk') || lower.contains('lactose') || lower.contains('dairy')) {
-      return (Icons.water_drop_rounded, const Color(0xFF64B5F6)); // Light Blue
-    }
-    if (lower.contains('egg')) {
-      return (Icons.egg_rounded, const Color(0xFFFFD54F)); // Yellow
-    }
-    if (lower.contains('soy')) {
-      return (Icons.grass_rounded, const Color(0xFF81C784)); // Green
-    }
-    if (lower.contains('fish') || lower.contains('seafood') || lower.contains('shrimp')) {
-      return (Icons.set_meal_rounded, const Color(0xFF4FC3F7)); // Blue
-    }
-
-    // Certifications & Labels
-    if (lower.contains('organic') || lower.contains('bio')) {
-      return (Icons.eco_rounded, const Color(0xFF4CAF50)); // Green
-    }
-    if (lower.contains('ecocert')) {
-      return (Icons.verified_rounded, const Color(0xFF2E7D32)); // Dark Green
-    }
-    if (lower.contains('green dot') || lower.contains('recycl')) {
-      return (Icons.recycling_rounded, const Color(0xFF388E3C)); // Green
-    }
-    if (lower.contains('agriculture') || lower.contains('grower')) {
-      return (Icons.spa_rounded, const Color(0xFF81C784)); // Soft Green
-    }
-    if (lower.contains('vegan') || lower.contains('vegetarian')) {
-      return (Icons.spa_rounded, const Color(0xFF4CAF50)); // Green
-    }
-    if (lower.contains('halal') || lower.contains('kosher')) {
-      return (Icons.task_alt_rounded, const Color(0xFF009688)); // Teal
-    }
-    if (lower.contains('fair trade') || lower.contains('fairtrade')) {
-      return (Icons.handshake_rounded, const Color(0xFF00897B)); // Teal
-    }
-
-    return (Icons.verified_rounded, const Color(0xFF7B52D3)); // Purple accent
-  }
-
-  Widget _buildLabelItem(String label) {
-    final clean = _cleanLabel(label);
-    final iconInfo = _getIconAndColor(clean);
-    final iconData = iconInfo.$1;
-    final iconColor = iconInfo.$2;
-
-    return Padding(
-      padding: EdgeInsets.only(right: 14 * scale),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 58 * scale,
-            height: 58 * scale,
-            decoration: BoxDecoration(
-              color: AppColors.pureWhite,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.clearGrey,
-                width: 1.2,
-              ),
-            ),
-            child: Center(
-              child: Icon(
-                iconData,
-                color: iconColor,
-                size: 26 * scale,
-              ),
-            ),
-          ),
-          SizedBox(height: 6 * scale),
-          SizedBox(
-            width: 68 * scale,
-            child: Text(
-              clean,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                fontSize: 10 * scale,
-                color: AppColors.black,
-                fontWeight: FontWeight.w500,
-                height: 1.2,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (labels.isEmpty) return const SizedBox.shrink();
-    final items = _filterEnglish(labels);
-
-    final List<String> row1;
-    final List<String> row2;
-
-    if (items.length <= 4) {
-      row1 = items;
-      row2 = [];
-    } else {
-      final half = (items.length / 2).ceil();
-      row1 = items.sublist(0, half);
-      row2 = items.sublist(half);
-    }
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: row1.map((label) => _buildLabelItem(label)).toList(),
-            ),
-          ),
-          if (row2.isNotEmpty) ...[
-            SizedBox(height: 12 * scale),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              child: Row(
-                children: row2.map((label) => _buildLabelItem(label)).toList(),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
 
 // ═══════════════════════════════════════════════════════════════
 // Ingredients list with "See All Ingredients" link
@@ -723,7 +535,7 @@ class _IngredientsListState extends State<_IngredientsList> {
 
     if (items.isEmpty) return const SizedBox.shrink();
 
-    final visible = _showAll ? items : items.take(6).toList();
+    final visible = _showAll ? items : items.take(5).toList();
 
     return Column(
       children: [
@@ -775,33 +587,19 @@ class _IngredientsListState extends State<_IngredientsList> {
           );
         }),
 
-        // ── See All Ingredients ──
-        if (!_showAll && items.length > 6)
+        // ── See More / See Less Ingredients ──
+        if (items.length > 5)
           GestureDetector(
-            onTap: () => setState(() => _showAll = true),
+            onTap: () => setState(() => _showAll = !_showAll),
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 12 * widget.scale),
               child: Text(
-                'See All Ingredients',
+                _showAll ? 'See less ingredients' : 'See more ingredients',
                 style: GoogleFonts.inter(
                   fontSize: 13 * widget.scale,
                   color: AppColors.darkGrey,
                   decoration: TextDecoration.underline,
                 ),
-              ),
-            ),
-          ),
-
-        // Always show "See All Ingredients" link (matches Figma)
-        if (_showAll || items.length <= 6)
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 12 * widget.scale),
-            child: Text(
-              'See All Ingredients',
-              style: GoogleFonts.inter(
-                fontSize: 13 * widget.scale,
-                color: AppColors.darkGrey,
-                decoration: TextDecoration.underline,
               ),
             ),
           ),
@@ -815,6 +613,7 @@ class _IngredientsListState extends State<_IngredientsList> {
 // ═══════════════════════════════════════════════════════════════
 class _MoreActionsPopup extends StatelessWidget {
   final double scale;
+  final bool isFavorite;
   final VoidCallback onDismiss;
   final VoidCallback onAddToList;
   final VoidCallback onAddToRecipe;
@@ -822,6 +621,7 @@ class _MoreActionsPopup extends StatelessWidget {
 
   const _MoreActionsPopup({
     required this.scale,
+    required this.isFavorite,
     required this.onDismiss,
     required this.onAddToList,
     required this.onAddToRecipe,
@@ -857,7 +657,7 @@ class _MoreActionsPopup extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _PopupAction(
-                      icon: Icons.check_box_outline_blank,
+                      icon: Icons.shopping_bag_outlined,
                       label: 'Add to a Shopping List',
                       scale: scale,
                       onTap: onAddToList,
@@ -871,8 +671,8 @@ class _MoreActionsPopup extends StatelessWidget {
                     ),
                     const Divider(height: 1, color: AppColors.clearGrey),
                     _PopupAction(
-                      icon: Icons.favorite_border_rounded,
-                      label: 'Mark as favorite',
+                      icon: isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                      label: isFavorite ? 'Mark as un favorite' : 'Mark as favorite',
                       scale: scale,
                       onTap: onMarkFavorite,
                     ),

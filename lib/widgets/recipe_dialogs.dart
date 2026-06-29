@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/app_colors.dart';
+import '../providers/food_preferences_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // Recipe More Actions Menu (Edit / Duplicate / Delete)
@@ -277,7 +279,7 @@ class RecipeDuplicateSuccessOverlay extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 // Filter Preferences Bottom Modal Sheet
 // ─────────────────────────────────────────────────────────────────
-class RecipeFilterSheet extends StatefulWidget {
+class RecipeFilterSheet extends ConsumerStatefulWidget {
   final String initialSortBy;
   final List<String> initialDietFilters;
   final ValueChanged<RecipeFilterResult> onApply;
@@ -290,7 +292,7 @@ class RecipeFilterSheet extends StatefulWidget {
   });
 
   @override
-  State<RecipeFilterSheet> createState() => _RecipeFilterSheetState();
+  ConsumerState<RecipeFilterSheet> createState() => _RecipeFilterSheetState();
 }
 
 class RecipeFilterResult {
@@ -299,18 +301,11 @@ class RecipeFilterResult {
   const RecipeFilterResult({required this.sortBy, required this.dietFilters});
 }
 
-class _RecipeFilterSheetState extends State<RecipeFilterSheet> {
+class _RecipeFilterSheetState extends ConsumerState<RecipeFilterSheet> {
   late String _sortBy;
   late List<String> _dietFilters;
 
   static const _sortOptions = ['Most Recent', 'Oldest', 'A-Z', 'Z-A'];
-  static const _dietOptions = [
-    'See All',
-    'Gluten Free',
-    'Duis',
-    'Ullamcorper',
-    'Ligula Imperdiet',
-  ];
 
   @override
   void initState() {
@@ -384,7 +379,7 @@ class _RecipeFilterSheetState extends State<RecipeFilterSheet> {
 
             // ── Filter 01: Sort dropdown ──
             Text(
-              'Filter 01',
+              'Sort By',
               style: GoogleFonts.inter(
                 fontSize: 12 * scale.clamp(0.85, 1.2),
                 fontWeight: FontWeight.w600,
@@ -428,7 +423,7 @@ class _RecipeFilterSheetState extends State<RecipeFilterSheet> {
 
             // ── Filter 02: Diet chips ──
             Text(
-              'Filter 02',
+              'Diet Preferences',
               style: GoogleFonts.inter(
                 fontSize: 12 * scale.clamp(0.85, 1.2),
                 fontWeight: FontWeight.w600,
@@ -436,45 +431,55 @@ class _RecipeFilterSheetState extends State<RecipeFilterSheet> {
               ),
             ),
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _dietOptions.map((opt) {
-                final isSelected = opt == 'See All'
-                    ? _dietFilters.isEmpty
-                    : _dietFilters.contains(opt);
-                return GestureDetector(
-                  onTap: () => _toggleDiet(opt),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.softLavender
-                          : AppColors.softGrey,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isSelected
-                            ? AppColors.royalPurple
-                            : AppColors.inputBorder,
+            ref.watch(onboardingTagsProvider).when(
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              ),
+              error: (_, __) => const SizedBox.shrink(),
+              data: (tags) {
+                final dietOptions = ['See All', ...tags['diets'] ?? []];
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: dietOptions.map((opt) {
+                    final isSelected = opt == 'See All'
+                        ? _dietFilters.isEmpty
+                        : _dietFilters.contains(opt);
+                    return GestureDetector(
+                      onTap: () => _toggleDiet(opt),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.softLavender
+                              : AppColors.softGrey,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.royalPurple
+                                : AppColors.inputBorder,
+                          ),
+                        ),
+                        child: Text(
+                          opt,
+                          style: GoogleFonts.inter(
+                            fontSize: 13 * scale.clamp(0.85, 1.2),
+                            fontWeight: FontWeight.w500,
+                            color: isSelected
+                                ? AppColors.royalPurple
+                                : AppColors.darkGrey,
+                          ),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      opt,
-                      style: GoogleFonts.inter(
-                        fontSize: 13 * scale.clamp(0.85, 1.2),
-                        fontWeight: FontWeight.w500,
-                        color: isSelected
-                            ? AppColors.royalPurple
-                            : AppColors.darkGrey,
-                      ),
-                    ),
-                  ),
+                    );
+                  }).toList(),
                 );
-              }).toList(),
+              },
             ),
 
             const SizedBox(height: 24),

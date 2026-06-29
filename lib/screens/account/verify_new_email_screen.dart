@@ -158,7 +158,7 @@ class _VerifyNewEmailScreenState extends ConsumerState<VerifyNewEmailScreen> {
                         if (!state.hasError) ...[
                           Center(
                             child: Text(
-                              'The email should arrive within 20s',
+                              'The email should arrive within 30s',
                               style: GoogleFonts.inter(
                                 fontSize: 12 * scale.clamp(0.85, 1.2),
                                 color: AppColors.neutralGrey,

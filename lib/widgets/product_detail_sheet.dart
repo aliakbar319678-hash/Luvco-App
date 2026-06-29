@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/app_colors.dart';
 import '../models/product_model.dart';
 import '../providers/favorites_provider.dart';
+import 'label_circle.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // Product Detail Bottom Sheet
@@ -41,6 +42,7 @@ class _ProductDetailSheet extends ConsumerStatefulWidget {
 
 class _ProductDetailSheetState extends ConsumerState<_ProductDetailSheet> {
   bool _productAdded = false; // drives the success toast overlay
+  bool _showAllIngredients = false;
 
   void _handleAddProduct() {
     widget.onAddProduct();
@@ -362,7 +364,7 @@ class _ProductDetailSheetState extends ConsumerState<_ProductDetailSheet> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              ...product.ingredients.map(
+                              ...(_showAllIngredients ? product.ingredients : product.ingredients.take(5)).map(
                                 (ing) => Padding(
                                   padding: const EdgeInsets.only(bottom: 4),
                                   child: Text(
@@ -374,6 +376,27 @@ class _ProductDetailSheetState extends ConsumerState<_ProductDetailSheet> {
                                   ),
                                 ),
                               ),
+                              if (product.ingredients.length > 5)
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _showAllIngredients = !_showAllIngredients;
+                                    });
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 8, bottom: 8),
+                                    child: Text(
+                                      _showAllIngredients
+                                          ? 'See less ingredients'
+                                          : 'See more ingredients',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13 * scale.clamp(0.85, 1.2),
+                                        color: AppColors.darkGrey,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -540,7 +563,6 @@ class _InfoSection extends StatelessWidget {
   Widget build(BuildContext context) {
     // Clean and filter empty items
     final validItems = items.where((item) => item.trim().isNotEmpty).toList();
-    if (validItems.isEmpty) return const SizedBox.shrink();
 
     final isAllergen = title.toLowerCase().contains('allergen');
     final s = scale.clamp(0.85, 1.2);
@@ -559,57 +581,32 @@ class _InfoSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: validItems
-                  .take(4)
-                  .map(
-                    (item) {
-                      final clean = _cleanLabel(item);
-                      final iconAsset = _getIconAsset(clean, isAllergen);
-                      final iconColor = _getIconColor(clean, isAllergen);
-
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 44 * s,
-                              height: 44 * s,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.softGrey,
-                                border: Border.all(color: AppColors.clearGrey),
-                              ),
-                              alignment: Alignment.center,
-                              child: Image.asset(
-                                iconAsset,
-                                width: 22 * s,
-                                height: 22 * s,
-                                color: iconColor,
-                                errorBuilder: (_, __, ___) => const SizedBox(),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              clean,
-                              style: GoogleFonts.inter(
-                                fontSize: 10 * s,
-                                color: AppColors.darkGrey,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  )
-                  .toList(),
+          if (validItems.isEmpty)
+            Text(
+              'None',
+              style: GoogleFonts.inter(
+                fontSize: 13 * s,
+                color: AppColors.darkGrey,
+              ),
+            )
+          else
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: validItems
+                    .take(4)
+                    .map(
+                      (item) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: LabelCircle(label: item, scale: scale),
+                        );
+                      },
+                    )
+                    .toList(),
+              ),
             ),
-          ),
         ],
       ),
     );

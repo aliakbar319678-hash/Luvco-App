@@ -148,7 +148,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                       const SizedBox(height: 8),
                       Center(
                         child: Text(
-                          'The email should arrive within 20s',
+                          'The email should arrive within 30s',
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             color: AppColors.neutralGrey,

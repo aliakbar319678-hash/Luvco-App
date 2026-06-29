@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,9 +8,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/network/product_api_service.dart';
+import '../../models/product_model.dart';
 import '../../models/new_recipe_model.dart';
 import '../../providers/new_recipe_provider.dart';
+import '../../providers/food_preferences_provider.dart';
 import '../../widgets/auth_header.dart';
+import '../../widgets/label_circle.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import '../../widgets/luvco_button.dart';
 import '../../widgets/preference_chip.dart';
@@ -73,22 +78,6 @@ class _Step1WidgetState extends ConsumerState<_Step1Widget> {
   final _nameCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
 
-  static const _dietOptions = [
-    'Nullam Scelerisque',
-    'Nullam',
-    'Duis',
-    'Ullamcorper',
-    'Ligula Imperdiet',
-    'Lectus',
-  ];
-  static const _freeOptions = [
-    'None',
-    'Nullam Scelerisque',
-    'Nullam',
-    'Ullamcorper',
-    'Lectus',
-    'Ligula Imperdiet',
-  ];
   static const _timeOptions = ['30 mins', '45 mins', '60 mins', '90 mins', '120 mins'];
   static const _servingOptions = ['1 person', '2 people', '3 people', '4 people', '5 people', '6 people'];
 
@@ -121,6 +110,15 @@ class _Step1WidgetState extends ConsumerState<_Step1Widget> {
     final scale = size.width / 390;
     final recipe = ref.watch(newRecipeProvider);
     final notifier = ref.read(newRecipeProvider.notifier);
+    final tagsAsync = ref.watch(onboardingTagsProvider);
+    final dietOptions = tagsAsync.maybeWhen(
+      data: (tags) => tags['diets'] ?? <String>[],
+      orElse: () => <String>[],
+    );
+    final freeOptions = tagsAsync.maybeWhen(
+      data: (tags) => tags['allergies'] ?? <String>[],
+      orElse: () => <String>[],
+    );
 
     return Column(
       children: [
@@ -240,10 +238,17 @@ class _Step1WidgetState extends ConsumerState<_Step1Widget> {
                 // ── Type of Diet ──
                 _SectionLabel(label: 'Type of Diet*', scale: scale),
                 const SizedBox(height: 10),
-                PreferenceChipWrap(
-                  options: _dietOptions,
-                  selected: recipe.selectedDietTypes,
-                  onTap: notifier.toggleDietType,
+                tagsAsync.when(
+                  loading: () => const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  ),
+                  error: (_, __) => const SizedBox.shrink(),
+                  data: (_) => PreferenceChipWrap(
+                    options: dietOptions,
+                    selected: recipe.selectedDietTypes,
+                    onTap: notifier.toggleDietType,
+                  ),
                 ),
 
                 SizedBox(height: size.height * 0.018),
@@ -251,10 +256,17 @@ class _Step1WidgetState extends ConsumerState<_Step1Widget> {
                 // ── Free of Ingredients ──
                 _SectionLabel(label: 'Free of Ingredients', scale: scale),
                 const SizedBox(height: 10),
-                PreferenceChipWrap(
-                  options: _freeOptions,
-                  selected: recipe.selectedFreeIngredients,
-                  onTap: notifier.toggleFreeIngredient,
+                tagsAsync.when(
+                  loading: () => const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  ),
+                  error: (_, __) => const SizedBox.shrink(),
+                  data: (_) => PreferenceChipWrap(
+                    options: freeOptions,
+                    selected: recipe.selectedFreeIngredients,
+                    onTap: notifier.toggleFreeIngredient,
+                  ),
                 ),
 
                 SizedBox(height: size.height * 0.032),
@@ -316,6 +328,15 @@ class _Step2WidgetState extends ConsumerState<_Step2Widget> {
     final scale = size.width / 390;
     final recipe = ref.watch(newRecipeProvider);
     final notifier = ref.read(newRecipeProvider.notifier);
+    final tagsAsync = ref.watch(onboardingTagsProvider);
+    final dietOptions = tagsAsync.maybeWhen(
+      data: (tags) => tags['diets'] ?? <String>[],
+      orElse: () => <String>[],
+    );
+    final freeOptions = tagsAsync.maybeWhen(
+      data: (tags) => tags['allergies'] ?? <String>[],
+      orElse: () => <String>[],
+    );
 
     return Column(
       children: [
@@ -430,13 +451,54 @@ class _Step3Widget extends ConsumerStatefulWidget {
 class _Step3WidgetState extends ConsumerState<_Step3Widget> {
   final _searchCtrl = TextEditingController();
   bool _showResults = false;
-  MockProduct? _selectedProduct;
+  ProductModel? _selectedProduct;
   bool _showProductDetail = false;
+  List<ProductModel> _searchResults = [];
+  bool _isSearching = false;
+  Timer? _debounceTimer;
 
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
+  }
+
+  void _performSearch(String query) {
+    _debounceTimer?.cancel();
+    final q = query.trim();
+    if (q.isEmpty) {
+      setState(() {
+        _showResults = false;
+        _searchResults = [];
+        _isSearching = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _showResults = true;
+      _isSearching = true;
+    });
+
+    _debounceTimer = Timer(const Duration(milliseconds: 350), () async {
+      try {
+        final results = await ProductApiService.instance.searchProducts(q);
+        if (mounted) {
+          setState(() {
+            _searchResults = results;
+            _isSearching = false;
+          });
+        }
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _searchResults = [];
+            _isSearching = false;
+          });
+        }
+      }
+    });
   }
 
   @override
@@ -500,30 +562,53 @@ class _Step3WidgetState extends ConsumerState<_Step3Widget> {
                     _SearchBar(
                       controller: _searchCtrl,
                       scale: scale,
-                      onChanged: (v) {
-                        setState(() => _showResults = v.isNotEmpty);
-                      },
+                      onChanged: _performSearch,
                     ),
 
                     SizedBox(height: size.height * 0.022),
 
                     // ── Search Results ──
-                    if (_showResults && !_showProductDetail)
-                      Column(
-                        children: mockProductSearchResults.map((p) {
-                          return _ProductSearchResultItem(
-                            product: p,
-                            scale: scale,
-                            onTap: () {
-                              setState(() {
-                                _selectedProduct = p;
-                                _showProductDetail = true;
-                                _showResults = false;
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
+                    if (_showResults && !_showProductDetail) ...[
+                      if (_isSearching)
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20),
+                            child: CircularProgressIndicator(
+                              color: AppColors.royalPurple,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        )
+                      else if (_searchResults.isEmpty)
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            child: Text(
+                              'No products found',
+                              style: GoogleFonts.inter(
+                                fontSize: 14 * scale,
+                                color: AppColors.neutralGrey,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        Column(
+                          children: _searchResults.map((p) {
+                            return _ProductSearchResultItem(
+                              product: p,
+                              scale: scale,
+                              onTap: () {
+                                setState(() {
+                                  _selectedProduct = p;
+                                  _showProductDetail = true;
+                                  _showResults = false;
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
+                    ],
 
                     // ── Empty State (no search) ──
                     if (!_showResults &&
@@ -619,11 +704,11 @@ class _Step3WidgetState extends ConsumerState<_Step3Widget> {
             onAddIngredient: () {
               notifier.addIngredient(
                 AddedIngredient(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  id: _selectedProduct!.id,
                   name: _selectedProduct!.name,
-                  otherData: _selectedProduct!.otherData,
-                  imageUrl: _selectedProduct!.imageUrl,
-                  isUnsustainable: _selectedProduct!.isUnsustainable,
+                  otherData: _selectedProduct!.description,
+                  imageUrl: _selectedProduct!.imageAsset,
+                  isUnsustainable: !_selectedProduct!.isSustainable,
                 ),
               );
               setState(() {
@@ -990,7 +1075,7 @@ class _SearchBar extends StatelessWidget {
 
 // ── Product Search Result Item ──────────────────────────────────────
 class _ProductSearchResultItem extends StatelessWidget {
-  final MockProduct product;
+  final ProductModel product;
   final double scale;
   final VoidCallback onTap;
 
@@ -1002,6 +1087,7 @@ class _ProductSearchResultItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = product.imageAsset ?? product.thumbnailAsset;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1020,13 +1106,28 @@ class _ProductSearchResultItem extends StatelessWidget {
                 color: AppColors.softGrey,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: product.imageUrl != null
+              child: imageUrl != null && imageUrl.isNotEmpty
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.asset(
-                        product.imageUrl!,
-                        fit: BoxFit.contain,
-                      ),
+                      child: (imageUrl.startsWith('http') || imageUrl.startsWith('https'))
+                          ? Image.network(
+                              imageUrl,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.fastfood_outlined,
+                                size: 18,
+                                color: AppColors.neutralGrey,
+                              ),
+                            )
+                          : Image.asset(
+                              imageUrl,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.fastfood_outlined,
+                                size: 18,
+                                color: AppColors.neutralGrey,
+                              ),
+                            ),
                     )
                   : const Icon(
                       Icons.fastfood_outlined,
@@ -1226,10 +1327,17 @@ class _AddedIngredientRow extends StatelessWidget {
                     child: ingredient.imageUrl != null
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.asset(
-                              ingredient.imageUrl!,
-                              fit: BoxFit.contain,
-                            ),
+                            child: ingredient.imageUrl!.startsWith('assets/')
+                                ? Image.asset(ingredient.imageUrl!, fit: BoxFit.contain)
+                                : Image.network(
+                                    ingredient.imageUrl!,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, __, ___) => const Icon(
+                                      Icons.fastfood_outlined,
+                                      size: 20,
+                                      color: AppColors.neutralGrey,
+                                    ),
+                                  ),
                           )
                         : const Icon(
                             Icons.fastfood_outlined,
@@ -1280,7 +1388,7 @@ class _AddedIngredientRow extends StatelessWidget {
 
 // ── Product Detail Overlay (bottom sheet style) ─────────────────────
 class _ProductDetailOverlay extends StatelessWidget {
-  final MockProduct product;
+  final ProductModel product;
   final double scale;
   final Size size;
   final VoidCallback onClose;
@@ -1294,11 +1402,57 @@ class _ProductDetailOverlay extends StatelessWidget {
     required this.onAddIngredient,
   });
 
-  static const _certifications = ['Bio', 'Organic', 'Vegan', 'Ecocert'];
-  static const _allergens = ['Gluten', 'Nut', 'Milk', 'Egg'];
+  static List<String> _filterEnglish(List<String> all) {
+    final englishOnly = all
+        .where((l) => !RegExp(r'^[a-z]{2,3}:').hasMatch(l) || l.startsWith('en:'))
+        .toList();
+    return englishOnly.isNotEmpty ? englishOnly : all;
+  }
+
+  static String _cleanLabel(String raw) {
+    String cleaned = raw.replaceAll(RegExp(r'^[a-z]{2,3}(-[a-z]{2,3})?:'), '');
+    cleaned = cleaned.replaceAll(RegExp(r'[-_]'), ' ').trim();
+    if (cleaned.isEmpty) return raw;
+    return cleaned
+        .split(' ')
+        .map((w) {
+          if (w.isEmpty) return '';
+          if (w.toLowerCase() == 'eu') return 'EU';
+          return '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}';
+        })
+        .join(' ');
+  }
 
   @override
   Widget build(BuildContext context) {
+    final sustainLabel = product.sustainabilityLabel;
+    final Color sustainColor;
+    if (sustainLabel.toLowerCase().contains('eco-friendly') ||
+        sustainLabel.toLowerCase().contains('sustainable') ||
+        sustainLabel.toLowerCase() == 'sustainable') {
+      sustainColor = const Color(0xFF4CAF50); // Green
+    } else if (sustainLabel.toLowerCase().contains('moderate')) {
+      sustainColor = const Color(0xFFFFB800); // Orange/Yellow
+    } else {
+      sustainColor = const Color(0xFFE12C2C); // Red
+    }
+
+    final safeLabel = product.safetyLabel;
+    final Color safeColor;
+    if (safeLabel.toLowerCase().contains('safe')) {
+      safeColor = const Color(0xFF4CAF50); // Green
+    } else {
+      safeColor = const Color(0xFFFFB800); // Orange/Yellow
+    }
+
+    final imageUrl = product.imageAsset ?? product.thumbnailAsset;
+
+    final filteredLabels = _filterEnglish(product.labels).map(_cleanLabel).toList();
+    final filteredAllergens = _filterEnglish(product.allergens).map(_cleanLabel).toList();
+
+    final displayLabels = filteredLabels.isNotEmpty ? filteredLabels : const ['None Listed'];
+    final displayAllergens = filteredAllergens.isNotEmpty ? filteredAllergens : const ['No Allergens Listed'];
+
     return Positioned.fill(
       child: GestureDetector(
         onTap: onClose,
@@ -1350,7 +1504,7 @@ class _ProductDetailOverlay extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    product.otherData,
+                                    product.description,
                                     textAlign: TextAlign.center,
                                     style: GoogleFonts.inter(
                                       fontSize: 13 * scale.clamp(0.85, 1.2),
@@ -1388,9 +1542,9 @@ class _ProductDetailOverlay extends StatelessWidget {
                                 child: Container(
                                   height: 80 * scale.clamp(0.85, 1.2), // extends behind the white card
                                   padding: EdgeInsets.only(top: 14 * scale.clamp(0.85, 1.2)),
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFED3232),
-                                    borderRadius: BorderRadius.only(
+                                  decoration: BoxDecoration(
+                                    color: sustainColor,
+                                    borderRadius: const BorderRadius.only(
                                       topLeft: Radius.circular(28),
                                       topRight: Radius.circular(16),
                                     ),
@@ -1402,7 +1556,7 @@ class _ProductDetailOverlay extends StatelessWidget {
                                       const Icon(Icons.eco_outlined, color: Colors.white, size: 20),
                                       const SizedBox(width: 8),
                                       Text(
-                                        'Unsustainable',
+                                        sustainLabel,
                                         style: GoogleFonts.inter(
                                           fontSize: 14 * scale.clamp(0.85, 1.2),
                                           fontWeight: FontWeight.w600,
@@ -1417,9 +1571,9 @@ class _ProductDetailOverlay extends StatelessWidget {
                                 child: Container(
                                   height: 80 * scale.clamp(0.85, 1.2),
                                   padding: EdgeInsets.only(top: 14 * scale.clamp(0.85, 1.2)),
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF4CAF50),
-                                    borderRadius: BorderRadius.only(
+                                  decoration: BoxDecoration(
+                                    color: safeColor,
+                                    borderRadius: const BorderRadius.only(
                                       topLeft: Radius.circular(16),
                                       topRight: Radius.circular(28),
                                     ),
@@ -1431,7 +1585,7 @@ class _ProductDetailOverlay extends StatelessWidget {
                                       const Icon(Icons.flag_outlined, color: Colors.white, size: 20),
                                       const SizedBox(width: 8),
                                       Text(
-                                        'Safe',
+                                        safeLabel,
                                         style: GoogleFonts.inter(
                                           fontSize: 14 * scale.clamp(0.85, 1.2),
                                           fontWeight: FontWeight.w600,
@@ -1472,11 +1626,26 @@ class _ProductDetailOverlay extends StatelessWidget {
                                   SizedBox(
                                     height: 190 * scale.clamp(0.85, 1.2),
                                     width: double.infinity,
-                                    child: product.imageUrl != null
-                                        ? Image.asset(
-                                            product.imageUrl!,
-                                            fit: BoxFit.contain,
-                                          )
+                                    child: imageUrl != null && imageUrl.isNotEmpty
+                                        ? (imageUrl.startsWith('http') || imageUrl.startsWith('https')
+                                            ? Image.network(
+                                                imageUrl,
+                                                fit: BoxFit.contain,
+                                                errorBuilder: (_, __, ___) => const Icon(
+                                                  Icons.fastfood_outlined,
+                                                  size: 70,
+                                                  color: AppColors.clearGrey,
+                                                ),
+                                              )
+                                            : Image.asset(
+                                                imageUrl,
+                                                fit: BoxFit.contain,
+                                                errorBuilder: (_, __, ___) => const Icon(
+                                                  Icons.fastfood_outlined,
+                                                  size: 70,
+                                                  color: AppColors.clearGrey,
+                                                ),
+                                              ))
                                         : const Icon(
                                             Icons.fastfood_outlined,
                                             size: 70,
@@ -1510,10 +1679,11 @@ class _ProductDetailOverlay extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: _certifications
-                            .map((l) => _LabelCircle(label: l, scale: scale))
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: displayLabels
+                            .map((l) => LabelCircle(label: l, scale: scale))
                             .toList(),
                       ),
                       const SizedBox(height: 16),
@@ -1528,10 +1698,11 @@ class _ProductDetailOverlay extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: _allergens
-                            .map((l) => _LabelCircle(label: l, scale: scale))
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: displayAllergens
+                            .map((l) => LabelCircle(label: l, scale: scale))
                             .toList(),
                       ),
                       const SizedBox(height: 16),
@@ -1545,22 +1716,46 @@ class _ProductDetailOverlay extends StatelessWidget {
                           color: AppColors.black,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Ingredient Name',
-                        style: GoogleFonts.inter(
-                          fontSize: 13 * scale.clamp(0.85, 1.2),
-                          color: AppColors.black,
+                      const SizedBox(height: 8),
+                      if (product.ingredients.isNotEmpty)
+                        ...product.ingredients.map(
+                          (ing) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  margin: const EdgeInsets.only(top: 6, right: 8),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.royalPurple,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    ing,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13 * scale.clamp(0.85, 1.2),
+                                      color: AppColors.darkGrey,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        Text(
+                          'No ingredient information available.',
+                          style: GoogleFonts.inter(
+                            fontSize: 13 * scale.clamp(0.85, 1.2),
+                            color: AppColors.darkGrey,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                      const Divider(color: AppColors.clearGrey, height: 24),
-                      Text(
-                        'Ingredient Name',
-                        style: GoogleFonts.inter(
-                          fontSize: 13 * scale.clamp(0.85, 1.2),
-                          color: AppColors.black,
-                        ),
-                      ),
                       
                       const SizedBox(height: 32),
 
@@ -1580,108 +1775,6 @@ class _ProductDetailOverlay extends StatelessWidget {
   }
 }
 
-class _LabelCircle extends StatelessWidget {
-  final String label;
-  final double scale;
-
-  const _LabelCircle({required this.label, required this.scale});
-
-  static (IconData, Color) _getIconAndColor(String name) {
-    final lower = name.toLowerCase();
-    
-    // Allergens
-    if (lower.contains('gluten') || lower.contains('wheat')) {
-      return (Icons.grain_rounded, const Color(0xFFE5A93C)); // Amber/Orange
-    }
-    if (lower.contains('nut') || lower.contains('almond') || lower.contains('hazelnut') || lower.contains('pecan') || lower.contains('cashew')) {
-      return (Icons.cookie_rounded, const Color(0xFF8D6E63)); // Brown
-    }
-    if (lower.contains('milk') || lower.contains('lactose') || lower.contains('dairy')) {
-      return (Icons.water_drop_rounded, const Color(0xFF64B5F6)); // Light Blue
-    }
-    if (lower.contains('egg')) {
-      return (Icons.egg_rounded, const Color(0xFFFFD54F)); // Yellow
-    }
-    if (lower.contains('soy')) {
-      return (Icons.grass_rounded, const Color(0xFF81C784)); // Green
-    }
-    if (lower.contains('fish') || lower.contains('seafood') || lower.contains('shrimp')) {
-      return (Icons.set_meal_rounded, const Color(0xFF4FC3F7)); // Blue
-    }
-
-    // Certifications & Labels
-    if (lower.contains('organic') || lower.contains('bio')) {
-      return (Icons.eco_rounded, const Color(0xFF4CAF50)); // Green
-    }
-    if (lower.contains('ecocert')) {
-      return (Icons.verified_rounded, const Color(0xFF2E7D32)); // Dark Green
-    }
-    if (lower.contains('green dot') || lower.contains('recycl')) {
-      return (Icons.recycling_rounded, const Color(0xFF388E3C)); // Green
-    }
-    if (lower.contains('agriculture') || lower.contains('grower')) {
-      return (Icons.spa_rounded, const Color(0xFF81C784)); // Soft Green
-    }
-    if (lower.contains('vegan') || lower.contains('vegetarian')) {
-      return (Icons.spa_rounded, const Color(0xFF4CAF50)); // Green
-    }
-    if (lower.contains('halal') || lower.contains('kosher')) {
-      return (Icons.task_alt_rounded, const Color(0xFF009688)); // Teal
-    }
-    if (lower.contains('fair trade') || lower.contains('fairtrade')) {
-      return (Icons.handshake_rounded, const Color(0xFF00897B)); // Teal
-    }
-
-    return (Icons.verified_rounded, const Color(0xFF7B52D3)); // Purple accent
-  }
-
-  static String _cleanLabel(String raw) {
-    String cleaned = raw.replaceAll(RegExp(r'^[a-z]{2}:'), '');
-    cleaned = cleaned.replaceAll(RegExp(r'[-_]'), ' ').trim();
-    if (cleaned.isEmpty) return raw;
-    return cleaned
-        .split(' ')
-        .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w)
-        .join(' ');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final clean = _cleanLabel(label);
-    final iconInfo = _getIconAndColor(clean);
-    final iconData = iconInfo.$1;
-    final iconColor = iconInfo.$2;
-
-    return Container(
-      width: 64 * scale.clamp(0.85, 1.2),
-      height: 64 * scale.clamp(0.85, 1.2),
-      decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        shape: BoxShape.circle,
-        border: Border.all(color: AppColors.clearGrey, width: 1),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            iconData,
-            size: 20 * scale.clamp(0.85, 1.2),
-            color: iconColor,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            clean,
-            style: GoogleFonts.inter(
-              fontSize: 10 * scale.clamp(0.85, 1.2),
-              color: AppColors.darkGrey,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ── Success Overlay (checkmark dialog) ─────────────────────────────
 class _SuccessOverlay extends StatelessWidget {

@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/food_settings_provider.dart';
 import '../../widgets/food_settings_dialogs.dart';
-import '../../providers/onboarding_provider.dart';
 
 class FoodSettingsTab extends ConsumerStatefulWidget {
   const FoodSettingsTab({super.key});
@@ -19,25 +18,6 @@ class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
     'diet': false,
     'challenges': false,
   };
-
-  final List<String> _dietOptions = [
-    'Vegan',
-    'Vegetarian',
-    'Pescatarian',
-    'Keto',
-    'Paleo',
-    'Gluten-Free',
-    'Dairy-Free',
-  ];
-
-  final List<String> _challengeOptions = [
-    'Nut Allergy',
-    'Shellfish Allergy',
-    'Lactose Intolerance',
-    'Diabetes Friendly',
-    'Low Sodium',
-    'No Sugar',
-  ];
 
   void _openModifySheet() {
     showFoodSettingsModifySheet(
@@ -158,8 +138,7 @@ class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
                                   .toggleDietChoice(option),
                               scale: scale,
                             ),
-                          )
-                          .toList(),
+                          ),
                     ],
                   ),
                 ),

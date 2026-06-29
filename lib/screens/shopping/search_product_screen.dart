@@ -78,6 +78,8 @@ class _SearchProductScreenState extends ConsumerState<SearchProductScreen> {
               ),
             ),
 
+            _ResultsHeader(scale: scale),
+
             // ── Body ──
             Expanded(
               child: !isSearching
@@ -89,6 +91,60 @@ class _SearchProductScreenState extends ConsumerState<SearchProductScreen> {
             const LuvcoBottomNavBar(),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ResultsHeader extends ConsumerWidget {
+  final double scale;
+  const _ResultsHeader({required this.scale});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Results',
+            style: GoogleFonts.inter(
+              fontSize: 16 * scale,
+              fontWeight: FontWeight.w700,
+              color: AppColors.black,
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => _FilterSheet(scale: scale, ref: ref),
+              );
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                Icon(
+                  Icons.tune_rounded,
+                  size: 18 * scale,
+                  color: AppColors.darkGrey,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Filter',
+                  style: GoogleFonts.inter(
+                    fontSize: 13 * scale,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.darkGrey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -288,74 +344,39 @@ class _SearchResults extends ConsumerWidget {
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Results',
-                style: GoogleFonts.inter(
-                  fontSize: 16 * scale,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.black,
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (_) => _FilterSheet(scale: scale, ref: ref),
-                  );
-                },
-                behavior: HitTestBehavior.opaque,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.tune_rounded,
-                      size: 18 * scale,
-                      color: AppColors.darkGrey,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Filter',
-                      style: GoogleFonts.inter(
-                        fontSize: 13 * scale,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.darkGrey,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
         Expanded(
-          child: results.isEmpty && searchState.query.isNotEmpty
+          child: searchState.isSearching
               ? const Center(
                   child: CircularProgressIndicator(
                     color: AppColors.royalPurple,
                   ),
                 )
-              : ListView.separated(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: results.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
-                  itemBuilder: (context, index) {
-                    return _ProductSearchCard(
-                      data: results[index],
-                      scale: scale,
-                      listId: listId,
-                    );
-                  },
-                ),
+              : results.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No results found.',
+                        style: GoogleFonts.inter(
+                          fontSize: 14 * scale,
+                          color: AppColors.neutralGrey,
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: results.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 16),
+                      itemBuilder: (context, index) {
+                        return _ProductSearchCard(
+                          data: results[index],
+                          scale: scale,
+                          listId: listId,
+                        );
+                      },
+                    ),
         ),
       ],
     );
@@ -565,10 +586,13 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: SizedBox(
-        width: 344 * widget.scale,
-        height: 122 * widget.scale,
-        child: Stack(
+      child: GestureDetector(
+        onTap: _openDetails,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          width: 344 * widget.scale,
+          height: 122 * widget.scale,
+          child: Stack(
           children: [
             // ── Badges (Top Row) ──
             Padding(
@@ -815,6 +839,7 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

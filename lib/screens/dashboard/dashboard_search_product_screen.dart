@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:luvco_logo/widgets/label_circle.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -87,18 +88,74 @@ class _DashboardSearchProductScreenState
                 scale: scale,
               ),
             ),
+            _ResultsHeader(scale: scale),
             Expanded(
               child: state.isSearching
                   ? const Center(child: CircularProgressIndicator(color: AppColors.royalPurple))
-                  : state.query.isNotEmpty && state.results.isEmpty
-                      ? Center(child: Text('No results found.', style: GoogleFonts.inter(fontSize: 14 * scale, color: AppColors.neutralGrey)))
-                      : state.query.isNotEmpty
-                          ? _ResultsBody(scale: scale, state: state)
-                          : _EmptyBody(scale: scale),
+                  : state.query.isNotEmpty
+                      ? _ResultsBody(scale: scale, state: state)
+                      : _EmptyBody(scale: scale),
             ),
             const LuvcoBottomNavBar(),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ResultsHeader extends ConsumerWidget {
+  final double scale;
+  const _ResultsHeader({required this.scale});
+
+  void _showFilterSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _FilterSheet(scale: scale, ref: ref),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = scale.clamp(0.85, 1.2);
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20 * s, vertical: 8 * s),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Results',
+            style: GoogleFonts.inter(
+              fontSize: 16 * s,
+              fontWeight: FontWeight.w700,
+              color: AppColors.black,
+            ),
+          ),
+          GestureDetector(
+            onTap: () => _showFilterSheet(context, ref),
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                Icon(
+                  Icons.tune_rounded,
+                  size: 16 * s,
+                  color: AppColors.black,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Filter',
+                  style: GoogleFonts.inter(
+                    fontSize: 13 * s,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -289,77 +346,30 @@ class _ResultsBody extends ConsumerWidget {
 
   const _ResultsBody({required this.scale, required this.state});
 
-  void _showFilterSheet(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _FilterSheet(scale: scale, ref: ref),
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = scale.clamp(0.85, 1.2);
     return Column(
       children: [
-        // Results header
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20 * s, vertical: 8 * s),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Results',
-                style: GoogleFonts.inter(
-                  fontSize: 16 * s, // ↓ was 24
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.black,
-                ),
-              ),
-              GestureDetector(
-                onTap: () => _showFilterSheet(context, ref),
-                behavior: HitTestBehavior.opaque,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.tune_rounded,
-                      size: 16 * s, // ↓ was 22
-                      color: AppColors.black,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Filter',
-                      style: GoogleFonts.inter(
-                        fontSize: 13 * s, // ↓ was 18
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.black,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-
         // List
         Expanded(
-          child: ListView.separated(
-            padding: EdgeInsets.symmetric(
-              horizontal: 16 * s, // ↓ was 20
-              vertical: 6 * s,
-            ),
-            physics: const BouncingScrollPhysics(),
-            itemCount: state.results.length,
-            separatorBuilder: (_, __) => SizedBox(height: 10 * s), // ↓ was 16
-            itemBuilder: (ctx, i) => _ProductCard(
-              result: state.results[i],
-              scale: scale,
-              shoppingLists: state.shoppingLists,
-              recipes: state.recipes,
-            ),
-          ),
+          child: state.results.isEmpty
+              ? Center(child: Text('No results found.', style: GoogleFonts.inter(fontSize: 14 * scale, color: AppColors.neutralGrey)))
+              : ListView.separated(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16 * s, // ↓ was 20
+                    vertical: 6 * s,
+                  ),
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: state.results.length,
+                  separatorBuilder: (_, __) => SizedBox(height: 10 * s), // ↓ was 16
+                  itemBuilder: (ctx, i) => _ProductCard(
+                    result: state.results[i],
+                    scale: scale,
+                    shoppingLists: state.shoppingLists,
+                    recipes: state.recipes,
+                  ),
+                ),
         ),
       ],
     );
@@ -399,6 +409,7 @@ class _ProductCardState extends ConsumerState<_ProductCard> {
       builder: (_) => _CardMenu(
         layerLink: _layerLink,
         scale: widget.scale,
+        isFavorite: widget.result.isFavorite,
         onDismiss: _closeMenu,
         onSeeDetails: () {
           _closeMenu();
@@ -676,6 +687,7 @@ class _ProductCardState extends ConsumerState<_ProductCard> {
 class _CardMenu extends StatelessWidget {
   final LayerLink layerLink;
   final double scale;
+  final bool isFavorite;
   final VoidCallback onDismiss;
   final VoidCallback onSeeDetails;
   final VoidCallback onAddToList;
@@ -685,6 +697,7 @@ class _CardMenu extends StatelessWidget {
   const _CardMenu({
     required this.layerLink,
     required this.scale,
+    required this.isFavorite,
     required this.onDismiss,
     required this.onSeeDetails,
     required this.onAddToList,
@@ -743,8 +756,8 @@ class _CardMenu extends StatelessWidget {
                     ),
                     _divider(),
                     _MenuRow(
-                      label: 'Mark as favorite',
-                      icon: Icons.favorite_border_rounded,
+                      label: isFavorite ? 'Mark as un favorite' : 'Mark as favorite',
+                      icon: isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                       scale: scale,
                       onTap: onFavorite,
                     ),
@@ -1181,124 +1194,7 @@ class _ProductDetailSheetState extends ConsumerState<_ProductDetailSheet> {
 }
 
 
-// ─────────────────────────────────────────────────────────────────
-// Circle Chip
-// ─────────────────────────────────────────────────────────────────
-class _CircleChip extends StatelessWidget {
-  final String label;
-  final double scale;
-  const _CircleChip({required this.label, required this.scale});
 
-  /// Strip language prefix (e.g. "en:", "fr:") and clean up the text.
-  static String _cleanLabel(String raw) {
-    String cleaned = raw.replaceAll(RegExp(r'^[a-z]{2}:'), '');
-    cleaned = cleaned.replaceAll(RegExp(r'[-_]'), ' ').trim();
-    if (cleaned.isEmpty) return raw;
-    return cleaned
-        .split(' ')
-        .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w)
-        .join(' ');
-  }
-
-  static (IconData, Color) _getIconAndColor(String name) {
-    final lower = name.toLowerCase();
-    
-    // Placeholder fallbacks
-    if (lower.contains('no allergens')) {
-      return (Icons.health_and_safety_rounded, const Color(0xFF4CAF50)); // Green for safe / no allergens
-    }
-    if (lower.contains('none listed')) {
-      return (Icons.info_outline_rounded, const Color(0xFF9E9E9E)); // Grey info for none listed
-    }
-
-    // Allergens
-    if (lower.contains('gluten') || lower.contains('wheat')) {
-      return (Icons.grain_rounded, const Color(0xFFE5A93C)); // Amber/Orange
-    }
-    if (lower.contains('nut') || lower.contains('almond') || lower.contains('hazelnut') || lower.contains('pecan') || lower.contains('cashew')) {
-      return (Icons.cookie_rounded, const Color(0xFF8D6E63)); // Brown
-    }
-    if (lower.contains('milk') || lower.contains('lactose') || lower.contains('dairy')) {
-      return (Icons.water_drop_rounded, const Color(0xFF64B5F6)); // Light Blue
-    }
-    if (lower.contains('egg')) {
-      return (Icons.egg_rounded, const Color(0xFFFFD54F)); // Yellow
-    }
-    if (lower.contains('soy')) {
-      return (Icons.grass_rounded, const Color(0xFF81C784)); // Green
-    }
-    if (lower.contains('fish') || lower.contains('seafood') || lower.contains('shrimp')) {
-      return (Icons.set_meal_rounded, const Color(0xFF4FC3F7)); // Blue
-    }
-
-    // Certifications & Labels
-    if (lower.contains('organic') || lower.contains('bio')) {
-      return (Icons.eco_rounded, const Color(0xFF4CAF50)); // Green
-    }
-    if (lower.contains('ecocert')) {
-      return (Icons.verified_rounded, const Color(0xFF2E7D32)); // Dark Green
-    }
-    if (lower.contains('green dot') || lower.contains('recycl')) {
-      return (Icons.recycling_rounded, const Color(0xFF388E3C)); // Green
-    }
-    if (lower.contains('agriculture') || lower.contains('grower')) {
-      return (Icons.spa_rounded, const Color(0xFF81C784)); // Soft Green
-    }
-    if (lower.contains('vegan') || lower.contains('vegetarian')) {
-      return (Icons.spa_rounded, const Color(0xFF4CAF50)); // Green
-    }
-    if (lower.contains('halal') || lower.contains('kosher')) {
-      return (Icons.task_alt_rounded, const Color(0xFF009688)); // Teal
-    }
-    if (lower.contains('fair trade') || lower.contains('fairtrade')) {
-      return (Icons.handshake_rounded, const Color(0xFF00897B)); // Teal
-    }
-
-    return (Icons.verified_rounded, const Color(0xFF7B52D3)); // Purple accent
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cleanLabel = _cleanLabel(label);
-    final iconInfo = _getIconAndColor(cleanLabel);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 56 * scale,
-          height: 56 * scale,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.pureWhite,
-            border: Border.all(color: const Color(0xFFD0D0D0), width: 1.5),
-          ),
-          child: Center(
-            child: Icon(
-              iconInfo.$1,
-              size: 28 * scale,
-              color: iconInfo.$2,
-            ),
-          ),
-        ),
-        SizedBox(height: 5 * scale),
-        SizedBox(
-          width: 70 * scale,
-          child: Text(
-            cleanLabel,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
-              fontSize: 10 * scale,
-              fontWeight: FontWeight.w500,
-              color: AppColors.darkGrey,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────
 // Chip Section
@@ -1332,10 +1228,11 @@ class _ChipSection extends StatelessWidget {
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               for (int i = 0; i < items.length; i++) ...[
-                _CircleChip(label: items[i], scale: s),
-                if (i < items.length - 1) SizedBox(width: 12 * s),
+                LabelCircle(label: items[i], scale: s),
+                if (i < items.length - 1) SizedBox(width: 8 * s),
               ],
             ],
           ),

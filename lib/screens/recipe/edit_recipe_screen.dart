@@ -12,6 +12,7 @@ import '../../models/recipe_detail_model.dart';
 import '../../providers/recipe_provider.dart';
 import '../../providers/recipe_detail_provider.dart';
 import '../../core/network/recipe_api_service.dart';
+import '../../providers/food_preferences_provider.dart';
 
 class EditRecipeScreen extends ConsumerStatefulWidget {
   final RecipeModel? recipe; // null = create new
@@ -36,24 +37,6 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
 
   int _activeTab = 0; // 0=Details 1=Preparation 2=Products
   bool _prepInitialized = false;
-
-  static const _dietOptions = [
-    'Vegetarian',
-    'Vegan',
-    'Gluten Free',
-    'Dairy-Free',
-    'Keto',
-    'Paleo',
-  ];
-
-  static const _freeOfOptions = [
-    'Gluten',
-    'Dairy',
-    'Soy',
-    'Nuts',
-    'Eggs',
-    'Shellfish',
-  ];
 
   static const _prepTimes = [15, 30, 45, 60, 90, 120];
   static const _servingOptions = [1, 2, 3, 4, 5, 6, 8, 10];
@@ -381,22 +364,36 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
 
           _SectionLabel(label: 'Type of Diet*', scale: scale),
           const SizedBox(height: 10),
-          _ChipGroup(
-            options: _dietOptions,
-            selected: _selectedDietTags,
-            onToggle: _toggleDiet,
-            scale: scale,
-          ),
+          Builder(builder: (ctx) {
+            final tagsAsync = ref.watch(onboardingTagsProvider);
+            final dietOptions = tagsAsync.maybeWhen(
+              data: (tags) => tags['diets'] ?? <String>[],
+              orElse: () => <String>[],
+            );
+            return _ChipGroup(
+              options: dietOptions,
+              selected: _selectedDietTags,
+              onToggle: _toggleDiet,
+              scale: scale,
+            );
+          }),
           const SizedBox(height: 16),
 
           _SectionLabel(label: 'Free of Ingredients', scale: scale),
           const SizedBox(height: 10),
-          _ChipGroup(
-            options: _freeOfOptions,
-            selected: _selectedFreeOf,
-            onToggle: _toggleFreeOf,
-            scale: scale,
-          ),
+          Builder(builder: (ctx) {
+            final tagsAsync = ref.watch(onboardingTagsProvider);
+            final freeOfOptions = tagsAsync.maybeWhen(
+              data: (tags) => tags['allergies'] ?? <String>[],
+              orElse: () => <String>[],
+            );
+            return _ChipGroup(
+              options: freeOfOptions,
+              selected: _selectedFreeOf,
+              onToggle: _toggleFreeOf,
+              scale: scale,
+            );
+          }),
 
           const SizedBox(height: 32),
 

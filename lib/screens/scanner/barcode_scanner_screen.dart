@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:luvco_logo/widgets/label_circle.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -50,33 +51,7 @@ class BarcodeScannerScreen extends ConsumerWidget {
               ),
             ),
 
-            // ══════════════════════════════════════════
-            // LAYER 2 — Top nav (always visible)
-            // ══════════════════════════════════════════
-            Positioned(
-              top: padding.top + 6 * scale,
-              left: 20 * scale,
-              right: 20 * scale,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Back chevron
-                  _NavIconButton(
-                    icon: Icons.chevron_left,
-                    size: 30 * scale,
-                    scale: scale,
-                    onTap: () => context.pop(),
-                  ),
-                  // Close X
-                  _NavIconButton(
-                    icon: Icons.close,
-                    size: 22 * scale,
-                    scale: scale,
-                    onTap: () => context.pop(),
-                  ),
-                ],
-              ),
-            ),
+
 
             // ══════════════════════════════════════════
             // LAYER 3 — State-specific overlays
@@ -137,6 +112,35 @@ class BarcodeScannerScreen extends ConsumerWidget {
                   notifier.closeCard();
                 },
               ),
+            
+            // ══════════════════════════════════════════
+            // LAYER 2 — Top nav (always visible)
+            // moved here so it is not blocked by scanning layer
+            // ══════════════════════════════════════════
+            Positioned(
+              top: padding.top + 6 * scale,
+              left: 20 * scale,
+              right: 20 * scale,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Back chevron
+                  _NavIconButton(
+                    icon: Icons.chevron_left,
+                    size: 30 * scale,
+                    scale: scale,
+                    onTap: () => context.pop(),
+                  ),
+                  // Close X
+                  _NavIconButton(
+                    icon: Icons.close,
+                    size: 22 * scale,
+                    scale: scale,
+                    onTap: () => context.pop(),
+                  ),
+                ],
+              ),
+            ),
 
             // ── 2.2.4 Add to Shopping List dialog ──
             if (state.scanState == BarcodeScanState.addToList)
@@ -505,11 +509,12 @@ class _ScanningLayer extends StatelessWidget {
           right: 0,
           child: Center(
             child: Container(
+              width: 190 * scale,
               height: 50 * scale,
-              padding: EdgeInsets.symmetric(horizontal: 36 * scale),
+              padding: EdgeInsets.symmetric(horizontal: 36 * scale, vertical: 12 * scale),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(30 * scale),
+                borderRadius: BorderRadius.circular(18 * scale),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.18),
@@ -915,20 +920,6 @@ List<String> _filterEnglish(List<String> all) {
   return englishOnly.isNotEmpty ? englishOnly : all;
 }
 
-String _cleanLabel(String raw) {
-  // Strip any language prefix code (e.g. "en:", "fr:", "en-us:")
-  String cleaned = raw.replaceAll(RegExp(r'^[a-z]{2,3}(-[a-z]{2,3})?:'), '');
-  cleaned = cleaned.replaceAll(RegExp(r'[-_]'), ' ').trim();
-  if (cleaned.isEmpty) return raw;
-  return cleaned
-      .split(' ')
-      .map((w) {
-        if (w.isEmpty) return '';
-        if (w.toLowerCase() == 'eu') return 'EU';
-        return '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}';
-      })
-      .join(' ');
-}
 
 // 2.2.3 — Product card bottom sheet
 // ═══════════════════════════════════════════════════════════════
@@ -1044,13 +1035,25 @@ class _ProductCardLayer extends StatelessWidget {
                         scale: scale,
                       ),
                       SizedBox(height: 10 * scale),
-                      _HexRow(labels: filteredLabels, scale: scale),
+                      Wrap(
+                        spacing: 12 * scale,
+                        runSpacing: 12 * scale,
+                        children: filteredLabels
+                            .map((l) => LabelCircle(label: l, scale: scale))
+                            .toList(),
+                      ),
                       SizedBox(height: 20 * scale),
                     ],
                     if (filteredAllergens.isNotEmpty) ...[
                       _SectionLabel(title: 'Possible allergens', scale: scale),
                       SizedBox(height: 10 * scale),
-                      _HexRow(labels: filteredAllergens, scale: scale),
+                      Wrap(
+                        spacing: 12 * scale,
+                        runSpacing: 12 * scale,
+                        children: filteredAllergens
+                            .map((l) => LabelCircle(label: l, scale: scale))
+                            .toList(),
+                      ),
                       SizedBox(height: 24 * scale),
                     ],
                     Row(
@@ -1156,183 +1159,177 @@ class _ImageWithBadges extends StatelessWidget {
       safeColor = const Color(0xFFFFB800); // Orange/Yellow
     }
 
-    return Column(
-      children: [
-        // ── Status tabs — flush at top, separate from white card ──────
-        IntrinsicHeight(
-          child: Row(
-            children: [
-              // Sustainability badge (dynamic color and label from backend)
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: sustainColor,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20 * scale),
-                      topRight: Radius.circular(16 * scale),
-                    ),
-                  ),
-                  padding: EdgeInsets.symmetric(
-                    vertical: 10 * scale,
-                    horizontal: 4 * scale,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.eco_outlined,
-                        color: Colors.white,
-                        size: 15 * scale,
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.pureWhite,
+        borderRadius: BorderRadius.circular(20 * scale),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20 * scale),
+        child: Stack(
+          children: [
+            // 1. Dynamic sustainability/safety background tabs
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 90 * scale,
+                    decoration: BoxDecoration(
+                      color: sustainColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(20 * scale),
+                        topRight: Radius.circular(16 * scale),
                       ),
-                      SizedBox(width: 5 * scale),
-                      Flexible(
-                        child: Text(
-                          sustainLabel,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(
-                            fontSize: 12 * scale,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                    ),
+                    alignment: Alignment.topCenter,
+                    padding: EdgeInsets.only(top: 14 * scale),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.eco_outlined, color: Colors.white, size: 16 * scale),
+                        SizedBox(width: 6 * scale),
+                        Flexible(
+                          child: Text(
+                            sustainLabel ?? 'Loading...',
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 12 * scale,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Safety badge (dynamic color and label from backend)
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: safeColor,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(16 * scale),
-                      topRight: Radius.circular(20 * scale),
+                      ],
                     ),
                   ),
-                  padding: EdgeInsets.symmetric(
-                    vertical: 10 * scale,
-                    horizontal: 4 * scale,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.flag_outlined,
-                        color: Colors.white,
-                        size: 15 * scale,
+                ),
+                Expanded(
+                  child: Container(
+                    height: 90 * scale,
+                    decoration: BoxDecoration(
+                      color: safeColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16 * scale),
+                        topRight: Radius.circular(20 * scale),
                       ),
-                      SizedBox(width: 5 * scale),
-                      Flexible(
-                        child: Text(
-                          safeLabel,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(
-                            fontSize: 12 * scale,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                    ),
+                    alignment: Alignment.topCenter,
+                    padding: EdgeInsets.only(top: 14 * scale),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.flag_outlined, color: Colors.white, size: 16 * scale),
+                        SizedBox(width: 6 * scale),
+                        Flexible(
+                          child: Text(
+                            safeLabel ?? 'Loading...',
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 12 * scale,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
+              ],
+            ),
 
-        SizedBox(height: 4 * scale), // Small visually balanced spacing
-
-        // ── White image area with heart overlay (all corners rounded) ──
-        Container(
-          width: double.infinity,
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16 * scale),
-            border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.07),
-                blurRadius: 12,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              // Centered product image
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(
-                  vertical: 20 * scale,
-                  horizontal: 16 * scale,
-                ),
+            // 2. White image card overlapping the background tabs
+            Container(
+              margin: EdgeInsets.only(top: 46 * scale),
+              width: double.infinity,
+              decoration: BoxDecoration(
                 color: Colors.white,
-                child: Center(
-                  child: product.imageAsset != null && product.imageAsset!.isNotEmpty
-                      ? (product.imageAsset!.startsWith('http')
-                          ? Image.network(
-                              product.imageAsset!,
-                              height: 150 * scale,
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) => Icon(
-                                Icons.image_outlined,
-                                size: 60 * scale,
-                                color: AppColors.neutralGrey,
-                              ),
-                              loadingBuilder: (ctx, child, prog) {
-                                if (prog == null) return child;
-                                return SizedBox(
-                                  height: 150 * scale,
-                                  child: const Center(
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: AppColors.royalPurple,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20 * scale),
+                  topRight: Radius.circular(20 * scale),
+                ),
+              ),
+              padding: EdgeInsets.only(top: 20 * scale, bottom: 20 * scale),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Product image
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 10 * scale),
+                    child: Center(
+                      child: product.imageAsset != null && product.imageAsset!.isNotEmpty
+                          ? (product.imageAsset!.startsWith('http')
+                              ? Image.network(
+                                  product.imageAsset!,
+                                  height: 180 * scale,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => SizedBox(
+                                    height: 180 * scale,
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.image_outlined,
+                                        size: 80 * scale,
+                                        color: AppColors.neutralGrey,
+                                      ),
                                     ),
                                   ),
-                                );
-                              },
-                            )
-                          : Image.asset(
-                              product.imageAsset!,
-                              height: 150 * scale,
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) => Icon(
-                                Icons.image_outlined,
-                                size: 60 * scale,
-                                color: AppColors.neutralGrey,
+                                )
+                              : Image.asset(
+                                  product.imageAsset!,
+                                  height: 180 * scale,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => SizedBox(
+                                    height: 180 * scale,
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.image_outlined,
+                                        size: 80 * scale,
+                                        color: AppColors.neutralGrey,
+                                      ),
+                                    ),
+                                  ),
+                                ))
+                          : SizedBox(
+                              height: 180 * scale,
+                              child: Center(
+                                child: Icon(
+                                  Icons.image_outlined,
+                                  size: 80 * scale,
+                                  color: AppColors.neutralGrey,
+                                ),
                               ),
-                            ))
-                      : Icon(
-                          Icons.image_outlined,
-                          size: 60 * scale,
-                          color: AppColors.neutralGrey,
-                        ),
-                ),
-              ),
-
-              // Heart icon — top-right overlay
-              Positioned(
-                top: 10 * scale,
-                right: 12 * scale,
-                child: GestureDetector(
-                  onTap: onFavorite,
-                  behavior: HitTestBehavior.opaque,
-                  child: Icon(
-                    isFavorite
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                    color: isFavorite ? AppColors.vibrantPink : AppColors.black,
-                    size: 22 * scale,
+                            ),
+                    ),
                   ),
-                ),
+
+                  // Heart save button
+                  Positioned(
+                    right: 16 * scale,
+                    top: 0,
+                    child: GestureDetector(
+                      onTap: onFavorite,
+                      behavior: HitTestBehavior.opaque,
+                      child: Icon(
+                        isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                        color: isFavorite ? AppColors.vibrantPink : AppColors.black,
+                        size: 26 * scale,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -1350,158 +1347,11 @@ class _SectionLabel extends StatelessWidget {
     alignment: Alignment.centerLeft,
     child: Text(
       title,
-      style: GoogleFonts.inter(
-        fontSize: 14 * scale,
-        fontWeight: FontWeight.w700,
-        color: AppColors.black,
-      ),
+      style: GoogleFonts.inter(fontSize: 14 * scale, fontWeight: FontWeight.w700, color: AppColors.black),
     ),
   );
 }
 
-// ─────────────────────────────────────────────────
-class _HexRow extends StatelessWidget {
-  final List<String> labels;
-  final double scale;
-  const _HexRow({required this.labels, required this.scale});
-
-  static (IconData, Color) _getIconAndColor(String name) {
-    final lower = name.toLowerCase();
-    
-    // Allergens
-    if (lower.contains('gluten') || lower.contains('wheat')) {
-      return (Icons.grain_rounded, const Color(0xFFE5A93C)); // Amber/Orange
-    }
-    if (lower.contains('nut') || lower.contains('almond') || lower.contains('hazelnut') || lower.contains('pecan') || lower.contains('cashew')) {
-      return (Icons.cookie_rounded, const Color(0xFF8D6E63)); // Brown
-    }
-    if (lower.contains('milk') || lower.contains('lactose') || lower.contains('dairy')) {
-      return (Icons.water_drop_rounded, const Color(0xFF64B5F6)); // Light Blue
-    }
-    if (lower.contains('egg')) {
-      return (Icons.egg_rounded, const Color(0xFFFFD54F)); // Yellow
-    }
-    if (lower.contains('soy')) {
-      return (Icons.grass_rounded, const Color(0xFF81C784)); // Green
-    }
-    if (lower.contains('fish') || lower.contains('seafood') || lower.contains('shrimp')) {
-      return (Icons.set_meal_rounded, const Color(0xFF4FC3F7)); // Blue
-    }
-
-    // Certifications & Labels
-    if (lower.contains('organic') || lower.contains('bio')) {
-      return (Icons.eco_rounded, const Color(0xFF4CAF50)); // Green
-    }
-    if (lower.contains('ecocert')) {
-      return (Icons.verified_rounded, const Color(0xFF2E7D32)); // Dark Green
-    }
-    if (lower.contains('green dot') || lower.contains('recycl')) {
-      return (Icons.recycling_rounded, const Color(0xFF388E3C)); // Green
-    }
-    if (lower.contains('agriculture') || lower.contains('grower')) {
-      return (Icons.spa_rounded, const Color(0xFF81C784)); // Soft Green
-    }
-    if (lower.contains('vegan') || lower.contains('vegetarian')) {
-      return (Icons.spa_rounded, const Color(0xFF4CAF50)); // Green
-    }
-    if (lower.contains('halal') || lower.contains('kosher')) {
-      return (Icons.task_alt_rounded, const Color(0xFF009688)); // Teal
-    }
-    if (lower.contains('fair trade') || lower.contains('fairtrade')) {
-      return (Icons.handshake_rounded, const Color(0xFF00897B)); // Teal
-    }
-
-    return (Icons.verified_rounded, const Color(0xFF7B52D3)); // Purple accent
-  }
-
-  Widget _buildLabelItem(String label) {
-    final clean = _cleanLabel(label);
-    final iconInfo = _getIconAndColor(clean);
-    final iconData = iconInfo.$1;
-    final iconColor = iconInfo.$2;
-
-    return Padding(
-      padding: EdgeInsets.only(right: 12 * scale),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 50 * scale,
-            height: 50 * scale,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.clearGrey, width: 1.2),
-            ),
-            child: Center(
-              child: Icon(
-                iconData,
-                color: iconColor,
-                size: 24 * scale,
-              ),
-            ),
-          ),
-          SizedBox(height: 5 * scale),
-          SizedBox(
-            width: 62 * scale,
-            child: Text(
-              clean,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                fontSize: 10 * scale,
-                fontWeight: FontWeight.w500,
-                color: AppColors.black,
-                height: 1.2,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final items = labels;
-
-    final List<String> row1;
-    final List<String> row2;
-
-    if (items.length <= 4) {
-      row1 = items;
-      row2 = [];
-    } else {
-      final half = (items.length / 2).ceil();
-      row1 = items.sublist(0, half);
-      row2 = items.sublist(half);
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          child: Row(
-            children: row1.map((item) => _buildLabelItem(item)).toList(),
-          ),
-        ),
-        if (row2.isNotEmpty) ...[
-          SizedBox(height: 12 * scale),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: row2.map((item) => _buildLabelItem(item)).toList(),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
 
 
 // ─────────────────────────────────────────────────

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/product_model.dart';
+import '../../core/network/product_api_service.dart';
 import '../../providers/new_shopping_list_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import '../../widgets/product_detail_sheet.dart';
@@ -181,15 +182,33 @@ class NewShoppingListScreen extends ConsumerWidget {
     );
   }
 
-  void _openProductDetail(
+  Future<void> _openProductDetail(
     BuildContext context,
     ProductModel product,
     NewShoppingListNotifier notifier,
-  ) {
+  ) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.vibrantPink),
+      ),
+    );
+
+    ProductModel fullProduct = product;
+    try {
+      fullProduct = await ProductApiService.instance.lookupProduct(product.id);
+    } catch (e) {
+      // Fallback to basic search result if full lookup fails
+    }
+
+    if (!context.mounted) return;
+    Navigator.of(context).pop(); // Dismiss loading dialog
+
     showProductDetailSheet(
       context,
-      product: product,
-      onAddProduct: () => notifier.addProduct(product),
+      product: fullProduct,
+      onAddProduct: () => notifier.addProduct(fullProduct),
     );
   }
 

@@ -26,7 +26,7 @@ class _SignupOtpScreenState extends ConsumerState<SignupOtpScreen> {
   );
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   Timer? _timer;
-  int _cooldown = 20;
+  int _cooldown = 60;
 
   @override
   void initState() {
@@ -39,7 +39,7 @@ class _SignupOtpScreenState extends ConsumerState<SignupOtpScreen> {
 
   void _startCooldown() {
     _timer?.cancel();
-    setState(() => _cooldown = 20);
+    setState(() => _cooldown = 60);
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_cooldown > 0) {
         setState(() => _cooldown--);
@@ -71,6 +71,13 @@ class _SignupOtpScreenState extends ConsumerState<SignupOtpScreen> {
     ref.read(signupOtpProvider.notifier).reset();
     _focusNodes[0].requestFocus();
     _startCooldown();
+    
+    // Call the backend to resend/regenerate the signup verification OTP
+    ref.read(signupOtpProvider.notifier).resendCode(email: widget.email);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('A new verification code has been requested.')),
+    );
   }
 
   void _onSubmit() {

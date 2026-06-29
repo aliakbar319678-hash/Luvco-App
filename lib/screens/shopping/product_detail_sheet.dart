@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:luvco_logo/widgets/label_circle.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/network/product_api_service.dart';
@@ -159,6 +160,7 @@ class _ProductDetailBody extends ConsumerStatefulWidget {
 }
 
 class _ProductDetailBodyState extends ConsumerState<_ProductDetailBody> {
+  bool _showAllIngredients = false;
   ProductModel? _fullProduct;
   bool _loading = true;
 
@@ -241,10 +243,10 @@ class _ProductDetailBodyState extends ConsumerState<_ProductDetailBody> {
               ),
               const SizedBox(height: 12),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 12,
+                runSpacing: 12,
                 children: filteredLabels
-                    .map((l) => _LabelChip(label: l, scale: scale, isAllergen: false))
+                    .map((l) => LabelCircle(label: l, scale: scale))
                     .toList(),
               ),
               const SizedBox(height: 24),
@@ -262,10 +264,10 @@ class _ProductDetailBodyState extends ConsumerState<_ProductDetailBody> {
               ),
               const SizedBox(height: 12),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 12,
+                runSpacing: 12,
                 children: filteredAllergens
-                    .map((l) => _LabelChip(label: l, scale: scale, isAllergen: true))
+                    .map((l) => LabelCircle(label: l, scale: scale))
                     .toList(),
               ),
               const SizedBox(height: 24),
@@ -281,8 +283,8 @@ class _ProductDetailBodyState extends ConsumerState<_ProductDetailBody> {
               ),
             ),
             const SizedBox(height: 12),
-            if (ingredients.isNotEmpty)
-              ...ingredients.map(
+            if (ingredients.isNotEmpty) ...[
+              ...(_showAllIngredients ? ingredients : ingredients.take(5)).map(
                 (ing) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
@@ -310,8 +312,29 @@ class _ProductDetailBodyState extends ConsumerState<_ProductDetailBody> {
                     ],
                   ),
                 ),
-              )
-            else
+              ),
+              if (ingredients.length > 5)
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _showAllIngredients = !_showAllIngredients;
+                    });
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8, bottom: 8),
+                    child: Text(
+                      _showAllIngredients
+                          ? 'See less ingredients'
+                          : 'See more ingredients',
+                      style: GoogleFonts.inter(
+                        fontSize: 13 * scale.clamp(0.85, 1.2),
+                        color: AppColors.darkGrey,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ),
+            ] else
               Text(
                 widget.item.description.isNotEmpty
                     ? widget.item.description
@@ -557,10 +580,15 @@ class _ProductImageSection extends ConsumerWidget {
                                     color: AppColors.neutralGrey,
                                   ),
                                 ))
-                          : Icon(
-                              Icons.image_outlined,
-                              size: 80 * s,
-                              color: AppColors.neutralGrey,
+                          : SizedBox(
+                              height: 180 * s,
+                              child: Center(
+                                child: Icon(
+                                  Icons.image_outlined,
+                                  size: 80 * s,
+                                  color: AppColors.neutralGrey,
+                                ),
+                              ),
                             ),
                     ),
                   ),
@@ -601,54 +629,3 @@ class _ProductImageSection extends ConsumerWidget {
 }
 
 
-// Chip widget for labels/certifications and allergens
-class _LabelChip extends StatelessWidget {
-  final String label;
-  final double scale;
-  final bool isAllergen;
-
-  const _LabelChip({
-    required this.label,
-    required this.scale,
-    required this.isAllergen,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final s = scale.clamp(0.85, 1.2);
-    final bgColor = isAllergen
-        ? const Color(0xFFFFF3E0)
-        : const Color(0xFFE8F5E9);
-    final textColor = isAllergen
-        ? const Color(0xFFE65100)
-        : const Color(0xFF2E7D32);
-    final icon = isAllergen ? Icons.warning_amber_rounded : Icons.verified_outlined;
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10 * s, vertical: 6 * s),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(20 * s),
-        border: Border.all(
-          color: textColor.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13 * s, color: textColor),
-          SizedBox(width: 5 * s),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 12 * s,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

@@ -237,7 +237,7 @@ class BarcodeScannerNotifier extends StateNotifier<BarcodeScannerState> {
           listId,
           barcode: product.id,
           productName: product.name,
-          productImageUrl: product.thumbnailAsset ?? '',
+          productImageUrl: product.thumbnailAsset,
           quantity: 1,
         );
         successCount++;
@@ -270,7 +270,7 @@ class BarcodeScannerNotifier extends StateNotifier<BarcodeScannerState> {
         await RecipeApiService.instance.addLinkedProduct(recipeId, {
           'barcode': product.id,
           'productName': product.name,
-          'productImageUrl': product.thumbnailAsset ?? '',
+          'productImageUrl': product.thumbnailAsset,
           'quantity': 1,
           'position': 1,
         });

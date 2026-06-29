@@ -195,4 +195,18 @@ class AuthApiService {
       throw handleError(e);
     }
   }
+
+  /// POST /auth/resend-verification
+  /// Resends the email verification OTP code.
+  Future<AuthResponse> resendVerification(String email) async {
+    try {
+      final response = await _dio.post(
+        '/auth/resend-verification',
+        data: {'email': email},
+      );
+      return AuthResponse.fromJson(response.data);
+    } catch (e) {
+      throw handleError(e);
+    }
+  }
 }

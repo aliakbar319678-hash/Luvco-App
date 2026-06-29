@@ -33,6 +33,7 @@ class SearchRecipeFilter {
 class SearchRecipeState {
   final String query;
   final bool isSearching;
+  final bool isFetching; // true while initial public recipes are loading
   final List<RecipeModel> results;
   final SearchRecipeFilter filter;
   final RecipeModel? selectedRecipe; // for quick-view card modal
@@ -42,6 +43,7 @@ class SearchRecipeState {
   const SearchRecipeState({
     this.query = '',
     this.isSearching = false,
+    this.isFetching = true,
     this.results = const [],
     this.filter = const SearchRecipeFilter(),
     this.selectedRecipe,
@@ -52,6 +54,7 @@ class SearchRecipeState {
   SearchRecipeState copyWith({
     String? query,
     bool? isSearching,
+    bool? isFetching,
     List<RecipeModel>? results,
     SearchRecipeFilter? filter,
     RecipeModel? selectedRecipe,
@@ -62,6 +65,7 @@ class SearchRecipeState {
   }) => SearchRecipeState(
     query: query ?? this.query,
     isSearching: isSearching ?? this.isSearching,
+    isFetching: isFetching ?? this.isFetching,
     results: results ?? this.results,
     filter: filter ?? this.filter,
     selectedRecipe: clearSelected
@@ -90,9 +94,11 @@ class SearchRecipeNotifier extends StateNotifier<SearchRecipeState> {
       _allRecipes = recipes;
       if (state.query.isNotEmpty) {
         _applySearchAndFilters(state.query, state.filter);
+      } else {
+        state = state.copyWith(isFetching: false);
       }
     } catch (e) {
-      // Keep _allRecipes empty or handle if needed
+      state = state.copyWith(isFetching: false);
     }
   }
 
@@ -157,6 +163,7 @@ class SearchRecipeNotifier extends StateNotifier<SearchRecipeState> {
     state = state.copyWith(
       query: query,
       isSearching: true,
+      isFetching: false,
       filter: filter,
       results: filtered,
     );

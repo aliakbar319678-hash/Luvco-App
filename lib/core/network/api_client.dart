@@ -28,9 +28,12 @@ class ApiClient {
         },
         onError: (DioException error, handler) async {
           if (error.response?.statusCode == 401) {
-            // Check if this error came from the refresh-token endpoint itself
-            if (error.requestOptions.path == '/auth/refresh-token') {
-              await TokenStorage.instance.clearTokens();
+            // Check if this error came from the refresh-token endpoint itself or during login
+            if (error.requestOptions.path == '/auth/refresh-token' || 
+                error.requestOptions.path == '/auth/login') {
+              if (error.requestOptions.path == '/auth/refresh-token') {
+                await TokenStorage.instance.clearTokens();
+              }
               return handler.next(error);
             }
 
