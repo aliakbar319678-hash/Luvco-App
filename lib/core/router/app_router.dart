@@ -40,22 +40,39 @@ import 'package:luvco_logo/models/product_model.dart';
 Page<void> _fadeSlide({
   required LocalKey key,
   required Widget child,
+  bool isTab = false,
 }) {
   return CustomTransitionPage<void>(
     key: key,
     child: child,
-    transitionDuration: const Duration(milliseconds: 220),
-    reverseTransitionDuration: const Duration(milliseconds: 180),
+    transitionDuration: Duration(milliseconds: isTab ? 200 : 350),
+    reverseTransitionDuration: Duration(milliseconds: isTab ? 150 : 250),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      // Fade + slight slide up — the most performant combo for mobile
-      return FadeTransition(
-        opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+      if (isTab) {
+        return FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+          child: child,
+        );
+      }
+      return SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(1.0, 0.0),
+          end: Offset.zero,
+        ).animate(
+          CurvedAnimation(
+            parent: animation,
+            curve: Curves.fastEaseInToSlowEaseOut,
+          ),
+        ),
         child: SlideTransition(
           position: Tween<Offset>(
-            begin: const Offset(0, 0.04), // barely 4% down → feels natural
-            end: Offset.zero,
+            begin: Offset.zero,
+            end: const Offset(-0.24, 0.0),
           ).animate(
-            CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            CurvedAnimation(
+              parent: secondaryAnimation,
+              curve: Curves.fastEaseInToSlowEaseOut,
+            ),
           ),
           child: child,
         ),
@@ -77,6 +94,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/',
         pageBuilder: (context, state) => _fadeSlide(
           key: state.pageKey,
+          isTab: true,
           child: const SplashScreen(),
         ),
       ),
@@ -180,6 +198,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/profile',
         pageBuilder: (context, state) => _fadeSlide(
           key: state.pageKey,
+          isTab: true,
           child: const UserProfileScreen(),
         ),
       ),
@@ -260,6 +279,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/home',
         pageBuilder: (context, state) => _fadeSlide(
           key: state.pageKey,
+          isTab: true,
           child: const UserDashboardScreen(),
         ),
       ),
