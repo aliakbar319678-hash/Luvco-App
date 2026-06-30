@@ -510,71 +510,81 @@ class _SearchResultsList extends StatelessWidget {
     return Column(
       children: results
           .map(
-            (product) => GestureDetector(
-              onTap: () => onProductTap(product),
-              behavior: HitTestBehavior.opaque,
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 2),
-                padding: EdgeInsets.symmetric(
-                  horizontal: size.width * 0.02,
-                  vertical: 12,
-                ),
-                decoration: const BoxDecoration(
-                  color: AppColors.pureWhite,
-                  border: Border(
-                    bottom: BorderSide(color: AppColors.clearGrey, width: 0.8),
+            (product) => RepaintBoundary(
+              child: GestureDetector(
+                onTap: () => onProductTap(product),
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 2),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: size.width * 0.02,
+                    vertical: 12,
                   ),
-                ),
-                child: Row(
-                  children: [
-                    // Product icon — nutila thumbnail (separate from large detail image)
-                    SizedBox(
-                      width: 36 * scale.clamp(0.85, 1.2),
-                      height: 36 * scale.clamp(0.85, 1.2),
-                      child: product.thumbnailAsset != null
-                          ? (product.thumbnailAsset!.startsWith('http')
-                              ? Image.network(
-                                  product.thumbnailAsset!,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (_, __, ___) => const Icon(
-                                    Icons.fastfood_outlined,
-                                    color: AppColors.neutralGrey,
-                                  ),
-                                )
-                              : Image.asset(
-                                  product.thumbnailAsset!,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (_, __, ___) => const Icon(
-                                    Icons.fastfood_outlined,
-                                    color: AppColors.neutralGrey,
-                                  ),
-                                ))
-                          : product.imageAsset != null
-                          ? (product.imageAsset!.startsWith('http')
-                              ? Image.network(
-                                  product.imageAsset!,
-                                  fit: BoxFit.contain,
-                                )
-                              : Image.asset(
-                                  product.imageAsset!,
-                                  fit: BoxFit.contain,
-                                ))
-                          : const Icon(
-                              Icons.fastfood_outlined,
-                              color: AppColors.neutralGrey,
-                            ),
+                  decoration: const BoxDecoration(
+                    color: AppColors.pureWhite,
+                    border: Border(
+                      bottom: BorderSide(color: AppColors.clearGrey, width: 0.8),
                     ),
-                    const SizedBox(width: 14),
-                    // Name
-                    Text(
-                      product.name,
-                      style: GoogleFonts.inter(
-                        fontSize: 14 * scale.clamp(0.85, 1.2),
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.black,
+                  ),
+                  child: Row(
+                    children: [
+                      // Product icon — nutila thumbnail (separate from large detail image)
+                      SizedBox(
+                        width: 36 * scale.clamp(0.85, 1.2),
+                        height: 36 * scale.clamp(0.85, 1.2),
+                        child: product.thumbnailAsset != null
+                            ? (product.thumbnailAsset!.startsWith('http')
+                                ? Image.network(
+                                    product.thumbnailAsset!,
+                                    fit: BoxFit.contain,
+                                    cacheWidth: 80,
+                                    cacheHeight: 80,
+                                    errorBuilder: (_, __, ___) => const Icon(
+                                      Icons.fastfood_outlined,
+                                      color: AppColors.neutralGrey,
+                                    ),
+                                  )
+                                : Image.asset(
+                                    product.thumbnailAsset!,
+                                    fit: BoxFit.contain,
+                                    cacheWidth: 80,
+                                    cacheHeight: 80,
+                                    errorBuilder: (_, __, ___) => const Icon(
+                                      Icons.fastfood_outlined,
+                                      color: AppColors.neutralGrey,
+                                    ),
+                                  ))
+                            : product.imageAsset != null
+                            ? (product.imageAsset!.startsWith('http')
+                                ? Image.network(
+                                    product.imageAsset!,
+                                    fit: BoxFit.contain,
+                                    cacheWidth: 80,
+                                    cacheHeight: 80,
+                                  )
+                                : Image.asset(
+                                    product.imageAsset!,
+                                    fit: BoxFit.contain,
+                                    cacheWidth: 80,
+                                    cacheHeight: 80,
+                                  ))
+                            : const Icon(
+                                Icons.fastfood_outlined,
+                                color: AppColors.neutralGrey,
+                              ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 14),
+                      // Name
+                      Text(
+                        product.name,
+                        style: GoogleFonts.inter(
+                          fontSize: 14 * scale.clamp(0.85, 1.2),
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.black,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

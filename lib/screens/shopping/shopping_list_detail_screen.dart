@@ -20,16 +20,17 @@ class ShoppingListDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final lists = ref.watch(shoppingListProvider);
-    final list = lists.firstWhere(
-      (l) => l.id == listId,
-      orElse: () => const ShoppingListModel(
-        id: '',
-        title: 'List Title',
-        description: 'Short description of the shopping list.',
-        itemCount: 0,
+    final list = ref.watch(shoppingListProvider.select(
+      (lists) => lists.firstWhere(
+        (l) => l.id == listId,
+        orElse: () => const ShoppingListModel(
+          id: '',
+          title: 'List Title',
+          description: 'Short description of the shopping list.',
+          itemCount: 0,
+        ),
       ),
-    );
+    ));
     final detailState = ref.watch(shoppingListDetailProvider(listId));
     final items = detailState.items;
 
@@ -577,90 +578,95 @@ class _ProductListItem extends StatelessWidget {
     final size = MediaQuery.sizeOf(context);
     final isChecked = item.isChecked;
 
-    return AnimatedOpacity(
-      opacity: isChecked ? 0.6 : 1.0,
-      duration: const Duration(milliseconds: 250),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 2),
-        padding: EdgeInsets.symmetric(
-          horizontal: size.width * 0.03,
-          vertical: 12,
-        ),
-        decoration: const BoxDecoration(
-          color: AppColors.pureWhite,
-          border: Border(
-            bottom: BorderSide(color: Color(0xFFF0F0F0), width: 1),
+    return RepaintBoundary(
+      child: AnimatedOpacity(
+        opacity: isChecked ? 0.6 : 1.0,
+        duration: const Duration(milliseconds: 250),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 2),
+          padding: EdgeInsets.symmetric(
+            horizontal: size.width * 0.03,
+            vertical: 12,
           ),
-        ),
-        child: Row(
-          children: [
-            // ── Checkbox ──
-            GestureDetector(
-              onTap: onToggle,
-              behavior: HitTestBehavior.opaque,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 26 * scale.clamp(0.85, 1.2),
-                height: 26 * scale.clamp(0.85, 1.2),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isChecked ? AppColors.royalPurple : Colors.transparent,
-                  border: Border.all(
-                    color: isChecked
-                        ? AppColors.royalPurple
-                        : AppColors.neutralGrey,
-                    width: 2,
+          decoration: const BoxDecoration(
+            color: AppColors.pureWhite,
+            border: Border(
+              bottom: BorderSide(color: Color(0xFFF0F0F0), width: 1),
+            ),
+          ),
+          child: Row(
+            children: [
+              // ── Checkbox ──
+              GestureDetector(
+                onTap: onToggle,
+                behavior: HitTestBehavior.opaque,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 26 * scale.clamp(0.85, 1.2),
+                  height: 26 * scale.clamp(0.85, 1.2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isChecked ? AppColors.royalPurple : Colors.transparent,
+                    border: Border.all(
+                      color: isChecked
+                          ? AppColors.royalPurple
+                          : AppColors.neutralGrey,
+                      width: 2,
+                    ),
+                  ),
+                  child: isChecked
+                      ? Icon(
+                          Icons.check,
+                          color: AppColors.pureWhite,
+                          size: 14 * scale.clamp(0.85, 1.2),
+                        )
+                      : null,
+                ),
+              ),
+  
+              SizedBox(width: size.width * 0.03),
+  
+              // ── Thumbnail ──
+              GestureDetector(
+                onTap: onTap,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    width: 56 * scale.clamp(0.85, 1.1),
+                    height: 56 * scale.clamp(0.85, 1.1),
+                    color: AppColors.softGrey,
+                    child: item.thumbnailAsset != null
+                        ? (item.thumbnailAsset!.startsWith('http')
+                            ? Image.network(
+                                item.thumbnailAsset!,
+                                fit: BoxFit.cover,
+                                cacheWidth: 120,
+                                cacheHeight: 120,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.image_outlined,
+                                  color: AppColors.neutralGrey,
+                                  size: 24,
+                                ),
+                              )
+                            : Image.asset(
+                                item.thumbnailAsset!,
+                                fit: BoxFit.cover,
+                                cacheWidth: 120,
+                                cacheHeight: 120,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.image_outlined,
+                                  color: AppColors.neutralGrey,
+                                  size: 24,
+                                ),
+                              ))
+                        : const Icon(
+                            Icons.image_outlined,
+                            color: AppColors.neutralGrey,
+                            size: 24,
+                          ),
                   ),
                 ),
-                child: isChecked
-                    ? Icon(
-                        Icons.check,
-                        color: AppColors.pureWhite,
-                        size: 14 * scale.clamp(0.85, 1.2),
-                      )
-                    : null,
               ),
-            ),
-
-            SizedBox(width: size.width * 0.03),
-
-            // ── Thumbnail ──
-            GestureDetector(
-              onTap: onTap,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  width: 56 * scale.clamp(0.85, 1.1),
-                  height: 56 * scale.clamp(0.85, 1.1),
-                  color: AppColors.softGrey,
-                  child: item.thumbnailAsset != null
-                      ? (item.thumbnailAsset!.startsWith('http')
-                          ? Image.network(
-                              item.thumbnailAsset!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const Icon(
-                                Icons.image_outlined,
-                                color: AppColors.neutralGrey,
-                                size: 24,
-                              ),
-                            )
-                          : Image.asset(
-                              item.thumbnailAsset!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const Icon(
-                                Icons.image_outlined,
-                                color: AppColors.neutralGrey,
-                                size: 24,
-                              ),
-                            ))
-                      : const Icon(
-                          Icons.image_outlined,
-                          color: AppColors.neutralGrey,
-                          size: 24,
-                        ),
-                ),
-              ),
-            ),
 
             SizedBox(width: size.width * 0.03),
 
@@ -725,8 +731,9 @@ class _ProductListItem extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 // ─────────────────────────────────────────────────────────────────

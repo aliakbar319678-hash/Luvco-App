@@ -565,6 +565,7 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
   }
 
   void _doAddProduct() {
+    FocusScope.of(context).unfocus();
     ref
         .read(shoppingListDetailProvider(widget.listId).notifier)
         .addItem(widget.data.item);
@@ -601,12 +602,13 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: GestureDetector(
-        onTap: _openDetails,
-        behavior: HitTestBehavior.opaque,
-        child: SizedBox(
-          width: 344 * widget.scale,
+    return RepaintBoundary(
+      child: Center(
+        child: GestureDetector(
+          onTap: _openDetails,
+          behavior: HitTestBehavior.opaque,
+          child: SizedBox(
+            width: 344 * widget.scale,
           height: 122 * widget.scale,
           child: Stack(
           children: [
@@ -736,6 +738,8 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
                                   ? Image.network(
                                       widget.data.item.thumbnailAsset!,
                                       fit: BoxFit.cover,
+                                      cacheWidth: 120,
+                                      cacheHeight: 120,
                                       errorBuilder: (_, __, ___) => const Icon(
                                         Icons.image,
                                         color: AppColors.neutralGrey,
@@ -744,6 +748,8 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
                                   : Image.asset(
                                       widget.data.item.thumbnailAsset!,
                                       fit: BoxFit.cover,
+                                      cacheWidth: 120,
+                                      cacheHeight: 120,
                                       errorBuilder: (_, __, ___) => const Icon(
                                         Icons.image,
                                         color: AppColors.neutralGrey,
@@ -855,6 +861,7 @@ class _ProductSearchCardState extends ConsumerState<_ProductSearchCard> {
             ),
           ],
         ),
+      ),
       ),
       ),
     );

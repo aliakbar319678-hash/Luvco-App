@@ -1344,6 +1344,7 @@ class _AddToListModalState extends ConsumerState<_AddToListModal> {
     }
     if (!mounted) return;
     setState(() => _isSaving = false);
+    FocusScope.of(context).unfocus();
     Navigator.pop(context);
     if (successCount > 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1446,6 +1447,7 @@ class _AddToRecipeModalState extends ConsumerState<_AddToRecipeModal> {
     }
     if (!mounted) return;
     setState(() => _isSaving = false);
+    FocusScope.of(context).unfocus();
     Navigator.pop(context);
     if (successCount > 0) {
       ScaffoldMessenger.of(context).showSnackBar(

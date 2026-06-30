@@ -45,6 +45,7 @@ class _ProductDetailSheetState extends ConsumerState<_ProductDetailSheet> {
   bool _showAllIngredients = false;
 
   void _handleAddProduct() {
+    FocusScope.of(context).unfocus();
     widget.onAddProduct();
     setState(() => _productAdded = true);
     // Auto-hide success toast after 1.8s, then pop sheet
