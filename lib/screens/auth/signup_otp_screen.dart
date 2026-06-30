@@ -25,33 +25,18 @@ class _SignupOtpScreenState extends ConsumerState<SignupOtpScreen> {
     (_) => TextEditingController(),
   );
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
-  Timer? _timer;
-  int _cooldown = 60;
+  final GlobalKey<_CooldownAndResendSectionState> _cooldownKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
-    _startCooldown();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(signupOtpProvider.notifier).reset();
     });
   }
 
-  void _startCooldown() {
-    _timer?.cancel();
-    setState(() => _cooldown = 60);
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_cooldown > 0) {
-        setState(() => _cooldown--);
-      } else {
-        timer.cancel();
-      }
-    });
-  }
-
   @override
   void dispose() {
-    _timer?.cancel();
     for (final c in _controllers) {
       c.dispose();
     }
@@ -70,7 +55,7 @@ class _SignupOtpScreenState extends ConsumerState<SignupOtpScreen> {
     }
     ref.read(signupOtpProvider.notifier).reset();
     _focusNodes[0].requestFocus();
-    _startCooldown();
+    _cooldownKey.currentState?._startCooldown();
     
     // Call the backend to resend/regenerate the signup verification OTP
     ref.read(signupOtpProvider.notifier).resendCode(email: widget.email);
@@ -147,12 +132,10 @@ class _SignupOtpScreenState extends ConsumerState<SignupOtpScreen> {
                     if (state.hasError)
                       AuthErrorRow(message: state.errorMessage, centered: true)
                     else
-                      _ArrivalHint(cooldown: _cooldown),
-
-                    SizedBox(height: size.height * 0.024),
-
-                    // ── Resend link ──
-                    _ResendRow(canResend: _cooldown == 0, onResend: _clearAll),
+                      _CooldownAndResendSection(
+                        key: _cooldownKey,
+                        onResend: _clearAll,
+                      ),
 
                     SizedBox(height: size.height * 0.036),
 
@@ -171,6 +154,59 @@ class _SignupOtpScreenState extends ConsumerState<SignupOtpScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _CooldownAndResendSection extends StatefulWidget {
+  final VoidCallback onResend;
+
+  const _CooldownAndResendSection({super.key, required this.onResend});
+
+  @override
+  State<_CooldownAndResendSection> createState() => _CooldownAndResendSectionState();
+}
+
+class _CooldownAndResendSectionState extends State<_CooldownAndResendSection> {
+  Timer? _timer;
+  int _cooldown = 60;
+
+  @override
+  void initState() {
+    super.initState();
+    _startCooldown();
+  }
+
+  void _startCooldown() {
+    _timer?.cancel();
+    setState(() => _cooldown = 60);
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_cooldown > 0) {
+        if (mounted) setState(() => _cooldown--);
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _ArrivalHint(cooldown: _cooldown),
+        const SizedBox(height: 14),
+        _ResendRow(
+          canResend: _cooldown == 0,
+          onResend: widget.onResend,
+        ),
+      ],
     );
   }
 }

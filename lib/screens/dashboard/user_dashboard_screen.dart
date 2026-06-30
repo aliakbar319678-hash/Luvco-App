@@ -17,7 +17,7 @@ class UserDashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dashboardState = ref.watch(dashboardProvider);
+    final isLoading = ref.watch(dashboardProvider.select((s) => s.isLoading));
 
     return Scaffold(
       backgroundColor: AppColors.pageBackground,
@@ -38,7 +38,7 @@ class UserDashboardScreen extends ConsumerWidget {
                     child: _GreetingHeader(),
                   ),
 
-                  if (dashboardState.isLoading)
+                  if (isLoading)
                     const SliverToBoxAdapter(
                       child: LinearProgressIndicator(
                         backgroundColor: Colors.transparent,
@@ -457,24 +457,26 @@ class _RecommendedProductsRow extends ConsumerWidget {
       );
     }
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: context.s(20)),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: products.asMap().entries.map((entry) {
-            final index = entry.key;
-            final item = entry.value;
-            return Container(
-              width: context.s(164),
-              margin: EdgeInsets.only(
-                right: index < products.length - 1 ? context.s(12) : 0,
-              ),
-              child: _RecommendedProductCard(item: item),
-            );
-          }).toList(),
+    return RepaintBoundary(
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: context.s(20)),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: products.asMap().entries.map((entry) {
+              final index = entry.key;
+              final item = entry.value;
+              return Container(
+                width: context.s(164),
+                margin: EdgeInsets.only(
+                  right: index < products.length - 1 ? context.s(12) : 0,
+                ),
+                child: _RecommendedProductCard(item: item),
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
@@ -695,24 +697,26 @@ class _RecentRecipesRow extends ConsumerWidget {
     // Fixed height replaces IntrinsicHeight.
     // IntrinsicHeight triggers a 2-pass layout (O(2N) instead of O(N)).
     // Recipe cards have a predictable structure so a clamped height is safe.
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: context.s(20)),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: recipes.asMap().entries.map((entry) {
-            final index = entry.key;
-            final recipe = entry.value;
-            return Container(
-              width: context.s(164),
-              margin: EdgeInsets.only(
-                right: index < recipes.length - 1 ? context.s(12) : 0,
-              ),
-              child: _RecentRecipeCard(recipe: recipe),
-            );
-          }).toList(),
+    return RepaintBoundary(
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: context.s(20)),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: recipes.asMap().entries.map((entry) {
+              final index = entry.key;
+              final recipe = entry.value;
+              return Container(
+                width: context.s(164),
+                margin: EdgeInsets.only(
+                  right: index < recipes.length - 1 ? context.s(12) : 0,
+                ),
+                child: _RecentRecipeCard(recipe: recipe),
+              );
+            }).toList(),
+          ),
         ),
       ),
     );

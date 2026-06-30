@@ -26,7 +26,6 @@ class LoginScreen extends ConsumerWidget {
     final loginState = ref.watch(loginProvider);
     final isLoading = loginState.status == LoginStatus.loading;
     final hasError = loginState.hasError;
-    final obscure = ref.watch(obscurePasswordProvider);
 
     // Navigate to onboarding on success
     ref.listen<LoginState>(loginProvider, (previous, next) {
@@ -86,41 +85,48 @@ class LoginScreen extends ConsumerWidget {
 
                     SizedBox(height: size.height * 0.022),
 
-                    // ── Password field ──
-                    LuvcoTextField(
-                      label: 'Password',
-                      hintText: 'Password',
-                      obscureText: obscure,
-                      keyboardType: TextInputType.visiblePassword,
-                      hasError: hasError,
-                      onChanged: (v) {
-                        ref.read(passwordProvider.notifier).state = v;
-                        // start typing detection
-                        ref.read(passwordTypingProvider.notifier).state = true;
-                        // cancel previous timer
-                        ref.read(passwordTypingTimerProvider.notifier).state?.cancel();
-                        // debounce - after 800ms set typing false
-                        ref.read(passwordTypingTimerProvider.notifier).state = Timer(const Duration(milliseconds: 800), () {
-                          ref.read(passwordTypingProvider.notifier).state = false;
-                        });
-                        if (hasError) ref.read(loginProvider.notifier).reset();
+                    // ── Password field (wrapped in Consumer to avoid rebuilding the whole screen on toggle/typing status) ──
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final obscure = ref.watch(obscurePasswordProvider);
+                        final isTyping = ref.watch(passwordTypingProvider);
+                        
+                        return LuvcoTextField(
+                          label: 'Password',
+                          hintText: 'Password',
+                          obscureText: obscure,
+                          keyboardType: TextInputType.visiblePassword,
+                          hasError: hasError,
+                          onChanged: (v) {
+                            ref.read(passwordProvider.notifier).state = v;
+                            // start typing detection
+                            ref.read(passwordTypingProvider.notifier).state = true;
+                            // cancel previous timer
+                            ref.read(passwordTypingTimerProvider.notifier).state?.cancel();
+                            // debounce - after 800ms set typing false
+                            ref.read(passwordTypingTimerProvider.notifier).state = Timer(const Duration(milliseconds: 800), () {
+                              ref.read(passwordTypingProvider.notifier).state = false;
+                            });
+                            if (hasError) ref.read(loginProvider.notifier).reset();
+                          },
+                          suffixIcon: GestureDetector(
+                            onTap: () =>
+                                ref.read(obscurePasswordProvider.notifier).state =
+                                    !obscure,
+                            child: Icon(
+                              obscure
+                                   ? Icons.visibility_off_outlined
+                                   : Icons.visibility_outlined,
+                              color: hasError
+                                   ? AppColors.errorRed
+                                   : isTyping
+                                       ? Colors.black
+                                       : AppColors.neutralGrey,
+                              size: 20,
+                            ),
+                          ),
+                        );
                       },
-                      suffixIcon: GestureDetector(
-                        onTap: () =>
-                            ref.read(obscurePasswordProvider.notifier).state =
-                                !obscure,
-                        child: Icon(
-                          obscure
-                               ? Icons.visibility_off_outlined
-                               : Icons.visibility_outlined,
-                          color: hasError
-                               ? AppColors.errorRed
-                               : ref.watch(passwordTypingProvider)
-                                   ? Colors.black
-                                   : AppColors.neutralGrey,
-                          size: 20,
-                        ),
-                      ),
                     ),
 
                     const SizedBox(height: 8),

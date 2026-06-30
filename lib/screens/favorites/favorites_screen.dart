@@ -15,7 +15,6 @@ import '../../providers/shopping_list_detail_provider.dart';
 import '../../providers/shopping_list_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import '../shopping/product_detail_sheet.dart';
-import '../../models/product_model.dart';
 
 // ── Provider to load user preferences for favorites filtering ─────────
 final _favoritePrefsProvider = FutureProvider<Map<String, List<String>>>((ref) async {
@@ -601,44 +600,49 @@ class _FavoriteCardState extends ConsumerState<_FavoriteCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            // Thumbnail
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                width: 60 * widget.scale.clamp(0.85, 1.1),
-                height: 60 * widget.scale.clamp(0.85, 1.1),
-                color: AppColors.softGrey,
-                child: widget.item.thumbnailAsset != null
-                    ? (widget.item.thumbnailAsset!.startsWith('http')
-                        ? Image.network(
-                            widget.item.thumbnailAsset!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Icon(
-                              Icons.image_outlined,
-                              color: AppColors.neutralGrey,
-                            ),
-                          )
-                        : Image.asset(
-                            widget.item.thumbnailAsset!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Icon(
-                              Icons.image_outlined,
-                              color: AppColors.neutralGrey,
-                            ),
-                          ))
-                    : const Icon(Icons.image_outlined, color: AppColors.neutralGrey),
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.pureWhite,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              // Thumbnail
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  width: 60 * widget.scale.clamp(0.85, 1.1),
+                  height: 60 * widget.scale.clamp(0.85, 1.1),
+                  color: AppColors.softGrey,
+                  child: widget.item.thumbnailAsset != null
+                      ? (widget.item.thumbnailAsset!.startsWith('http')
+                          ? Image.network(
+                              widget.item.thumbnailAsset!,
+                              fit: BoxFit.cover,
+                              cacheWidth: 120,
+                              cacheHeight: 120,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.image_outlined,
+                                color: AppColors.neutralGrey,
+                              ),
+                            )
+                          : Image.asset(
+                              widget.item.thumbnailAsset!,
+                              fit: BoxFit.cover,
+                              cacheWidth: 120,
+                              cacheHeight: 120,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.image_outlined,
+                                color: AppColors.neutralGrey,
+                              ),
+                            ))
+                      : const Icon(Icons.image_outlined, color: AppColors.neutralGrey),
+                ),
               ),
-            ),
             const SizedBox(width: 14),
             // Info
             Expanded(
@@ -698,8 +702,9 @@ class _FavoriteCardState extends ConsumerState<_FavoriteCard> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _MenuItem extends StatelessWidget {

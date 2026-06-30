@@ -99,17 +99,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   Widget _buildLogo(Size size) {
     return AnimatedBuilder(
       animation: _controller,
-      builder: (context, _) {
+      child: LuvcoLogo(
+        width: size.width * 0.63,
+        color: LuvcoLogoColor.white,
+      ),
+      builder: (context, child) {
         return Opacity(
           opacity: _logoOpacity.value,
           child: Transform.translate(
             offset: Offset(0, _logoSlideY.value),
             child: Transform.scale(
               scale: _logoScale.value,
-              child: LuvcoLogo(
-                width: size.width * 0.63,
-                color: LuvcoLogoColor.white,
-              ),
+              child: child,
             ),
           ),
         );

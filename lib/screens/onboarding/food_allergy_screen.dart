@@ -15,13 +15,9 @@ class FoodAllergyScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.sizeOf(context);
-    final onboardingState = ref.watch(onboardingProvider);
     final onboardingOptionsAsync = ref.watch(onboardingOptionsProvider);
-    final selectedAllergies = onboardingState.selectedAllergies;
-    final manualAllergies = onboardingState.manualAllergies;
-    final hasSelection =
-        selectedAllergies.isNotEmpty || manualAllergies.isNotEmpty;
-    final showManualInput = ref.watch(showManualInputProvider);
+    final hasSelection = ref.watch(onboardingProvider.select((s) =>
+        s.selectedAllergies.isNotEmpty || s.manualAllergies.isNotEmpty));
     final scale = size.width / 390;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -91,111 +87,125 @@ class FoodAllergyScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // ── Allergy chips ──
-                            PreferenceChipWrap(
-                              options: allergyOptions,
-                              selected: selectedAllergies,
-                              onTap: (a) => ref
-                                  .read(onboardingProvider.notifier)
-                                  .toggleAllergy(a),
+                            // ── Allergy chips (wrapped in Consumer to avoid screen rebuild) ──
+                            Consumer(
+                              builder: (context, ref, child) {
+                                final selectedAllergies = ref.watch(onboardingProvider.select((s) => s.selectedAllergies));
+                                return PreferenceChipWrap(
+                                  options: allergyOptions,
+                                  selected: selectedAllergies,
+                                  onTap: (a) => ref
+                                      .read(onboardingProvider.notifier)
+                                      .toggleAllergy(a),
+                                );
+                              },
                             ),
 
                             SizedBox(height: size.height * 0.020),
 
-                            // ── "Add More Manually" trigger (only shown if input is hidden) ──
-                            if (!showManualInput)
-                              GestureDetector(
-                                onTap: () =>
-                                    ref
-                                            .read(
-                                              showManualInputProvider.notifier,
-                                            )
-                                            .state =
-                                        true,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      width: 22,
-                                      height: 22,
-                                      decoration: const BoxDecoration(
-                                        color: AppColors.black,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.add,
-                                        color: Colors.white,
-                                        size: 14,
-                                      ),
+                            // ── Manual input section (wrapped in Consumer) ──
+                            Consumer(
+                              builder: (context, ref, child) {
+                                final showManualInput = ref.watch(showManualInputProvider);
+                                if (!showManualInput) {
+                                  return GestureDetector(
+                                    onTap: () =>
+                                        ref
+                                                .read(
+                                                  showManualInputProvider.notifier,
+                                                )
+                                                .state =
+                                            true,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          width: 22,
+                                          height: 22,
+                                          decoration: const BoxDecoration(
+                                            color: AppColors.black,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.add,
+                                            color: Colors.white,
+                                            size: 14,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Add More Manually',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 14 * scale.clamp(0.85, 1.3),
+                                            fontWeight: FontWeight.w500,
+                                            color: AppColors.darkGrey,
+                                            decoration: TextDecoration.underline,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Add More Manually',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 14 * scale.clamp(0.85, 1.3),
-                                        fontWeight: FontWeight.w500,
-                                        color: AppColors.darkGrey,
-                                        decoration: TextDecoration.underline,
+                                  );
+                                }
+
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(height: size.height * 0.016),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          'Other',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13 * scale.clamp(0.85, 1.3),
+                                            fontWeight: FontWeight.w500,
+                                            color: AppColors.black,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    // ── Manual entry field ──
+                                    _ManualAllergyField(
+                                      scale: scale,
+                                      onAdd: (val) {
+                                        ref
+                                            .read(onboardingProvider.notifier)
+                                            .addManualAllergy(val);
+                                        ref
+                                                .read(
+                                                  showManualInputProvider.notifier,
+                                                )
+                                                .state =
+                                            false;
+                                      },
+                                    ),
+                                    SizedBox(height: size.height * 0.020),
+                                  ],
+                                );
+                              },
+                            ),
+
+                            // ── Already added manual allergies (wrapped in Consumer) ──
+                            Consumer(
+                              builder: (context, ref, child) {
+                                final manualAllergies = ref.watch(onboardingProvider.select((s) => s.manualAllergies));
+                                if (manualAllergies.isEmpty) return const SizedBox.shrink();
+                                
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    ...manualAllergies.map(
+                                      (item) => _ManualAllergyTag(
+                                        label: item,
+                                        onRemove: () => ref
+                                            .read(onboardingProvider.notifier)
+                                            .removeManualAllergy(item),
                                       ),
                                     ),
                                   ],
-                                ),
-                              ),
-
-                            // ── Manual input section (shown after tap) ──
-                            if (showManualInput) ...[
-                              SizedBox(height: size.height * 0.016),
-
-                              Row(
-                                children: [
-                                  Text(
-                                    'Other',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 13 * scale.clamp(0.85, 1.3),
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.black,
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 8),
-
-                              // ── Manual entry field ──
-                              _ManualAllergyField(
-                                scale: scale,
-                                onAdd: (val) {
-                                  ref
-                                      .read(onboardingProvider.notifier)
-                                      .addManualAllergy(val);
-                                  ref
-                                          .read(
-                                            showManualInputProvider.notifier,
-                                          )
-                                          .state =
-                                      false;
-                                },
-                              ),
-
-                              SizedBox(height: size.height * 0.020),
-                            ],
-
-                            // ── Already added manual allergies ──
-                            if (manualAllergies.isNotEmpty) ...[
-                              SizedBox(
-                                height: showManualInput
-                                    ? 0
-                                    : size.height * 0.016,
-                              ),
-                              ...manualAllergies.map(
-                                (item) => _ManualAllergyTag(
-                                  label: item,
-                                  onRemove: () => ref
-                                      .read(onboardingProvider.notifier)
-                                      .removeManualAllergy(item),
-                                ),
-                              ),
-                            ],
+                                );
+                              },
+                            ),
 
                             SizedBox(height: size.height * 0.020),
                           ],

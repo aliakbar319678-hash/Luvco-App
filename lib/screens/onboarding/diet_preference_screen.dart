@@ -15,10 +15,8 @@ class DietPreferenceScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.sizeOf(context);
-    final onboardingState = ref.watch(onboardingProvider);
     final onboardingOptionsAsync = ref.watch(onboardingOptionsProvider);
-    final selectedDiets = onboardingState.selectedDiets;
-    final hasSelection = selectedDiets.isNotEmpty;
+    final hasSelection = ref.watch(onboardingProvider.select((s) => s.selectedDiets.isNotEmpty));
     final scale = size.width / 390;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -88,13 +86,18 @@ class DietPreferenceScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // ── Diet chips ──
-                            PreferenceChipWrap(
-                              options: dietOptions,
-                              selected: selectedDiets,
-                              onTap: (d) => ref
-                                  .read(onboardingProvider.notifier)
-                                  .toggleDiet(d),
+                            // ── Diet chips (wrapped in Consumer to prevent full screen rebuild on toggle) ──
+                            Consumer(
+                              builder: (context, ref, child) {
+                                final selectedDiets = ref.watch(onboardingProvider.select((s) => s.selectedDiets));
+                                return PreferenceChipWrap(
+                                  options: dietOptions,
+                                  selected: selectedDiets,
+                                  onTap: (d) => ref
+                                      .read(onboardingProvider.notifier)
+                                      .toggleDiet(d),
+                                );
+                              },
                             ),
 
                             SizedBox(height: size.height * 0.020),

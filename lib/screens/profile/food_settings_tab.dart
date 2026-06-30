@@ -14,11 +14,6 @@ class FoodSettingsTab extends ConsumerStatefulWidget {
 }
 
 class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
-  final Map<String, bool> _expandedSections = {
-    'diet': false,
-    'challenges': false,
-  };
-
   void _openModifySheet() {
     showFoodSettingsModifySheet(
       context,
@@ -110,11 +105,6 @@ class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
                   title: 'Diet Choices',
                   // Figma: fork & knife / restaurant icon
                   icon: Icons.restaurant,
-                  isExpanded: _expandedSections['diet'] ?? false,
-                  onToggle: () => setState(
-                    () => _expandedSections['diet'] =
-                        !(_expandedSections['diet'] ?? false),
-                  ),
                   scale: scale,
                   content: Column(
                     children: [
@@ -154,11 +144,6 @@ class _FoodSettingsTabState extends ConsumerState<FoodSettingsTab> {
                   title: 'Food Challenges & Allergies',
                   // Figma: crossed-out food container icon
                   icon: Icons.no_food_outlined,
-                  isExpanded: _expandedSections['challenges'] ?? false,
-                  onToggle: () => setState(
-                    () => _expandedSections['challenges'] =
-                        !(_expandedSections['challenges'] ?? false),
-                  ),
                   scale: scale,
                   content: Column(
                     children: [
@@ -245,22 +230,25 @@ class _SettingsListItem extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 // Accordion section container — matches Figma card style exactly
 // ─────────────────────────────────────────────────────────────────
-class _SettingsAccordionSection extends StatelessWidget {
+class _SettingsAccordionSection extends StatefulWidget {
   final String title;
   final IconData icon;
-  final bool isExpanded;
-  final VoidCallback onToggle;
   final double scale;
   final Widget content;
 
   const _SettingsAccordionSection({
     required this.title,
     required this.icon,
-    required this.isExpanded,
-    required this.onToggle,
     required this.scale,
     required this.content,
   });
+
+  @override
+  State<_SettingsAccordionSection> createState() => _SettingsAccordionSectionState();
+}
+
+class _SettingsAccordionSectionState extends State<_SettingsAccordionSection> {
+  bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -268,20 +256,20 @@ class _SettingsAccordionSection extends StatelessWidget {
       children: [
         // ── Header row: icon + title + +/× toggle ──
         GestureDetector(
-          onTap: onToggle,
+          onTap: () => setState(() => _isExpanded = !_isExpanded),
           behavior: HitTestBehavior.opaque,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
             child: Row(
               children: [
                 // Section icon (restaurant or no_food matching Figma)
-                Icon(icon, color: AppColors.black, size: 22),
+                Icon(widget.icon, color: AppColors.black, size: 22),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    title,
+                    widget.title,
                     style: GoogleFonts.inter(
-                      fontSize: 15 * scale.clamp(0.85, 1.2),
+                      fontSize: 15 * widget.scale.clamp(0.85, 1.2),
                       fontWeight: FontWeight.w600,
                       color: AppColors.black,
                     ),
@@ -289,7 +277,7 @@ class _SettingsAccordionSection extends StatelessWidget {
                 ),
                 // Toggle icon: + when collapsed, × when expanded (matches Figma)
                 Icon(
-                  isExpanded ? Icons.close : Icons.add,
+                  _isExpanded ? Icons.close : Icons.add,
                   color: AppColors.black,
                   size: 22,
                 ),
@@ -299,7 +287,7 @@ class _SettingsAccordionSection extends StatelessWidget {
         ),
 
         // ── Expanded content with divider ──
-        if (isExpanded) ...[
+        if (_isExpanded) ...[
           const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
           Padding(
             padding: const EdgeInsets.only(
@@ -308,7 +296,7 @@ class _SettingsAccordionSection extends StatelessWidget {
               top: 4,
               bottom: 16,
             ),
-            child: SizedBox(width: double.infinity, child: content),
+            child: SizedBox(width: double.infinity, child: widget.content),
           ),
         ],
       ],

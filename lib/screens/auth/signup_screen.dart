@@ -55,9 +55,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final size = MediaQuery.sizeOf(context);
 
     final signupState = ref.watch(signupProvider);
-    final obscure = ref.watch(signupObscurePasswordProvider);
-    final termsAccepted = ref.watch(signupTermsAcceptedProvider);
-    final privacyAccepted = ref.watch(signupPrivacyAcceptedProvider);
 
     final isLoading = signupState.status == SignupStatus.loading;
     final passwordHasError = signupState.fieldHasError(
@@ -174,58 +171,50 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                     SizedBox(height: size.height * 0.020),
 
-                    // ── Password ──
-                    LuvcoTextField(
-                      controller: _passwordController,
-                      label: 'Password*',
-                      hintText: 'Enter your password',
-                      obscureText: obscure,
-                      keyboardType: TextInputType.visiblePassword,
-                      hasError: passwordHasError,
-                      onChanged: (v) {
-                        ref.read(signupPasswordProvider.notifier).state = v;
-                        clearIfError();
-                        // Start typing detection
-                        ref.read(signupPasswordTypingProvider.notifier).state =
-                            true;
-                        // Cancel previous timer if any
-                        ref
-                            .read(signupPasswordTypingTimerProvider.notifier)
-                            .state
-                            ?.cancel();
-                        // Start new debounce timer (800ms)
-                        ref
-                            .read(signupPasswordTypingTimerProvider.notifier)
-                            .state = Timer(
-                          const Duration(milliseconds: 800),
-                          () {
-                            ref
-                                    .read(signupPasswordTypingProvider.notifier)
-                                    .state =
-                                false;
+                    // ── Password (wrapped in Consumer to avoid rebuilding the whole screen on toggle/typing status) ──
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final obscure = ref.watch(signupObscurePasswordProvider);
+                        final isTyping = ref.watch(signupPasswordTypingProvider);
+                        
+                        return LuvcoTextField(
+                          controller: _passwordController,
+                          label: 'Password*',
+                          hintText: 'Enter your password',
+                          obscureText: obscure,
+                          keyboardType: TextInputType.visiblePassword,
+                          hasError: passwordHasError,
+                          onChanged: (v) {
+                            ref.read(signupPasswordProvider.notifier).state = v;
+                            clearIfError();
+                            // Start typing detection
+                            ref.read(signupPasswordTypingProvider.notifier).state = true;
+                            // Cancel previous timer if any
+                            ref.read(signupPasswordTypingTimerProvider.notifier).state?.cancel();
+                            // Start new debounce timer (800ms)
+                            ref.read(signupPasswordTypingTimerProvider.notifier).state = Timer(
+                              const Duration(milliseconds: 800),
+                              () {
+                                ref.read(signupPasswordTypingProvider.notifier).state = false;
+                              },
+                            );
                           },
+                          suffixIcon: GestureDetector(
+                            onTap: () =>
+                                ref.read(signupObscurePasswordProvider.notifier).state =
+                                    !obscure,
+                            child: Icon(
+                              obscure
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              color: passwordHasError
+                                  ? AppColors.errorRed
+                                  : (isTyping ? Colors.black : AppColors.neutralGrey),
+                              size: 20,
+                            ),
+                          ),
                         );
                       },
-                      suffixIcon: GestureDetector(
-                        onTap: () =>
-                            ref
-                                    .read(
-                                      signupObscurePasswordProvider.notifier,
-                                    )
-                                    .state =
-                                !obscure,
-                        child: Icon(
-                          obscure
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          color: passwordHasError
-                              ? AppColors.errorRed
-                              : (ref.watch(signupPasswordTypingProvider)
-                                    ? Colors.black
-                                    : AppColors.neutralGrey),
-                          size: 20,
-                        ),
-                      ),
                     ),
 
                     // ── Password hint row — turns red on error (Figma 0.3.3) ──
@@ -238,16 +227,21 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                     SizedBox(height: size.height * 0.026),
 
-                    // ── Terms checkbox ──
-                    _CheckboxRow(
-                      value: termsAccepted,
-                      label: 'Accept Terms And Conditions',
-                      onChanged: (v) =>
-                          ref.read(signupTermsAcceptedProvider.notifier).state =
-                              v ?? false,
-                      onLabelTap: () {
-                        FocusScope.of(context).unfocus();
-                        context.push('/terms');
+                    // ── Terms checkbox (wrapped in Consumer) ──
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final termsAccepted = ref.watch(signupTermsAcceptedProvider);
+                        return _CheckboxRow(
+                          value: termsAccepted,
+                          label: 'Accept Terms And Conditions',
+                          onChanged: (v) =>
+                              ref.read(signupTermsAcceptedProvider.notifier).state =
+                                  v ?? false,
+                          onLabelTap: () {
+                            FocusScope.of(context).unfocus();
+                            context.push('/terms');
+                          },
+                        );
                       },
                     ),
                     if (fieldError(SignupErrorField.terms))
@@ -258,18 +252,21 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                     const SizedBox(height: 12),
 
-                    // ── Privacy Policy checkbox ──
-                    _CheckboxRow(
-                      value: privacyAccepted,
-                      label: 'Privacy Policy',
-                      onChanged: (v) =>
-                          ref
-                                  .read(signupPrivacyAcceptedProvider.notifier)
-                                  .state =
-                              v ?? false,
-                      onLabelTap: () {
-                        FocusScope.of(context).unfocus();
-                        context.push('/privacy');
+                    // ── Privacy Policy checkbox (wrapped in Consumer) ──
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final privacyAccepted = ref.watch(signupPrivacyAcceptedProvider);
+                        return _CheckboxRow(
+                          value: privacyAccepted,
+                          label: 'Privacy Policy',
+                          onChanged: (v) =>
+                              ref.read(signupPrivacyAcceptedProvider.notifier).state =
+                                  v ?? false,
+                          onLabelTap: () {
+                            FocusScope.of(context).unfocus();
+                            context.push('/privacy');
+                          },
+                        );
                       },
                     ),
                     if (fieldError(SignupErrorField.privacy))
