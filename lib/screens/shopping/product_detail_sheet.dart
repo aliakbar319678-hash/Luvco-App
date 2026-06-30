@@ -564,6 +564,8 @@ class _ProductImageSection extends ConsumerWidget {
                                   imageUrl,
                                   height: 180 * s,
                                   fit: BoxFit.contain,
+                                  cacheWidth: 360,
+                                  cacheHeight: 360,
                                   errorBuilder: (_, __, ___) => Icon(
                                     Icons.image_outlined,
                                     size: 80 * s,
@@ -574,6 +576,8 @@ class _ProductImageSection extends ConsumerWidget {
                                   imageUrl,
                                   height: 180 * s,
                                   fit: BoxFit.contain,
+                                  cacheWidth: 360,
+                                  cacheHeight: 360,
                                   errorBuilder: (_, __, ___) => Icon(
                                     Icons.image_outlined,
                                     size: 80 * s,
