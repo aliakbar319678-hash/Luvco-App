@@ -25,9 +25,22 @@ class SearchProductScreen extends ConsumerStatefulWidget {
 
 class _SearchProductScreenState extends ConsumerState<SearchProductScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    // Request focus only once on initial load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _searchFocusNode.requestFocus();
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _searchFocusNode.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -73,6 +86,7 @@ class _SearchProductScreenState extends ConsumerState<SearchProductScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: _SearchBar(
                 controller: _searchController,
+                focusNode: _searchFocusNode,
                 onChanged: _onSearchChanged,
                 scale: scale,
               ),
@@ -221,11 +235,13 @@ class _SearchTopBar extends StatelessWidget {
 // ── Search Bar ──
 class _SearchBar extends StatelessWidget {
   final TextEditingController controller;
+  final FocusNode focusNode;
   final ValueChanged<String> onChanged;
   final double scale;
 
   const _SearchBar({
     required this.controller,
+    required this.focusNode,
     required this.onChanged,
     required this.scale,
   });
@@ -243,8 +259,8 @@ class _SearchBar extends StatelessWidget {
       ),
       child: TextField(
         controller: controller,
+        focusNode: focusNode,
         onChanged: onChanged,
-        autofocus: true,
         style: GoogleFonts.inter(fontSize: 14 * scale, color: AppColors.black),
         decoration: InputDecoration(
           hintText: 'Product Name',
