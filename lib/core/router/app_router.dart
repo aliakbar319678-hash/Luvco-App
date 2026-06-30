@@ -88,7 +88,7 @@ Page<void> _fadeSlide({
 // ─────────────────────────────────────────────────────────────────────────────
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/login',
     routes: [
       GoRoute(
         path: '/',
