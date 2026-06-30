@@ -53,8 +53,7 @@ class _SearchProductScreenState extends ConsumerState<SearchProductScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final scale = size.width / 390;
-    final lists = ref.watch(shoppingListProvider);
-    final listTitle = lists
+    final listTitle = ref.watch(shoppingListProvider.select((lists) => lists
         .firstWhere(
           (l) => l.id == widget.listId,
           orElse: () => const ShoppingListModel(
@@ -64,7 +63,7 @@ class _SearchProductScreenState extends ConsumerState<SearchProductScreen> {
             itemCount: 0,
           ),
         )
-        .title;
+        .title));
 
     final searchState = ref.watch(searchProductProvider);
     final isSearching = searchState.query.isNotEmpty;
