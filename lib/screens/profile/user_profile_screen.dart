@@ -55,10 +55,11 @@ class UserProfileScreen extends ConsumerWidget {
                   child: RefreshIndicator(
                     color: AppColors.vibrantPink,
                     onRefresh: () async {
-                      ref.invalidate(shoppingListProvider);
-                      ref.invalidate(myRecipesProvider);
-                      ref.invalidate(savedRecipesProvider);
-                      await Future.delayed(const Duration(milliseconds: 500));
+                      await Future.wait([
+                        ref.read(shoppingListProvider.notifier).loadLists(),
+                        ref.read(myRecipesProvider.notifier).loadRecipes(),
+                        ref.read(savedRecipesProvider.notifier).loadRecipes(),
+                      ]);
                     },
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(
