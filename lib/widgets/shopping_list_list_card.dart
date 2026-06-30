@@ -94,7 +94,7 @@ class _ShoppingListListCardState extends State<ShoppingListListCard> {
                             fontWeight: FontWeight.w700,
                             color: AppColors.vibrantPink,
                           ),
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),

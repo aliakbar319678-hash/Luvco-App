@@ -125,7 +125,7 @@ class _ShoppingListGridCardState extends State<ShoppingListGridCard> {
                           fontWeight: FontWeight.w700,
                           color: AppColors.vibrantPink,
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
