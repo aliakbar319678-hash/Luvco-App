@@ -1271,6 +1271,8 @@ class _ImageWithBadges extends StatelessWidget {
                                   product.imageAsset!,
                                   height: 180 * scale,
                                   fit: BoxFit.contain,
+                                  cacheWidth: 360,
+                                  cacheHeight: 360,
                                   errorBuilder: (_, __, ___) => SizedBox(
                                     height: 180 * scale,
                                     child: Center(
@@ -1286,6 +1288,8 @@ class _ImageWithBadges extends StatelessWidget {
                                   product.imageAsset!,
                                   height: 180 * scale,
                                   fit: BoxFit.contain,
+                                  cacheWidth: 360,
+                                  cacheHeight: 360,
                                   errorBuilder: (_, __, ___) => SizedBox(
                                     height: 180 * scale,
                                     child: Center(

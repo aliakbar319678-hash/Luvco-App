@@ -1404,6 +1404,8 @@ class _SuccessToast extends StatelessWidget {
                   'assets/icons/circle_check.png',
                   width: 56,
                   height: 56,
+                  cacheWidth: 120,
+                  cacheHeight: 120,
                 ),
                 const SizedBox(height: 14),
                 Text(
@@ -1587,14 +1589,15 @@ class _SelectedListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.inputBorder, width: 0.5),
-      ),
+    return RepaintBoundary(
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: AppColors.pureWhite,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.inputBorder, width: 0.5),
+        ),
       child: Row(
         children: [
           Icon(
@@ -1623,6 +1626,7 @@ class _SelectedListItem extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }
@@ -1643,14 +1647,15 @@ class _CustomListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.inputBorder, width: 0.5),
-      ),
+    return RepaintBoundary(
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: AppColors.pureWhite,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.inputBorder, width: 0.5),
+        ),
       child: Row(
         children: [
           Icon(
@@ -1688,6 +1693,7 @@ class _CustomListItem extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }
@@ -1725,6 +1731,8 @@ class _SearchResultItem extends StatelessWidget {
                     width: 20 * scale.clamp(0.85, 1.2),
                     height: 20 * scale.clamp(0.85, 1.2),
                     color: AppColors.darkGrey,
+                    cacheWidth: 40,
+                    cacheHeight: 40,
                   ),
             const SizedBox(width: 12),
             Expanded(

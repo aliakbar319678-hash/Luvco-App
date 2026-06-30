@@ -326,6 +326,8 @@ class _ProfileAvatar extends StatelessWidget {
                         fit: BoxFit.cover,
                         width: avatarSize,
                         height: avatarSize,
+                        cacheWidth: 200,
+                        cacheHeight: 200,
                       )
                     : (profilePicUrl != null && profilePicUrl!.isNotEmpty)
                         ? Image.network(
@@ -333,11 +335,15 @@ class _ProfileAvatar extends StatelessWidget {
                             fit: BoxFit.cover,
                             width: avatarSize,
                             height: avatarSize,
+                            cacheWidth: 200,
+                            cacheHeight: 200,
                             errorBuilder: (_, __, ___) => Image.asset(
                               'assets/images/profile_pic.png',
                               fit: BoxFit.cover,
                               width: avatarSize,
                               height: avatarSize,
+                              cacheWidth: 200,
+                              cacheHeight: 200,
                             ),
                           )
                         : Image.asset(
@@ -345,6 +351,8 @@ class _ProfileAvatar extends StatelessWidget {
                             fit: BoxFit.cover,
                             width: avatarSize,
                             height: avatarSize,
+                            cacheWidth: 200,
+                            cacheHeight: 200,
                             errorBuilder: (_, __, ___) => Icon(
                               Icons.person_rounded,
                               size: avatarSize * 0.55,

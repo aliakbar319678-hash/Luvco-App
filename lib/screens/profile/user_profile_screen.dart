@@ -26,8 +26,6 @@ class UserProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.sizeOf(context);
     final padding = MediaQuery.paddingOf(context);
-    final lists = ref.watch(shoppingListProvider);
-    final viewMode = ref.watch(viewModeProvider);
     final activeTab = ref.watch(profileTabProvider);
     final scale = size.width / 390;
 
@@ -88,8 +86,6 @@ class UserProfileScreen extends ConsumerWidget {
                         // ── Tab content ──
                         if (activeTab == ProfileTab.shoppingLists)
                           _ShoppingListsTab(
-                            lists: lists,
-                            viewMode: viewMode,
                             size: size,
                             scale: scale,
                           )
@@ -290,19 +286,27 @@ class _ProfileInfo extends ConsumerWidget {
                 ? Image.file(
                     accountState.profileImage!,
                     fit: BoxFit.cover,
+                    cacheWidth: 200,
+                    cacheHeight: 200,
                   )
                 : (profilePicUrl != null && profilePicUrl.isNotEmpty)
                     ? Image.network(
                         profilePicUrl,
                         fit: BoxFit.cover,
+                        cacheWidth: 200,
+                        cacheHeight: 200,
                         errorBuilder: (_, __, ___) => Image.asset(
                           'assets/images/profile_pic.png',
                           fit: BoxFit.cover,
+                          cacheWidth: 200,
+                          cacheHeight: 200,
                         ),
                       )
                     : Image.asset(
                         'assets/images/profile_pic.png',
                         fit: BoxFit.cover,
+                        cacheWidth: 200,
+                        cacheHeight: 200,
                       ),
           ),
         ),
@@ -448,21 +452,18 @@ class _TabDivider extends StatelessWidget {
 // Shopping Lists Tab content
 // ─────────────────────────────────────────────────────────────────
 class _ShoppingListsTab extends ConsumerWidget {
-  final List<ShoppingListModel> lists;
-  final ShoppingListViewMode viewMode;
   final Size size;
   final double scale;
-  // Uses ref directly for view mode toggles — no prop-drilling needed
 
   const _ShoppingListsTab({
-    required this.lists,
-    required this.viewMode,
     required this.size,
     required this.scale,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final lists = ref.watch(shoppingListProvider);
+    final viewMode = ref.watch(viewModeProvider);
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: size.width * 0.058),
       child: Column(
