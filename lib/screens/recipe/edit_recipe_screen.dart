@@ -848,10 +848,11 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 20 * scale),
-      child: Stack(
-        children: [
+    return RepaintBoundary(
+      child: Container(
+        margin: EdgeInsets.only(bottom: 20 * scale),
+        child: Stack(
+          children: [
           // ── Background Tabs ──
           SizedBox(
             height: 48 * scale,
@@ -952,10 +953,17 @@ class _ProductCard extends StatelessWidget {
                   height: 64 * scale,
                   child: product.imageAsset != null
                       ? (product.imageAsset!.startsWith('assets/')
-                          ? Image.asset(product.imageAsset!, fit: BoxFit.contain)
+                          ? Image.asset(
+                              product.imageAsset!,
+                              fit: BoxFit.contain,
+                              cacheWidth: 120,
+                              cacheHeight: 120,
+                            )
                           : Image.network(
                               product.imageAsset!,
                               fit: BoxFit.contain,
+                              cacheWidth: 120,
+                              cacheHeight: 120,
                               errorBuilder: (_, __, ___) => Icon(
                                 Icons.image_outlined,
                                 size: 32 * scale,
@@ -1016,6 +1024,7 @@ class _ProductCard extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

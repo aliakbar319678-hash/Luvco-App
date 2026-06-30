@@ -514,45 +514,50 @@ class _RecipeCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.pureWhite,
-          borderRadius: BorderRadius.circular(12 * scale),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        padding: EdgeInsets.all(8 * scale),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Thumbnail
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8 * scale),
-              child: SizedBox(
-                width: 80 * scale,
-                height: 80 * scale,
-                child: recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty
-                    ? (recipe.imageUrl!.startsWith('http')
-                        ? Image.network(
-                            recipe.imageUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
-                          )
-                        : Image.asset(
-                            recipe.imageUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
-                          ))
-                    : Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
+    return RepaintBoundary(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.pureWhite,
+            borderRadius: BorderRadius.circular(12 * scale),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
               ),
-            ),
+            ],
+          ),
+          padding: EdgeInsets.all(8 * scale),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Thumbnail
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8 * scale),
+                child: SizedBox(
+                  width: 80 * scale,
+                  height: 80 * scale,
+                  child: recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty
+                      ? (recipe.imageUrl!.startsWith('http')
+                          ? Image.network(
+                              recipe.imageUrl!,
+                              fit: BoxFit.cover,
+                              cacheWidth: 120,
+                              cacheHeight: 120,
+                              errorBuilder: (_, __, ___) => Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
+                            )
+                          : Image.asset(
+                              recipe.imageUrl!,
+                              fit: BoxFit.cover,
+                              cacheWidth: 120,
+                              cacheHeight: 120,
+                              errorBuilder: (_, __, ___) => Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
+                            ))
+                      : Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
+                ),
+              ),
             SizedBox(width: 10 * scale),
 
             // Content
@@ -671,6 +676,7 @@ class _RecipeCard extends ConsumerWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

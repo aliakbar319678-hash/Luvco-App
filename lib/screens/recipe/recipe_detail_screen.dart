@@ -1074,128 +1074,129 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 20 * scale),
-      child: Stack(
-        children: [
-          // ── Background Tabs ──
-          SizedBox(
-            height: 48 * scale,
-            width: double.infinity,
-            child: Row(
-              children: [
-                // Sustainability tab (left)
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: _sustainabilityColor,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16 * scale),
-                        topRight: Radius.circular(16 * scale),
-                      ),
-                    ),
-                    padding: EdgeInsets.only(top: 8 * scale),
-                    alignment: Alignment.topCenter,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.eco_outlined,
-                          size: 16,
-                          color: Colors.white,
+    return RepaintBoundary(
+      child: Container(
+        margin: EdgeInsets.only(bottom: 20 * scale),
+        child: Stack(
+          children: [
+            // ── Background Tabs ──
+            SizedBox(
+              height: 48 * scale,
+              width: double.infinity,
+              child: Row(
+                children: [
+                  // Sustainability tab (left)
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: _sustainabilityColor,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(16 * scale),
+                          topRight: Radius.circular(16 * scale),
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          product.sustainabilityLevel,
-                          style: GoogleFonts.inter(
-                            fontSize: 13 * scale.clamp(0.85, 1.2),
-                            fontWeight: FontWeight.w600,
+                      ),
+                      padding: EdgeInsets.only(top: 8 * scale),
+                      alignment: Alignment.topCenter,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.eco_outlined,
+                            size: 16,
                             color: Colors.white,
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Safety tab (right)
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: _safetyColor,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16 * scale),
-                        topRight: Radius.circular(16 * scale),
+                          const SizedBox(width: 6),
+                          Text(
+                            product.sustainabilityLevel,
+                            style: GoogleFonts.inter(
+                              fontSize: 13 * scale.clamp(0.85, 1.2),
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    padding: EdgeInsets.only(top: 8 * scale),
-                    alignment: Alignment.topCenter,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.flag_outlined,
-                          size: 16,
-                          color: Colors.white,
+                  ),
+                  // Safety tab (right)
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: _safetyColor,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(16 * scale),
+                          topRight: Radius.circular(16 * scale),
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          product.safetyLevel,
-                          style: GoogleFonts.inter(
-                            fontSize: 13 * scale.clamp(0.85, 1.2),
-                            fontWeight: FontWeight.w600,
+                      ),
+                      padding: EdgeInsets.only(top: 8 * scale),
+                      alignment: Alignment.topCenter,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.flag_outlined,
+                            size: 16,
                             color: Colors.white,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Text(
+                            product.safetyLevel,
+                            style: GoogleFonts.inter(
+                              fontSize: 13 * scale.clamp(0.85, 1.2),
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ── Product Info Area (White Foreground Card) ──
-          GestureDetector(
-            onTap: () {
-              final productModel = ProductModel(
-                id: product.barcode ?? product.id,
-                name: product.name,
-                description: product.otherData,
-                thumbnailAsset: product.productImageUrl,
-                imageAsset: product.productImageUrl,
-                sustainabilityLabel: product.sustainabilityLevel,
-                safetyLabel: product.safetyLevel,
-                isSustainable: product.sustainabilityLevel.toLowerCase() == 'eco-friendly' ||
-                    product.sustainabilityLevel.toLowerCase() == 'sustainable',
-              );
-              context.push('/product-detail', extra: productModel);
-            },
-            child: Container(
-              margin: EdgeInsets.only(top: 32 * scale),
-              decoration: BoxDecoration(
-                color: AppColors.pureWhite,
-                borderRadius: BorderRadius.circular(24 * scale),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 15,
-                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              padding: EdgeInsets.symmetric(
-                vertical: 20 * scale,
-                horizontal: 16 * scale,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Product Image
-                  SizedBox(
-                    width: 64 * scale,
-                    height: 64 * scale,
-                    child: _buildProductImage(product.imageAsset, scale),
-                  ),
+            ),
+  
+            // ── Product Info Area (White Foreground Card) ──
+            GestureDetector(
+              onTap: () {
+                final productModel = ProductModel(
+                  id: product.barcode ?? product.id,
+                  name: product.name,
+                  description: product.otherData,
+                  thumbnailAsset: product.productImageUrl,
+                  imageAsset: product.productImageUrl,
+                  sustainabilityLabel: product.sustainabilityLevel,
+                  safetyLabel: product.safetyLevel,
+                  isSustainable: product.sustainabilityLevel.toLowerCase() == 'eco-friendly' ||
+                      product.sustainabilityLevel.toLowerCase() == 'sustainable',
+                );
+                context.push('/product-detail', extra: productModel);
+              },
+              child: Container(
+                margin: EdgeInsets.only(top: 32 * scale),
+                decoration: BoxDecoration(
+                  color: AppColors.pureWhite,
+                  borderRadius: BorderRadius.circular(24 * scale),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 15,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                padding: EdgeInsets.symmetric(
+                  vertical: 20 * scale,
+                  horizontal: 16 * scale,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Product Image
+                    SizedBox(
+                      width: 64 * scale,
+                      height: 64 * scale,
+                      child: _buildProductImage(product.imageAsset, scale),
+                    ),
                   SizedBox(width: 16 * scale),
                   // Text Info
                   Expanded(
@@ -1247,6 +1248,7 @@ class _ProductCard extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }
@@ -1477,6 +1479,8 @@ Widget _buildProductImage(String? path, double scale) {
     return Image.network(
       resolvedPath,
       fit: BoxFit.contain,
+      cacheWidth: 120,
+      cacheHeight: 120,
       errorBuilder: (_, __, ___) => Icon(
         Icons.image_outlined,
         size: 32 * scale,
@@ -1487,6 +1491,8 @@ Widget _buildProductImage(String? path, double scale) {
     return Image.asset(
       resolvedPath ?? path,
       fit: BoxFit.contain,
+      cacheWidth: 120,
+      cacheHeight: 120,
       errorBuilder: (_, __, ___) => Icon(
         Icons.image_outlined,
         size: 32 * scale,

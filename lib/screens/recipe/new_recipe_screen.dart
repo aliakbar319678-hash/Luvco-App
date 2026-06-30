@@ -1088,65 +1088,71 @@ class _ProductSearchResultItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imageUrl = product.imageAsset ?? product.thumbnailAsset;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.pureWhite,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.softGrey,
-                borderRadius: BorderRadius.circular(8),
+    return RepaintBoundary(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.pureWhite,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.softGrey,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: imageUrl != null && imageUrl.isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: (imageUrl.startsWith('http') || imageUrl.startsWith('https'))
+                            ? Image.network(
+                                imageUrl,
+                                fit: BoxFit.contain,
+                                cacheWidth: 80,
+                                cacheHeight: 80,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.fastfood_outlined,
+                                  size: 18,
+                                  color: AppColors.neutralGrey,
+                                ),
+                              )
+                            : Image.asset(
+                                imageUrl,
+                                fit: BoxFit.contain,
+                                cacheWidth: 80,
+                                cacheHeight: 80,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.fastfood_outlined,
+                                  size: 18,
+                                  color: AppColors.neutralGrey,
+                                ),
+                              ),
+                      )
+                    : const Icon(
+                        Icons.fastfood_outlined,
+                        size: 18,
+                        color: AppColors.neutralGrey,
+                      ),
               ),
-              child: imageUrl != null && imageUrl.isNotEmpty
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: (imageUrl.startsWith('http') || imageUrl.startsWith('https'))
-                          ? Image.network(
-                              imageUrl,
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) => const Icon(
-                                Icons.fastfood_outlined,
-                                size: 18,
-                                color: AppColors.neutralGrey,
-                              ),
-                            )
-                          : Image.asset(
-                              imageUrl,
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) => const Icon(
-                                Icons.fastfood_outlined,
-                                size: 18,
-                                color: AppColors.neutralGrey,
-                              ),
-                            ),
-                    )
-                  : const Icon(
-                      Icons.fastfood_outlined,
-                      size: 18,
-                      color: AppColors.neutralGrey,
-                    ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                product.name,
-                style: GoogleFonts.inter(
-                  fontSize: 14 * scale.clamp(0.85, 1.2),
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.black,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  product.name,
+                  style: GoogleFonts.inter(
+                    fontSize: 14 * scale.clamp(0.85, 1.2),
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.black,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1229,158 +1235,167 @@ class _AddedIngredientRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Stack(
-        children: [
-          // Background Tabs
-          SizedBox(
-            height: 44,
-            child: Row(
-              children: [
-                // Red tab (Unsustainable)
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.only(top: 8),
-                    alignment: Alignment.topCenter,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFED3232),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(14),
-                        topRight: Radius.circular(14),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.eco_outlined, size: 14, color: Colors.white),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Unsustainable',
-                          style: GoogleFonts.inter(
-                            fontSize: 12 * scale.clamp(0.85, 1.2),
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Green tab (Safe)
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.only(top: 8),
-                    alignment: Alignment.topCenter,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF4CAF50),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(14),
-                        topRight: Radius.circular(14),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.flag_outlined, size: 14, color: Colors.white),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Safe',
-                          style: GoogleFonts.inter(
-                            fontSize: 12 * scale.clamp(0.85, 1.2),
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // White Foreground Card
-          Container(
-            margin: const EdgeInsets.only(top: 32),
-            decoration: BoxDecoration(
-              color: AppColors.pureWhite,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
+    return RepaintBoundary(
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        child: Stack(
+          children: [
+            // Background Tabs
+            SizedBox(
+              height: 44,
               child: Row(
                 children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: AppColors.softGrey,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: ingredient.imageUrl != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: ingredient.imageUrl!.startsWith('assets/')
-                                ? Image.asset(ingredient.imageUrl!, fit: BoxFit.contain)
-                                : Image.network(
-                                    ingredient.imageUrl!,
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (_, __, ___) => const Icon(
-                                      Icons.fastfood_outlined,
-                                      size: 20,
-                                      color: AppColors.neutralGrey,
-                                    ),
-                                  ),
-                          )
-                        : const Icon(
-                            Icons.fastfood_outlined,
-                            size: 20,
-                            color: AppColors.neutralGrey,
-                          ),
-                  ),
-                  const SizedBox(width: 12),
+                  // Red tab (Unsustainable)
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          ingredient.name,
-                          style: GoogleFonts.inter(
-                            fontSize: 13 * scale.clamp(0.85, 1.2),
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.black,
-                          ),
+                    child: Container(
+                      padding: const EdgeInsets.only(top: 8),
+                      alignment: Alignment.topCenter,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFED3232),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(14),
+                          topRight: Radius.circular(14),
                         ),
-                        Text(
-                          ingredient.otherData,
-                          style: GoogleFonts.inter(
-                            fontSize: 11 * scale.clamp(0.85, 1.2),
-                            color: AppColors.neutralGrey,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.eco_outlined, size: 14, color: Colors.white),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Unsustainable',
+                            style: GoogleFonts.inter(
+                              fontSize: 12 * scale.clamp(0.85, 1.2),
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: onDelete,
-                    child: const Icon(
-                      Icons.delete_outline_rounded,
-                      size: 20,
-                      color: AppColors.black,
+                  // Green tab (Safe)
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.only(top: 8),
+                      alignment: Alignment.topCenter,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF4CAF50),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(14),
+                          topRight: Radius.circular(14),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.flag_outlined, size: 14, color: Colors.white),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Safe',
+                            style: GoogleFonts.inter(
+                              fontSize: 12 * scale.clamp(0.85, 1.2),
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+            // White Foreground Card
+            Container(
+              margin: const EdgeInsets.only(top: 32),
+              decoration: BoxDecoration(
+                color: AppColors.pureWhite,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.softGrey,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: ingredient.imageUrl != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: ingredient.imageUrl!.startsWith('assets/')
+                                  ? Image.asset(
+                                      ingredient.imageUrl!,
+                                      fit: BoxFit.contain,
+                                      cacheWidth: 80,
+                                      cacheHeight: 80,
+                                    )
+                                  : Image.network(
+                                      ingredient.imageUrl!,
+                                      fit: BoxFit.contain,
+                                      cacheWidth: 80,
+                                      cacheHeight: 80,
+                                      errorBuilder: (_, __, ___) => const Icon(
+                                        Icons.fastfood_outlined,
+                                        size: 20,
+                                        color: AppColors.neutralGrey,
+                                      ),
+                                    ),
+                            )
+                          : const Icon(
+                              Icons.fastfood_outlined,
+                              size: 20,
+                              color: AppColors.neutralGrey,
+                            ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            ingredient.name,
+                            style: GoogleFonts.inter(
+                              fontSize: 13 * scale.clamp(0.85, 1.2),
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.black,
+                            ),
+                          ),
+                          Text(
+                            ingredient.otherData,
+                            style: GoogleFonts.inter(
+                              fontSize: 11 * scale.clamp(0.85, 1.2),
+                              color: AppColors.neutralGrey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: onDelete,
+                      child: const Icon(
+                        Icons.delete_outline_rounded,
+                        size: 20,
+                        color: AppColors.black,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1631,6 +1646,8 @@ class _ProductDetailOverlay extends StatelessWidget {
                                             ? Image.network(
                                                 imageUrl,
                                                 fit: BoxFit.contain,
+                                                cacheWidth: 300,
+                                                cacheHeight: 300,
                                                 errorBuilder: (_, __, ___) => const Icon(
                                                   Icons.fastfood_outlined,
                                                   size: 70,
@@ -1640,6 +1657,8 @@ class _ProductDetailOverlay extends StatelessWidget {
                                             : Image.asset(
                                                 imageUrl,
                                                 fit: BoxFit.contain,
+                                                cacheWidth: 300,
+                                                cacheHeight: 300,
                                                 errorBuilder: (_, __, ___) => const Icon(
                                                   Icons.fastfood_outlined,
                                                   size: 70,
