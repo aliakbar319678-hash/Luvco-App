@@ -139,7 +139,20 @@ class NewShoppingListScreen extends ConsumerWidget {
                           )
                         // ── Empty state ──
                         else
-                          _EmptyProductState(scale: scale, size: size),
+                          _EmptyProductState(
+                            scale: scale,
+                            size: size,
+                            onTap: state.canCreate && !state.isCreating
+                                ? () => _handleCreateList(context, ref, notifier)
+                                : () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Please enter a list name first.'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  },
+                          ),
 
                         const SizedBox(height: 40),
 
@@ -823,8 +836,13 @@ class _AddedProductCard extends StatelessWidget {
 class _EmptyProductState extends StatelessWidget {
   final double scale;
   final Size size;
+  final VoidCallback onTap;
 
-  const _EmptyProductState({required this.scale, required this.size});
+  const _EmptyProductState({
+    required this.scale,
+    required this.size,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -849,7 +867,7 @@ class _EmptyProductState extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Text(
-              'Yo can add items later',
+              'You can add items later',
               style: GoogleFonts.inter(
                 fontSize: 15 * scale.clamp(0.85, 1.2),
                 fontWeight: FontWeight.w700,
@@ -857,8 +875,13 @@ class _EmptyProductState extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            GestureDetector(
-              onTap: () {}, // user can tap search bar above instead
+            TextButton(
+              onPressed: onTap,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               child: Text(
                 'Create And Add Items Later',
                 style: GoogleFonts.inter(
