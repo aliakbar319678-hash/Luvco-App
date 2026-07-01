@@ -19,6 +19,7 @@ import '../../widgets/bottom_nav_bar.dart';
 import '../../widgets/luvco_button.dart';
 import '../../widgets/preference_chip.dart';
 import '../../widgets/step_progress_bar.dart';
+import '../../core/network/api_client.dart';
 
 // ═══════════════════════════════════════════════════════════════════
 // NewRecipeScreen — 3-step recipe creation flow
@@ -1112,38 +1113,46 @@ class _ProductSearchResultItem extends StatelessWidget {
                   color: AppColors.softGrey,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: imageUrl != null && imageUrl.isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: (imageUrl.startsWith('http') || imageUrl.startsWith('https'))
-                            ? Image.network(
-                                imageUrl,
-                                fit: BoxFit.contain,
-                                cacheWidth: 80,
-                                cacheHeight: 80,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.fastfood_outlined,
-                                  size: 18,
-                                  color: AppColors.neutralGrey,
-                                ),
-                              )
-                            : Image.asset(
-                                imageUrl,
-                                fit: BoxFit.contain,
-                                cacheWidth: 80,
-                                cacheHeight: 80,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.fastfood_outlined,
-                                  size: 18,
-                                  color: AppColors.neutralGrey,
-                                ),
-                              ),
-                      )
-                    : const Icon(
+                child: Builder(builder: (context) {
+                  final resolvedUrl = ApiClient.instance.resolveImageUrl(imageUrl);
+                  if (resolvedUrl.isEmpty) {
+                    return const Icon(
+                      Icons.fastfood_outlined,
+                      size: 18,
+                      color: AppColors.neutralGrey,
+                    );
+                  }
+                  if (resolvedUrl.startsWith('http')) {
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        resolvedUrl,
+                        fit: BoxFit.contain,
+                        cacheWidth: 80,
+                        cacheHeight: 80,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.fastfood_outlined,
+                          size: 18,
+                          color: AppColors.neutralGrey,
+                        ),
+                      ),
+                    );
+                  }
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.asset(
+                      resolvedUrl,
+                      fit: BoxFit.contain,
+                      cacheWidth: 80,
+                      cacheHeight: 80,
+                      errorBuilder: (_, __, ___) => const Icon(
                         Icons.fastfood_outlined,
                         size: 18,
                         color: AppColors.neutralGrey,
                       ),
+                    ),
+                  );
+                }),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1336,33 +1345,41 @@ class _AddedIngredientRow extends StatelessWidget {
                         color: AppColors.softGrey,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: ingredient.imageUrl != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: ingredient.imageUrl!.startsWith('assets/')
-                                  ? Image.asset(
-                                      ingredient.imageUrl!,
-                                      fit: BoxFit.contain,
-                                      cacheWidth: 80,
-                                      cacheHeight: 80,
-                                    )
-                                  : Image.network(
-                                      ingredient.imageUrl!,
-                                      fit: BoxFit.contain,
-                                      cacheWidth: 80,
-                                      cacheHeight: 80,
-                                      errorBuilder: (_, __, ___) => const Icon(
-                                        Icons.fastfood_outlined,
-                                        size: 20,
-                                        color: AppColors.neutralGrey,
-                                      ),
-                                    ),
-                            )
-                          : const Icon(
-                              Icons.fastfood_outlined,
-                              size: 20,
-                              color: AppColors.neutralGrey,
+                      child: Builder(builder: (context) {
+                        final resolvedUrl = ApiClient.instance.resolveImageUrl(ingredient.imageUrl);
+                        if (resolvedUrl.isEmpty) {
+                          return const Icon(
+                            Icons.fastfood_outlined,
+                            size: 20,
+                            color: AppColors.neutralGrey,
+                          );
+                        }
+                        if (resolvedUrl.startsWith('http')) {
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              resolvedUrl,
+                              fit: BoxFit.contain,
+                              cacheWidth: 80,
+                              cacheHeight: 80,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.fastfood_outlined,
+                                size: 20,
+                                color: AppColors.neutralGrey,
+                              ),
                             ),
+                          );
+                        }
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.asset(
+                            resolvedUrl,
+                            fit: BoxFit.contain,
+                            cacheWidth: 80,
+                            cacheHeight: 80,
+                          ),
+                        );
+                      }),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -1646,35 +1663,40 @@ class _ProductDetailOverlay extends StatelessWidget {
                                   SizedBox(
                                     height: 190 * scale.clamp(0.85, 1.2),
                                     width: double.infinity,
-                                    child: imageUrl != null && imageUrl.isNotEmpty
-                                        ? (imageUrl.startsWith('http') || imageUrl.startsWith('https')
-                                            ? Image.network(
-                                                imageUrl,
-                                                fit: BoxFit.contain,
-                                                cacheWidth: 300,
-                                                cacheHeight: 300,
-                                                errorBuilder: (_, __, ___) => const Icon(
-                                                  Icons.fastfood_outlined,
-                                                  size: 70,
-                                                  color: AppColors.clearGrey,
-                                                ),
-                                              )
-                                            : Image.asset(
-                                                imageUrl,
-                                                fit: BoxFit.contain,
-                                                cacheWidth: 300,
-                                                cacheHeight: 300,
-                                                errorBuilder: (_, __, ___) => const Icon(
-                                                  Icons.fastfood_outlined,
-                                                  size: 70,
-                                                  color: AppColors.clearGrey,
-                                                ),
-                                              ))
-                                        : const Icon(
+                                    child: Builder(builder: (context) {
+                                      final resolvedUrl = ApiClient.instance.resolveImageUrl(imageUrl);
+                                      if (resolvedUrl.isEmpty) {
+                                        return const Icon(
+                                          Icons.fastfood_outlined,
+                                          size: 70,
+                                          color: AppColors.clearGrey,
+                                        );
+                                      }
+                                      if (resolvedUrl.startsWith('http')) {
+                                        return Image.network(
+                                          resolvedUrl,
+                                          fit: BoxFit.contain,
+                                          cacheWidth: 300,
+                                          cacheHeight: 300,
+                                          errorBuilder: (_, __, ___) => const Icon(
                                             Icons.fastfood_outlined,
                                             size: 70,
                                             color: AppColors.clearGrey,
                                           ),
+                                        );
+                                      }
+                                      return Image.asset(
+                                        resolvedUrl,
+                                        fit: BoxFit.contain,
+                                        cacheWidth: 300,
+                                        cacheHeight: 300,
+                                        errorBuilder: (_, __, ___) => const Icon(
+                                          Icons.fastfood_outlined,
+                                          size: 70,
+                                          color: AppColors.clearGrey,
+                                        ),
+                                      );
+                                    }),
                                   ),
                                   const Positioned(
                                     top: -4,

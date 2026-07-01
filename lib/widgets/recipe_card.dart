@@ -52,13 +52,9 @@ class RecipeGridCard extends StatelessWidget {
                     aspectRatio: 1.1,
                     child: Builder(builder: (context) {
                       final url = recipe.imageUrl;
-                      if (url == null || url.isEmpty) {
+                      final resolvedUrl = ApiClient.instance.resolveImageUrl(url);
+                      if (resolvedUrl.isEmpty) {
                         return Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover);
-                      }
-                      
-                      String resolvedUrl = url;
-                      if (url.startsWith('/uploads')) {
-                        resolvedUrl = '${ApiClient.instance.hostUrl}$url';
                       }
 
                       if (resolvedUrl.startsWith('http')) {
@@ -69,7 +65,7 @@ class RecipeGridCard extends StatelessWidget {
                         );
                       }
                       
-                      return Image.asset(url, fit: BoxFit.cover);
+                      return Image.asset(resolvedUrl, fit: BoxFit.cover);
                     }),
                   ),
                 ),
@@ -190,13 +186,9 @@ class RecipeListCard extends StatelessWidget {
                 height: 80 * scale.clamp(0.85, 1.2),
                 child: Builder(builder: (context) {
                   final url = recipe.imageUrl;
-                  if (url == null || url.isEmpty) {
+                  final resolvedUrl = ApiClient.instance.resolveImageUrl(url);
+                  if (resolvedUrl.isEmpty) {
                     return Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover);
-                  }
-                  
-                  String resolvedUrl = url;
-                  if (url.startsWith('/uploads')) {
-                    resolvedUrl = '${ApiClient.instance.hostUrl}$url';
                   }
 
                   if (resolvedUrl.startsWith('http')) {
@@ -207,7 +199,7 @@ class RecipeListCard extends StatelessWidget {
                     );
                   }
                   
-                  return Image.asset(url, fit: BoxFit.cover);
+                  return Image.asset(resolvedUrl, fit: BoxFit.cover);
                 }),
               ),
             ),

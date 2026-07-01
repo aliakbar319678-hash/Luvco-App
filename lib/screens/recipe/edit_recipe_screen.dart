@@ -12,6 +12,7 @@ import '../../models/recipe_detail_model.dart';
 import '../../providers/recipe_provider.dart';
 import '../../providers/recipe_detail_provider.dart';
 import '../../core/network/recipe_api_service.dart';
+import '../../core/network/api_client.dart';
 import '../../providers/food_preferences_provider.dart';
 
 class EditRecipeScreen extends ConsumerStatefulWidget {
@@ -956,30 +957,41 @@ class _ProductCard extends StatelessWidget {
                 SizedBox(
                   width: 64 * scale,
                   height: 64 * scale,
-                  child: product.imageAsset != null
-                      ? (product.imageAsset!.startsWith('assets/')
-                          ? Image.asset(
-                              product.imageAsset!,
-                              fit: BoxFit.contain,
-                              cacheWidth: 120,
-                              cacheHeight: 120,
-                            )
-                          : Image.network(
-                              product.imageAsset!,
-                              fit: BoxFit.contain,
-                              cacheWidth: 120,
-                              cacheHeight: 120,
-                              errorBuilder: (_, __, ___) => Icon(
-                                Icons.image_outlined,
-                                size: 32 * scale,
-                                color: AppColors.clearGrey,
-                              ),
-                            ))
-                      : Icon(
+                  child: Builder(builder: (context) {
+                    final raw = product.imageAsset;
+                    final resolved = ApiClient.instance.resolveImageUrl(raw);
+                    if (resolved.isEmpty) {
+                      return Icon(
+                        Icons.image_outlined,
+                        size: 32 * scale,
+                        color: AppColors.clearGrey,
+                      );
+                    }
+                    if (resolved.startsWith('http')) {
+                      return Image.network(
+                        resolved,
+                        fit: BoxFit.contain,
+                        cacheWidth: 120,
+                        cacheHeight: 120,
+                        errorBuilder: (_, __, ___) => Icon(
                           Icons.image_outlined,
                           size: 32 * scale,
                           color: AppColors.clearGrey,
                         ),
+                      );
+                    }
+                    return Image.asset(
+                      resolved,
+                      fit: BoxFit.contain,
+                      cacheWidth: 120,
+                      cacheHeight: 120,
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.image_outlined,
+                        size: 32 * scale,
+                        color: AppColors.clearGrey,
+                      ),
+                    );
+                  }),
                 ),
                 SizedBox(width: 16 * scale),
                 Expanded(
@@ -1054,26 +1066,46 @@ class _CoverPicturePicker extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: AspectRatio(
           aspectRatio: 2.2,
-          child: imagePath != null && imagePath!.isNotEmpty
-              ? (imagePath!.startsWith('http')
-                  ? Image.network(imagePath!, fit: BoxFit.cover)
-                  : (imagePath!.startsWith('assets/')
-                      ? Image.asset(imagePath!, fit: BoxFit.cover)
-                      : Image.file(File(imagePath!), fit: BoxFit.cover)))
-              : Image.asset(
-                  'assets/images/bread_pic.png',
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: AppColors.clearGrey,
-                    child: Center(
-                      child: Icon(
-                        Icons.add_photo_alternate_outlined,
-                        size: 42 * scale.clamp(0.85, 1.2),
-                        color: AppColors.neutralGrey,
-                      ),
+          child: Builder(builder: (context) {
+            if (imagePath == null || imagePath!.isEmpty) {
+              return Image.asset(
+                'assets/images/bread_pic.png',
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: AppColors.clearGrey,
+                  child: Center(
+                    child: Icon(
+                      Icons.add_photo_alternate_outlined,
+                      size: 42 * scale.clamp(0.85, 1.2),
+                      color: AppColors.neutralGrey,
                     ),
                   ),
                 ),
+              );
+            }
+            if (imagePath!.startsWith('assets/')) {
+              return Image.asset(imagePath!, fit: BoxFit.cover);
+            }
+            final resolvedPath = ApiClient.instance.resolveImageUrl(imagePath);
+            if (resolvedPath.startsWith('http')) {
+              return Image.network(
+                resolvedPath,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: AppColors.clearGrey,
+                  child: Center(
+                    child: Icon(
+                      Icons.add_photo_alternate_outlined,
+                      size: 42 * scale.clamp(0.85, 1.2),
+                      color: AppColors.neutralGrey,
+                    ),
+                  ),
+                ),
+              );
+            }
+            // Local file (e.g. newly picked from camera/gallery)
+            return Image.file(File(imagePath!), fit: BoxFit.cover);
+          }),
         ),
       ),
     );

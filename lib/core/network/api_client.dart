@@ -90,6 +90,29 @@ class ApiClient {
     }
   }
 
+  /// Resolves an image URL by prepending hostUrl for relative paths, or replacing localhost/127.0.0.1 with the correct host.
+  String resolveImageUrl(String? url) {
+    if (url == null || url.isEmpty) return '';
+    
+    if (url.startsWith('/uploads')) {
+      return '$hostUrl$url';
+    }
+    
+    // Replace localhost or 127.0.0.1 (with any port) with the actual hostUrl
+    if (url.startsWith('http://localhost:') || url.startsWith('http://127.0.0.1:') ||
+        url.startsWith('https://localhost:') || url.startsWith('https://127.0.0.1:')) {
+      try {
+        final uri = Uri.parse(url);
+        final relativePath = uri.path + (uri.hasQuery ? '?${uri.query}' : '');
+        return '$hostUrl$relativePath';
+      } catch (_) {
+        return url;
+      }
+    }
+    
+    return url;
+  }
+
   /// Request a new access token using a persistent refresh token.
   Future<String?> _refreshAccessToken(String refreshToken) async {
     try {

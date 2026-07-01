@@ -9,6 +9,7 @@ import '../../../models/recipe_model.dart';
 import '../../../models/recipe_detail_model.dart';
 import '../../../providers/search_recipe_provider.dart';
 import '../../../widgets/bottom_nav_bar.dart';
+import '../../../core/network/api_client.dart';
 
 // ── Provider to load user preferences for filters ─────────────────
 final _recipeFilterPrefsProvider = FutureProvider<Map<String, List<String>>>((ref) async {
@@ -544,23 +545,28 @@ class _RecipeCard extends ConsumerWidget {
                 child: SizedBox(
                   width: 80 * scale,
                   height: 80 * scale,
-                  child: recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty
-                      ? (recipe.imageUrl!.startsWith('http')
-                          ? Image.network(
-                              recipe.imageUrl!,
-                              fit: BoxFit.cover,
-                              cacheWidth: 120,
-                              cacheHeight: 120,
-                              errorBuilder: (_, __, ___) => Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
-                            )
-                          : Image.asset(
-                              recipe.imageUrl!,
-                              fit: BoxFit.cover,
-                              cacheWidth: 120,
-                              cacheHeight: 120,
-                              errorBuilder: (_, __, ___) => Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
-                            ))
-                      : Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
+                  child: Builder(builder: (context) {
+                    final resolvedUrl = ApiClient.instance.resolveImageUrl(recipe.imageUrl);
+                    if (resolvedUrl.isEmpty) {
+                      return Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover);
+                    }
+                    if (resolvedUrl.startsWith('http')) {
+                      return Image.network(
+                        resolvedUrl,
+                        fit: BoxFit.cover,
+                        cacheWidth: 120,
+                        cacheHeight: 120,
+                        errorBuilder: (_, __, ___) => Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
+                      );
+                    }
+                    return Image.asset(
+                      resolvedUrl,
+                      fit: BoxFit.cover,
+                      cacheWidth: 120,
+                      cacheHeight: 120,
+                      errorBuilder: (_, __, ___) => Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
+                    );
+                  }),
                 ),
               ),
             SizedBox(width: 10 * scale),
@@ -832,33 +838,23 @@ class _QuickViewModal extends StatelessWidget {
                                 flex: 145,
                                 child: SizedBox(
                                   width: double.infinity,
-                                  child: recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty
-                                      ? (recipe.imageUrl!.startsWith('http')
-                                          ? Image.network(
-                                              recipe.imageUrl!,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (_, __, ___) => Container(
-                                                color: AppColors.softGrey,
-                                                child: Icon(
-                                                  Icons.image_outlined,
-                                                  color: AppColors.clearGrey,
-                                                  size: 36 * scale,
-                                                ),
-                                              ),
-                                            )
-                                          : Image.asset(
-                                              recipe.imageUrl!,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (_, __, ___) => Container(
-                                                color: AppColors.softGrey,
-                                                child: Icon(
-                                                  Icons.image_outlined,
-                                                  color: AppColors.clearGrey,
-                                                  size: 36 * scale,
-                                                ),
-                                              ),
-                                            ))
-                                      : Container(
+                                  child: Builder(builder: (context) {
+                                    final resolvedUrl = ApiClient.instance.resolveImageUrl(recipe.imageUrl);
+                                    if (resolvedUrl.isEmpty) {
+                                      return Container(
+                                        color: AppColors.softGrey,
+                                        child: Icon(
+                                          Icons.image_outlined,
+                                          color: AppColors.clearGrey,
+                                          size: 36 * scale,
+                                        ),
+                                      );
+                                    }
+                                    if (resolvedUrl.startsWith('http')) {
+                                      return Image.network(
+                                        resolvedUrl,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => Container(
                                           color: AppColors.softGrey,
                                           child: Icon(
                                             Icons.image_outlined,
@@ -866,6 +862,21 @@ class _QuickViewModal extends StatelessWidget {
                                             size: 36 * scale,
                                           ),
                                         ),
+                                      );
+                                    }
+                                    return Image.asset(
+                                      resolvedUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Container(
+                                        color: AppColors.softGrey,
+                                        child: Icon(
+                                          Icons.image_outlined,
+                                          color: AppColors.clearGrey,
+                                          size: 36 * scale,
+                                        ),
+                                      ),
+                                    );
+                                  }),
                                 ),
                               ),
 

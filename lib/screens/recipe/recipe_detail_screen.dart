@@ -307,13 +307,14 @@ class _HeroImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final resolvedUrl = ApiClient.instance.resolveImageUrl(recipe.imageUrl);
     return SizedBox(
       height: 317 * scale,
       width: double.infinity,
-      child: recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty
-          ? (recipe.imageUrl!.startsWith('http')
+      child: resolvedUrl.isNotEmpty
+          ? (resolvedUrl.startsWith('http')
                 ? Image.network(
-                    recipe.imageUrl!,
+                    resolvedUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Image.asset(
                       'assets/images/bread_pic.png',
@@ -321,7 +322,7 @@ class _HeroImage extends StatelessWidget {
                     ),
                   )
                 : Image.asset(
-                    recipe.imageUrl!,
+                    resolvedUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Image.asset(
                       'assets/images/bread_pic.png',

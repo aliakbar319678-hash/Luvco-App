@@ -862,18 +862,7 @@ class _DietTagChip extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 String? _resolveImageUrl(String? url) {
   if (url == null || url.isEmpty) return null;
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-  if (url.startsWith('assets/')) {
-    return url;
-  }
-  final baseUrl = ApiClient.instance.dio.options.baseUrl;
-  final rootUrl = baseUrl.endsWith('/api/v1')
-      ? baseUrl.substring(0, baseUrl.length - 7)
-      : baseUrl;
-  final path = url.startsWith('/') ? url : '/$url';
-  return '$rootUrl$path';
+  return ApiClient.instance.resolveImageUrl(url);
 }
 
 Widget _buildProductImage(String? path, BuildContext context) {
