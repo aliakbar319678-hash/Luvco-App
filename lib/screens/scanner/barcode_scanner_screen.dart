@@ -511,7 +511,7 @@ class _ScanningLayer extends StatelessWidget {
             child: Container(
               width: 190 * scale,
               height: 50 * scale,
-              padding: EdgeInsets.symmetric(horizontal: 36 * scale, vertical: 12 * scale),
+              padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 12 * scale),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(18 * scale),
@@ -525,7 +525,7 @@ class _ScanningLayer extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  'Scanning Real-Time...',
+                  'Scan a barcode',
                   style: GoogleFonts.inter(
                     fontSize: 15 * scale,
                     fontWeight: FontWeight.w600,

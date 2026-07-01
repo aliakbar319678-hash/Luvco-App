@@ -37,43 +37,24 @@ import 'package:luvco_logo/models/product_model.dart';
 // GPU-friendly: uses opacity + translate only (no clipping, no scale distortion).
 // Duration is intentionally short (220ms) to feel snappy without lagging.
 // ─────────────────────────────────────────────────────────────────────────────
-Page<void> _fadeSlide({
-  required LocalKey key,
-  required Widget child,
-  bool isTab = false,
-}) {
+Page<void> _fadeSlide({required LocalKey key, required Widget child}) {
   return CustomTransitionPage<void>(
     key: key,
     child: child,
-    transitionDuration: Duration(milliseconds: isTab ? 200 : 350),
-    reverseTransitionDuration: Duration(milliseconds: isTab ? 150 : 250),
+    transitionDuration: const Duration(milliseconds: 220),
+    reverseTransitionDuration: const Duration(milliseconds: 180),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      if (isTab) {
-        return FadeTransition(
-          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
-          child: child,
-        );
-      }
-      return SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(1.0, 0.0),
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(
-            parent: animation,
-            curve: Curves.fastEaseInToSlowEaseOut,
-          ),
-        ),
+      // Fade + slight slide up — the most performant combo for mobile
+      return FadeTransition(
+        opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
         child: SlideTransition(
-          position: Tween<Offset>(
-            begin: Offset.zero,
-            end: const Offset(-0.24, 0.0),
-          ).animate(
-            CurvedAnimation(
-              parent: secondaryAnimation,
-              curve: Curves.fastEaseInToSlowEaseOut,
-            ),
-          ),
+          position:
+              Tween<Offset>(
+                begin: const Offset(0, 0.04), // barely 4% down → feels natural
+                end: Offset.zero,
+              ).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+              ),
           child: child,
         ),
       );
@@ -88,29 +69,22 @@ Page<void> _fadeSlide({
 // ─────────────────────────────────────────────────────────────────────────────
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/',
     routes: [
       GoRoute(
         path: '/',
-        pageBuilder: (context, state) => _fadeSlide(
-          key: state.pageKey,
-          isTab: true,
-          child: const SplashScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _fadeSlide(key: state.pageKey, child: const SplashScreen()),
       ),
       GoRoute(
         path: '/login',
-        pageBuilder: (context, state) => _fadeSlide(
-          key: state.pageKey,
-          child: const LoginScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _fadeSlide(key: state.pageKey, child: const LoginScreen()),
       ),
       GoRoute(
         path: '/forgot-password',
-        pageBuilder: (context, state) => _fadeSlide(
-          key: state.pageKey,
-          child: const ForgotPasswordScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _fadeSlide(key: state.pageKey, child: const ForgotPasswordScreen()),
       ),
       GoRoute(
         path: '/otp-verification',
@@ -142,10 +116,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/signup',
-        pageBuilder: (context, state) => _fadeSlide(
-          key: state.pageKey,
-          child: const SignupScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _fadeSlide(key: state.pageKey, child: const SignupScreen()),
       ),
       GoRoute(
         path: '/terms',
@@ -156,10 +128,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/privacy',
-        pageBuilder: (context, state) => _fadeSlide(
-          key: state.pageKey,
-          child: const PrivacyPolicyScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _fadeSlide(key: state.pageKey, child: const PrivacyPolicyScreen()),
       ),
       GoRoute(
         path: '/signup-verify',
@@ -173,10 +143,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/onboarding',
-        pageBuilder: (context, state) => _fadeSlide(
-          key: state.pageKey,
-          child: const OnboardingScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _fadeSlide(key: state.pageKey, child: const OnboardingScreen()),
         routes: [
           GoRoute(
             path: 'diet',
@@ -196,11 +164,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/profile',
-        pageBuilder: (context, state) => _fadeSlide(
-          key: state.pageKey,
-          isTab: true,
-          child: const UserProfileScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _fadeSlide(key: state.pageKey, child: const UserProfileScreen()),
       ),
       GoRoute(
         path: '/new-shopping-list',
@@ -238,23 +203,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/favorites',
-        pageBuilder: (context, state) => _fadeSlide(
-          key: state.pageKey,
-          child: const FavoritesScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _fadeSlide(key: state.pageKey, child: const FavoritesScreen()),
       ),
       GoRoute(
         path: '/new-recipe',
-        pageBuilder: (context, state) => _fadeSlide(
-          key: state.pageKey,
-          child: const NewRecipeScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _fadeSlide(key: state.pageKey, child: const NewRecipeScreen()),
       ),
       GoRoute(
         path: '/recipe-detail',
         pageBuilder: (context, state) {
-          final recipe =
-              state.extra as RecipeDetailModel? ?? demoRecipeDetail;
+          final recipe = state.extra as RecipeDetailModel? ?? demoRecipeDetail;
           return _fadeSlide(
             key: state.pageKey,
             child: RecipeDetailScreen(recipe: recipe),
@@ -277,11 +237,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/home',
-        pageBuilder: (context, state) => _fadeSlide(
-          key: state.pageKey,
-          isTab: true,
-          child: const UserDashboardScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _fadeSlide(key: state.pageKey, child: const UserDashboardScreen()),
       ),
       GoRoute(
         path: '/dashboard-search',
@@ -292,10 +249,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/search-recipe',
-        pageBuilder: (context, state) => _fadeSlide(
-          key: state.pageKey,
-          child: const SearchRecipeScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _fadeSlide(key: state.pageKey, child: const SearchRecipeScreen()),
       ),
       GoRoute(
         path: '/product-detail',
@@ -311,12 +266,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/barcode-scanner',
-        pageBuilder: (context, state) => _fadeSlide(
-          key: state.pageKey,
-          child: const BarcodeScannerScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _fadeSlide(key: state.pageKey, child: const BarcodeScannerScreen()),
       ),
     ],
   );
 });
-

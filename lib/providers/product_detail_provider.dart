@@ -167,6 +167,7 @@ class ProductDetailNotifier extends StateNotifier<ProductDetailState> {
     if (state.selectedLists.isEmpty) return 'Please select at least one list';
     state = state.copyWith(isSaving: true);
     int successCount = 0;
+    String? lastError;
     for (final listId in state.selectedLists) {
       try {
         await ListApiService.instance.addItem(
@@ -177,7 +178,9 @@ class ProductDetailNotifier extends StateNotifier<ProductDetailState> {
           quantity: 1,
         );
         successCount++;
-      } catch (_) {}
+      } catch (e) {
+        lastError = e.toString();
+      }
     }
     if (!mounted) return null;
     state = state.copyWith(
@@ -189,6 +192,16 @@ class ProductDetailNotifier extends StateNotifier<ProductDetailState> {
       return successCount == 1
           ? 'Product added to shopping list!'
           : 'Product added to $successCount lists!';
+    }
+    if (lastError != null) {
+      final errorLower = lastError.toLowerCase();
+      if (errorLower.contains('already present') ||
+          errorLower.contains('already exist') ||
+          errorLower.contains('conflict') ||
+          errorLower.contains('duplicate')) {
+        return 'Product is already exist';
+      }
+      return lastError;
     }
     return 'Failed to add product. Please try again.';
   }
