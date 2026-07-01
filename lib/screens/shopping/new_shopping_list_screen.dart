@@ -32,9 +32,12 @@ class NewShoppingListScreen extends ConsumerWidget {
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.pureWhite,
-        body: Stack(
-          children: [
-            Column(
+        body: SafeArea(
+          child: Container(
+            color: AppColors.pageBackground,
+            child: Stack(
+              children: [
+                Column(
               children: [
                 // ── Header ──────────────────────────────────────
                 _NewListHeader(padding: padding, scale: scale, size: size),
@@ -191,6 +194,8 @@ class NewShoppingListScreen extends ConsumerWidget {
               ),
           ],
         ),
+          ),
+        ),
       ),
     );
   }
@@ -253,7 +258,7 @@ class _NewListHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.only(
-        top: padding.top + 12,
+        top: 12,
         bottom: 16,
         left: size.width * 0.058,
         right: size.width * 0.058,

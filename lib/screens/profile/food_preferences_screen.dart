@@ -36,10 +36,13 @@ class FoodPreferencesScreen extends ConsumerWidget {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.pageBackground,
-        body: Stack(
-          children: [
-            Column(
+        backgroundColor: AppColors.pureWhite,
+        body: SafeArea(
+          child: Container(
+            color: AppColors.pageBackground,
+            child: Stack(
+              children: [
+                Column(
               children: [
                 // ── Top bar ──────────────────────────────────────
                 _TopBar(
@@ -141,6 +144,8 @@ class FoodPreferencesScreen extends ConsumerWidget {
             // ── Success toast ─────────────────────────────────────
             if (showSuccess) const _SuccessToast(),
           ],
+        ),
+          ),
         ),
       ),
     );
@@ -250,7 +255,7 @@ class _TopBar extends StatelessWidget {
       width: double.infinity,
       color: AppColors.pageBackground,
       padding: EdgeInsets.only(
-        top: padding.top + 10,
+        top: 10,
         bottom: 14,
         left: 16 * scale,
         right: 16 * scale,

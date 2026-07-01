@@ -89,9 +89,12 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.pageBackground,
-        body: Column(
-          children: [
+        backgroundColor: AppColors.pureWhite,
+        body: SafeArea(
+          child: Container(
+            color: AppColors.pageBackground,
+            child: Column(
+              children: [
             // ── Top white card with logo ──
             const AuthHeader(showLogo: true),
 
@@ -200,6 +203,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
               ),
             ),
           ],
+        ),
+          ),
         ),
       ),
     );

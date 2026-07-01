@@ -20,9 +20,12 @@ class PasswordUpdatedScreen extends ConsumerWidget {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.pageBackground,
-        body: Column(
-          children: [
+        backgroundColor: AppColors.pureWhite,
+        body: SafeArea(
+          child: Container(
+            color: AppColors.pageBackground,
+            child: Column(
+              children: [
             // ── Header: white card + logo ──
             _ConfirmationHeader(size: size, padding: padding),
 
@@ -67,6 +70,8 @@ class PasswordUpdatedScreen extends ConsumerWidget {
             ),
           ],
         ),
+          ),
+        ),
       ),
     );
   }
@@ -102,7 +107,7 @@ class _ConfirmationHeader extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(height: padding.top + 12),
+          SizedBox(height: 12),
           LuvcoLogo(width: size.width * 0.32, color: LuvcoLogoColor.pink),
           const SizedBox(height: 16),
         ],

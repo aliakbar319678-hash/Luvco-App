@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/app_colors.dart';
 import '../models/recipe_model.dart';
+import '../core/network/api_client.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // Recipe Grid Card
@@ -49,11 +50,27 @@ class RecipeGridCard extends StatelessWidget {
                   ),
                   child: AspectRatio(
                     aspectRatio: 1.1,
-                    child: recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty
-                        ? (recipe.imageUrl!.startsWith('http')
-                            ? Image.network(recipe.imageUrl!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover))
-                            : Image.asset(recipe.imageUrl!, fit: BoxFit.cover))
-                        : Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
+                    child: Builder(builder: (context) {
+                      final url = recipe.imageUrl;
+                      if (url == null || url.isEmpty) {
+                        return Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover);
+                      }
+                      
+                      String resolvedUrl = url;
+                      if (url.startsWith('/uploads')) {
+                        resolvedUrl = '${ApiClient.instance.hostUrl}$url';
+                      }
+
+                      if (resolvedUrl.startsWith('http')) {
+                        return Image.network(
+                          resolvedUrl, 
+                          fit: BoxFit.cover, 
+                          errorBuilder: (_, __, ___) => Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
+                        );
+                      }
+                      
+                      return Image.asset(url, fit: BoxFit.cover);
+                    }),
                   ),
                 ),
                 Positioned(
@@ -171,11 +188,27 @@ class RecipeListCard extends StatelessWidget {
               child: SizedBox(
                 width: 80 * scale.clamp(0.85, 1.2),
                 height: 80 * scale.clamp(0.85, 1.2),
-                child: recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty
-                    ? (recipe.imageUrl!.startsWith('http')
-                        ? Image.network(recipe.imageUrl!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover))
-                        : Image.asset(recipe.imageUrl!, fit: BoxFit.cover))
-                    : Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
+                child: Builder(builder: (context) {
+                  final url = recipe.imageUrl;
+                  if (url == null || url.isEmpty) {
+                    return Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover);
+                  }
+                  
+                  String resolvedUrl = url;
+                  if (url.startsWith('/uploads')) {
+                    resolvedUrl = '${ApiClient.instance.hostUrl}$url';
+                  }
+
+                  if (resolvedUrl.startsWith('http')) {
+                    return Image.network(
+                      resolvedUrl, 
+                      fit: BoxFit.cover, 
+                      errorBuilder: (_, __, ___) => Image.asset('assets/images/bread_pic.png', fit: BoxFit.cover),
+                    );
+                  }
+                  
+                  return Image.asset(url, fit: BoxFit.cover);
+                }),
               ),
             ),
             const SizedBox(width: 12),

@@ -244,8 +244,11 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.pageBackground,
-        body: Column(
+        backgroundColor: AppColors.pureWhite,
+        body: SafeArea(
+          child: Container(
+            color: AppColors.pageBackground,
+            child: Column(
           children: [
             // ── Top Title Bar ──
             _EditRecipeHeader(
@@ -287,6 +290,8 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
               ),
             ),
           ],
+        ),
+          ),
         ),
       ),
     );
@@ -681,7 +686,7 @@ class _EditRecipeHeader extends StatelessWidget {
         ],
       ),
       padding: EdgeInsets.only(
-        top: padding.top + 8,
+        top: 8,
         bottom: 24 * scale,
         left: 8,
         right: 8,

@@ -39,9 +39,12 @@ class LoginScreen extends ConsumerWidget {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.pageBackground,
-        body: Column(
-          children: [
+        backgroundColor: AppColors.pureWhite,
+        body: SafeArea(
+          child: Container(
+            color: AppColors.pageBackground,
+            child: Column(
+              children: [
             // ── White header card with logo ──
             const AuthHeader(
               showLogo: true,
@@ -183,6 +186,8 @@ class LoginScreen extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+          ),
         ),
       ),
     );

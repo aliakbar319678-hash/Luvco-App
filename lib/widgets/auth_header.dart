@@ -23,7 +23,6 @@ class AuthHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final padding = MediaQuery.paddingOf(context);
     final headerHeight = showLogo ? size.height * 0.14 : size.height * 0.085;
 
     return Container(
@@ -45,7 +44,7 @@ class AuthHeader extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(height: padding.top),
+
           SizedBox(
             height: headerHeight,
             child: Padding(

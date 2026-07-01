@@ -58,9 +58,12 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.pageBackground,
-        body: Column(
-          children: [
+        backgroundColor: AppColors.pureWhite,
+        body: SafeArea(
+          child: Container(
+            color: AppColors.pageBackground,
+            child: Column(
+              children: [
             // ── Header: white card + logo ──
             const AuthHeader(showLogo: true),
 
@@ -179,6 +182,8 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
               ),
             ),
           ],
+        ),
+          ),
         ),
       ),
     );

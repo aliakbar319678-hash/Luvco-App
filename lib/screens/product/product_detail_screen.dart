@@ -29,9 +29,12 @@ class ProductDetailScreen extends ConsumerWidget {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.pageBackground,
-        body: Stack(
-          children: [
+        backgroundColor: AppColors.pureWhite,
+        body: SafeArea(
+          child: Container(
+            color: AppColors.pageBackground,
+            child: Stack(
+              children: [
             // ── Main scrollable content ──
             Column(
               children: [
@@ -206,6 +209,8 @@ class ProductDetailScreen extends ConsumerWidget {
               ),
           ],
         ),
+          ),
+        ),
       ),
     );
   }
@@ -232,7 +237,7 @@ class _ProductDetailHeader extends StatelessWidget {
     return Container(
       color: AppColors.pureWhite,
       padding: EdgeInsets.only(
-        top: padding.top + 8,
+        top: 8,
         left: 16 * scale,
         right: 16 * scale,
         bottom: 12 * scale,

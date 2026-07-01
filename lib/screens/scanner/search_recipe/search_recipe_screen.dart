@@ -77,11 +77,14 @@ class _SearchRecipeScreenState extends ConsumerState<SearchRecipeScreen> {
       ),
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: AppColors.pageBackground,
-        body: Stack(
-          children: [
-            Column(
+        backgroundColor: AppColors.pureWhite,
+        body: SafeArea(
+          child: Container(
+            color: AppColors.pageBackground,
+            child: Stack(
               children: [
+                Column(
+                  children: [
                 // ── Header ──
                 _SearchHeader(
                   padding: padding,
@@ -154,6 +157,8 @@ class _SearchRecipeScreenState extends ConsumerState<SearchRecipeScreen> {
               ),
           ],
         ),
+          ),
+        ),
       ),
     );
   }
@@ -215,7 +220,7 @@ class _SearchHeader extends StatelessWidget {
         // ── Header Title Box (121px height) ──────────────────────
         Container(
           width: double.infinity,
-          height: 121 * scale + padding.top,
+          height: 121 * scale,
           decoration: BoxDecoration(
             color: AppColors.pureWhite,
             borderRadius: BorderRadius.vertical(
@@ -229,7 +234,7 @@ class _SearchHeader extends StatelessWidget {
               ),
             ],
           ),
-          padding: EdgeInsets.only(top: padding.top),
+          padding: EdgeInsets.zero,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

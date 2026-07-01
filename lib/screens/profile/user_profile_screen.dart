@@ -34,10 +34,13 @@ class UserProfileScreen extends ConsumerWidget {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.pageBackground,
-        body: Stack(
-          children: [
-            Column(
+        backgroundColor: AppColors.pureWhite,
+        body: SafeArea(
+          child: Container(
+            color: AppColors.pageBackground,
+            child: Stack(
+              children: [
+                Column(
               children: [
                 // ── Top Header ──
                 _ProfileHeader(
@@ -136,11 +139,11 @@ class UserProfileScreen extends ConsumerWidget {
             ),
           ],
         ),
+          ),
+        ),
       ),
     );
   }
-
-
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -161,11 +164,9 @@ class _ProfileHeader extends StatelessWidget {
     required this.onFavoritesTap,
   });
 
-  @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 145 * scale,
       decoration: BoxDecoration(
         color: AppColors.pureWhite,
         borderRadius: const BorderRadius.only(
@@ -181,7 +182,8 @@ class _ProfileHeader extends StatelessWidget {
         ],
       ),
       padding: EdgeInsets.only(
-        top: padding.top,
+        top: 24,
+        bottom: 24,
         left: size.width * 0.058,
         right: size.width * 0.058,
       ),

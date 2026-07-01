@@ -39,11 +39,14 @@ class ShoppingListDetailScreen extends ConsumerWidget {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.pageBackground,
-        body: Column(
-          children: [
-            // ── Top bar ──
-            _DetailTopBar(list: list, listId: listId, ref: ref),
+        backgroundColor: AppColors.pureWhite,
+        body: SafeArea(
+          child: Container(
+            color: AppColors.pageBackground,
+            child: Column(
+              children: [
+                // ── Top bar ──
+                _DetailTopBar(list: list, listId: listId, ref: ref),
 
             // ── Scrollable content ──
             Expanded(
@@ -61,6 +64,8 @@ class ShoppingListDetailScreen extends ConsumerWidget {
             // ── Bottom Nav ──
             const LuvcoBottomNavBar(),
           ],
+        ),
+          ),
         ),
       ),
     );
@@ -138,7 +143,6 @@ class _DetailTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final padding = MediaQuery.paddingOf(context);
     final scale = size.width / 375; // Figma design width
 
     final totalHeight = 121 * scale;
@@ -163,7 +167,7 @@ class _DetailTopBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
-          SizedBox(height: padding.top),
+          // SizedBox removed — SafeArea handles top inset
           Expanded(
             child: Row(
               children: [

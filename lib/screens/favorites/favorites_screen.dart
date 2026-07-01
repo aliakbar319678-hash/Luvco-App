@@ -104,9 +104,12 @@ class FavoritesScreen extends ConsumerWidget {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(statusBarColor: Colors.transparent),
       child: Scaffold(
-        backgroundColor: AppColors.pageBackground,
-        body: Column(
-          children: [
+        backgroundColor: AppColors.pureWhite,
+        body: SafeArea(
+          child: Container(
+            color: AppColors.pageBackground,
+            child: Column(
+              children: [
             _FavoritesTopBar(scale: scale),
             const SizedBox(height: 16),
             Expanded(
@@ -116,6 +119,8 @@ class FavoritesScreen extends ConsumerWidget {
             ),
             const LuvcoBottomNavBar(),
           ],
+        ),
+          ),
         ),
       ),
     );
@@ -130,12 +135,8 @@ class _FavoritesTopBar extends StatelessWidget {
   final double scale;
   const _FavoritesTopBar({required this.scale});
 
-  @override
   Widget build(BuildContext context) {
-    final top = MediaQuery.paddingOf(context).top;
-    final barHeight = 121 * scale;
     return Container(
-      height: barHeight,
       decoration: BoxDecoration(
         color: AppColors.pureWhite,
         borderRadius: const BorderRadius.only(
@@ -150,7 +151,7 @@ class _FavoritesTopBar extends StatelessWidget {
           )
         ],
       ),
-      padding: EdgeInsets.only(top: top, left: 20 * scale, right: 20 * scale),
+      padding: EdgeInsets.only(top: 24 * scale, bottom: 24 * scale, left: 20 * scale, right: 20 * scale),
       child: Row(
         children: [
           GestureDetector(

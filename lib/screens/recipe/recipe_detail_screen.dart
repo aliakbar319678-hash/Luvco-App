@@ -33,8 +33,11 @@ class RecipeDetailScreen extends ConsumerWidget {
       child: Scaffold(
         backgroundColor: AppColors.pureWhite,
         bottomNavigationBar: const LuvcoBottomNavBar(),
-        body: Stack(
-          children: [
+        body: SafeArea(
+          child: Container(
+            color: AppColors.pageBackground,
+            child: Stack(
+              children: [
             // ── Background color ──────────────────────────────────────
             Container(color: AppColors.pageBackground),
 
@@ -194,6 +197,8 @@ class RecipeDetailScreen extends ConsumerWidget {
             ),
           ],
         ),
+          ),
+        ),
       ),
     );
   }
@@ -243,7 +248,7 @@ class _CustomHeader extends StatelessWidget {
         ],
       ),
       padding: EdgeInsets.only(
-        top: padding.top + 6,
+        top: 6,
         bottom: 28 * scale,
         left: 4,
         right: 4,

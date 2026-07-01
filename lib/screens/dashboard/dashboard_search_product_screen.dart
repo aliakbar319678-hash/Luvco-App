@@ -72,9 +72,12 @@ class _DashboardSearchProductScreenState
       ),
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: AppColors.pageBackground,
-        body: Column(
-          children: [
+        backgroundColor: AppColors.pureWhite,
+        body: SafeArea(
+          child: Container(
+            color: AppColors.pageBackground,
+            child: Column(
+              children: [
             _TopBar(scale: scale),
             Padding(
               padding: EdgeInsets.symmetric(
@@ -98,6 +101,8 @@ class _DashboardSearchProductScreenState
             ),
             const LuvcoBottomNavBar(),
           ],
+        ),
+          ),
         ),
       ),
     );
@@ -170,10 +175,9 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final padding = MediaQuery.paddingOf(context);
     return Container(
       padding: EdgeInsets.only(
-        top: padding.top + 16,
+        top: 16,
         bottom: 22,
         left: 16,
         right: 16,

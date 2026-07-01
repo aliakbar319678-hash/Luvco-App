@@ -74,8 +74,11 @@ class _SearchProductScreenState extends ConsumerState<SearchProductScreen> {
       ),
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: AppColors.pageBackground,
-        body: Column(
+        backgroundColor: AppColors.pureWhite,
+        body: SafeArea(
+          child: Container(
+            color: AppColors.pageBackground,
+            child: Column(
           children: [
             // ── Top Bar ──
             _SearchTopBar(listTitle: listTitle, scale: scale),
@@ -103,6 +106,8 @@ class _SearchProductScreenState extends ConsumerState<SearchProductScreen> {
             // ── Bottom Nav ──
             const LuvcoBottomNavBar(),
           ],
+        ),
+          ),
         ),
       ),
     );
@@ -172,11 +177,9 @@ class _SearchTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final padding = MediaQuery.paddingOf(context);
-
     return Container(
       padding: EdgeInsets.only(
-        top: padding.top + 8,
+        top: 8,
         bottom: 12,
         left: 16,
         right: 16,

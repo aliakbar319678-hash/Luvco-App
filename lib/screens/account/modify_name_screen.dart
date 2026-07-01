@@ -67,9 +67,12 @@ class _ModifyNameScreenState extends ConsumerState<ModifyNameScreen> {
       ),
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: AppColors.pageBackground,
-        body: Stack(
-          children: [
+        backgroundColor: AppColors.pureWhite,
+        body: SafeArea(
+          child: Container(
+            color: AppColors.pageBackground,
+            child: Stack(
+              children: [
             Column(
               children: [
                 // ── Header ──
@@ -207,6 +210,8 @@ class _ModifyNameScreenState extends ConsumerState<ModifyNameScreen> {
               ),
           ],
         ),
+          ),
+        ),
       ),
     );
   }
@@ -232,7 +237,7 @@ class _ModifyNameHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.only(
-        top: padding.top + 12,
+        top: 12,
         bottom: 16,
         left: size.width * 0.058,
         right: size.width * 0.058,

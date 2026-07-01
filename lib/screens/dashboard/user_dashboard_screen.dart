@@ -20,9 +20,12 @@ class UserDashboardScreen extends ConsumerWidget {
     final isLoading = ref.watch(dashboardProvider.select((s) => s.isLoading));
 
     return Scaffold(
-      backgroundColor: AppColors.pageBackground,
-      body: Column(
-        children: [
+      backgroundColor: AppColors.pureWhite,
+      body: SafeArea(
+        child: Container(
+          color: AppColors.pageBackground,
+          child: Column(
+            children: [
           // ── Scrollable Content ──
           Expanded(
             child: RefreshIndicator(
@@ -123,6 +126,8 @@ class UserDashboardScreen extends ConsumerWidget {
           const LuvcoBottomNavBar(),
         ],
       ),
+        ),
+      ),
     );
   }
 }
@@ -141,7 +146,7 @@ class _GreetingHeader extends ConsumerWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.only(
-        top: context.topPadding + context.s(24),
+        top: context.s(24),
         bottom: context.s(32),
         left: context.s(20),
         right: context.s(20),

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:luvco_logo/core/network/api_client.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   // Lock to portrait — done once at startup, not per-frame
   SystemChrome.setPreferredOrientations([
@@ -30,7 +32,7 @@ void main() {
   //   Use: http://10.0.2.2:3000/api/v1
   // ─────────────────────────────────────────────────────────────────────────
   ApiClient.instance.setBaseUrl(
-    'http://127.0.0.1:3000/api/v1',
+    'http://192.168.1.36:3000/api/v1',
   );
 
   runApp(const ProviderScope(child: LuvcoApp()));

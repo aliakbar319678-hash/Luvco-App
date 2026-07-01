@@ -39,25 +39,30 @@ class NewRecipeScreen extends ConsumerWidget {
       ),
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: AppColors.pageBackground,
-        body: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          transitionBuilder: (child, anim) => FadeTransition(
-            opacity: anim,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0.05, 0),
-                end: Offset.zero,
-              ).animate(anim),
-              child: child,
+        backgroundColor: AppColors.pureWhite,
+        body: SafeArea(
+          child: Container(
+            color: AppColors.pageBackground,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, anim) => FadeTransition(
+                opacity: anim,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0.05, 0),
+                    end: Offset.zero,
+                  ).animate(anim),
+                  child: child,
+                ),
+              ),
+              child: switch (step) {
+                1 => const _Step1Widget(key: ValueKey('step1')),
+                2 => const _Step2Widget(key: ValueKey('step2')),
+                3 => const _Step3Widget(key: ValueKey('step3')),
+                _ => const _Step1Widget(key: ValueKey('step1')),
+              },
             ),
           ),
-          child: switch (step) {
-            1 => const _Step1Widget(key: ValueKey('step1')),
-            2 => const _Step2Widget(key: ValueKey('step2')),
-            3 => const _Step3Widget(key: ValueKey('step3')),
-            _ => const _Step1Widget(key: ValueKey('step1')),
-          },
         ),
       ),
     );
